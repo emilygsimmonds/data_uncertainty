@@ -47,7 +47,7 @@ source("./Functions/process_input_data.R")
 
 ## Edit the previously output data to be new input data
 input_data <- process_input_data(output_data = input_data_old,
-                                   i = i)
+                                   i = i, IDs = IDs)
   
 ## Take the input data and apply the survival and reproduction functions
   
@@ -55,7 +55,7 @@ output_data <- input_data %>%
   survival_function(parameters = parameters,
                     max_age = max_age, 
                     inc_trait = inc_trait) %>%
-  reproduction_function(parameters = parameters,
+  reproduction_function(parameters = parameters, max_age = max_age,
                         inc_trait = inc_trait)
   
 ## Clean output_data

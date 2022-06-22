@@ -46,7 +46,7 @@ input_data <- input_data %>% filter(Year == i)
 
 # get a vector of fertility values for each individual based on age
 # take first row of the parameters matrix and index by age column
-lambdas <- parameters[1,input_data$Age]
+lambdas <- parameters[1, input_data$Age]
 
 # get offspring values using rpois using the lambda for each level of condition
 input_data$Offspring <- rpois(n = length(input_data$Offspring), 

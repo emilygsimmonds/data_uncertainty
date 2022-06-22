@@ -38,39 +38,49 @@ source("./Functions/run_simulation.R")
 
 # set up input data
 
-input_data <- data.frame(ID = sample(1:1000, 100, replace = FALSE),
+input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
                          Surv = 1,
                          Recap = 1,
                          Offspring = rpois(100, 2),
                          Age = sample(1:5, 100, replace = TRUE),
                          Trait = rnorm(100, 20, 5))
+# set up max age
 
-# set up recapture probability 
+max_age = 5
 
-recapture <- 0.5
+# make sure Recap and Surv = 0 for all of max age
 
-# set up survival
+input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
 
-survival <- c(0.2, 0.5, 0.5)
+# set up parameters 
 
-# set up fertility
+parameters = matrix(c(1.6, rep(2, 4),
+                      0.5, 0, 0, 0, 0,
+                      0, 0.7, 0, 0, 0,
+                      0, 0, 0.7, 0, 0,
+                      0, 0, 0, 0.7, 0), 
+                    byrow = TRUE, 
+                    ncol = max_age)
 
-fertility <- c(1, 2, 2)
+# set up recapture probabilities
+
+recapture <- rep(0.8, max_age)
+
+# set up IDs
+
+IDs <- 101:1000000
 
 #### TEST ####
 
 for(i in 2:10){
 output_data <- run_simulation(input_data_old = input_data, 
-               lambda = fertility, 
-               phi = survival, 
+               parameters = parameters, 
                p = recapture, 
-               condition_surv = "Age", 
-               condition_repro = "Age",
-               max_age = 3,
+               max_age = max_age,
                inc_trait = FALSE,
-               Obs_error = FALSE,
-               i = i) 
+               obs_error = FALSE,
+               i = i, IDs = IDs) 
 input_data <- output_data
 }
 
