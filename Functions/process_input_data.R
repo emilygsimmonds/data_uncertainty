@@ -9,13 +9,15 @@
 # Age (num), Trait (num)
 #
 # - i = index for year
+#
+# - IDs = vector of IDs that can be used for individuals
 
 ## OUTPUT = a new dataframe with individuals for next year
 
 #### FUNCTION ####
 
 process_input_data <- function(output_data, 
-                             i) {
+                             i, IDs) {
   
 ## Take the previous output data and clean up ready to be input data
   
@@ -36,11 +38,13 @@ input_data_new <- output_data %>% filter(Surv == 1,
 # add new individuals based on offspring numbers - all with age = 1
 
 # marker so only consider focal year
-
 marker <- which(output_data$Year == i-1)
+
+# assign IDs, want to remove any that have previously been used 
+IDs_new <- sample(setdiff(IDs, output_data$ID), 
+                  length(sum(output_data$Offspring[marker])))
   
-offspring <- data.frame(ID = sample(seq(i*1000,(((i+1)*1000)-1),1),
-                                      sum(output_data$Offspring[marker])),
+offspring <- data.frame(ID = IDs_new,
                         Year = i,
                         Surv = NA,
                         Recap = NA,
