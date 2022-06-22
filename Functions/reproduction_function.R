@@ -9,7 +9,7 @@
 # ID (factor), Year (factor), Surv (0/1), Recap (0/1), Offspring (num), 
 # Age (num), Trait (num), Group (factor)
 #
-# - lambda = fertility rate. Vector or single number
+# - parameters = a transition matrix of size max_age X max_age 
 #
 # - condition = variable that lambda varies by (only used if lambda = vector)
 # 
@@ -21,10 +21,16 @@
 
 #### FUNCTION ####
 reproduction_function <- function(input_data, 
-                              lambda = 1, 
-                              condition = NULL, 
+                              parameters = matrix(c(rep(1.6, 5),
+                                                    0.5, 0, 0, 0, 0,
+                                                    0, 0.5, 0, 0, 0,
+                                                    0, 0, 0.5, 0, 0,
+                                                    0, 0, 0, 0.5, 0), 
+                                                  byrow = TRUE, 
+                                                  ncol = 5),
+                              max_age = 5, 
                               inc_trait = FALSE,
-                              Obs_error = FALSE) {
+                              obs_error = FALSE) {
   
 ## Load packages
 
@@ -38,22 +44,17 @@ input_data <- input_data %>% filter(Year == i)
 
 ## Fill in the offspring column of the input_data
 
-## check length of lambda to see if it varies or not then run offspring 
-
-if(length(lambda) > 1){
-  
-# find the column that condition is set for
-marker <- which(colnames(input_data) == condition)
+# get a vector of fertility values for each individual based on age
+# take first row of the parameters matrix and index by age column
+lambdas <- parameters[1,input_data$Age]
 
 # get offspring values using rpois using the lambda for each level of condition
 input_data$Offspring <- rpois(n = length(input_data$Offspring), 
-                                      lambda = lambda[input_data[,marker]])}else{
-    input_data$Offspring <- rpois(n = length(input_data$Offspring), 
-                              lambda = lambda)}
+                                      lambda = lambdas)
 
 ## add observation error
 
-if(Obs_error == TRUE){
+if(obs_error == TRUE){
   
 # resample the offspring counts with Poisson error
 input_data$Offspring <- rpois(length(input_data$Offspring), 
