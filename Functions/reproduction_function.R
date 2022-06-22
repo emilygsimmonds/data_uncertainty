@@ -52,7 +52,7 @@ lambdas <- parameters[1,input_data$Age]
 input_data$Offspring <- rpois(n = length(input_data$Offspring), 
                                       lambda = lambdas)
 
-## add observation error
+## Add observation error
 
 if(obs_error == TRUE){
   
