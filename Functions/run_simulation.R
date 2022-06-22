@@ -11,16 +11,15 @@
 # - parameters = matrix of parameter values (transition matrix) inc phi, f
 #
 # - p = vector of recapture probabilities length of max_age
-#
-# - condition = variable that phi+/p vary by (only used if phi/p = vectors)
 # 
 # - max_age = maximum age species can get to
-#
-# - condition = variable that lambda varies by (only used if lambda = vector)
 # 
 # - inc_trait = TRUE or FALSE if you want to include a trait as well
 #
 # - obs_error = TRUE or FALSE whether there is observation error
+#
+# - IDs = vector of IDs to be used for new individuals (should be longer than 
+# ßneeded)
 #
 
 ## OUTPUT = filled in dataframe for this year
@@ -39,12 +38,12 @@ run_simulation <- function(input_data_old,
                              max_age = 5,
                              inc_trait = FALSE,
                              obs_error = FALSE,
-                             i) {
+                             i, IDs) {
   
 ## Source necessary functions
-source("survival_function.R")
-source("reproduction_function.R")
-source("process_input_data.R")
+source("./Functions/survival_function.R")
+source("./Functions/reproduction_function.R")
+source("./Functions/process_input_data.R")
 
 ## Edit the previously output data to be new input data
 input_data <- process_input_data(output_data = input_data_old,
