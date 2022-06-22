@@ -42,7 +42,7 @@ marker <- which(output_data$Year == i-1)
 
 # assign IDs, want to remove any that have previously been used 
 IDs_new <- sample(setdiff(IDs, output_data$ID), 
-                  length(sum(output_data$Offspring[marker])))
+                  sum(output_data$Offspring[marker]))
   
 offspring <- data.frame(ID = IDs_new,
                         Year = i,
