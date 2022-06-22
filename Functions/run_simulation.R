@@ -1,0 +1,72 @@
+# FUNCTION to run the simulation
+
+## Function applies the survival and reproduction functions to input data
+
+## INPUT :
+#
+# - input_data =a dataframe with column names:
+# ID (factor), Year (factor), Surv (0/1), Recap (0/1), Offspring (num), 
+# Age (num), Trait (num)
+#
+# - parameters = matrix of parameter values (transition matrix) inc phi, f
+#
+# - p = vector of recapture probabilities length of max_age
+#
+# - condition = variable that phi+/p vary by (only used if phi/p = vectors)
+# 
+# - max_age = maximum age species can get to
+#
+# - condition = variable that lambda varies by (only used if lambda = vector)
+# 
+# - inc_trait = TRUE or FALSE if you want to include a trait as well
+#
+# - obs_error = TRUE or FALSE whether there is observation error
+#
+
+## OUTPUT = filled in dataframe for this year
+
+#### FUNCTION ####
+
+run_simulation <- function(input_data_old, 
+                             parameters = matrix(c(rep(1.6, 5),
+                                                   0.5, 0, 0, 0, 0,
+                                                   0, 0.5, 0, 0, 0,
+                                                   0, 0, 0.5, 0, 0,
+                                                   0, 0, 0, 0.5, 0), 
+                                                 byrow = TRUE, 
+                                                 ncol = 5), 
+                             p = rep(0.6, 5),
+                             max_age = 5,
+                             inc_trait = FALSE,
+                             obs_error = FALSE,
+                             i) {
+  
+## Source necessary functions
+source("survival_function.R")
+source("reproduction_function.R")
+source("process_input_data.R")
+
+## Edit the previously output data to be new input data
+input_data <- process_input_data(output_data = input_data_old,
+                                   i = i)
+  
+## Take the input data and apply the survival and reproduction functions
+  
+output_data <- input_data %>% 
+  survival_function(parameters = parameters,
+                    max_age = max_age, 
+                    inc_trait = inc_trait) %>%
+  reproduction_function(parameters = parameters,
+                        inc_trait = inc_trait)
+  
+## Clean output_data
+  
+# remove all with recap = 0
+  
+output_data <- output_data %>% filter(Recap == 1)
+  
+## Output simulated data 
+  
+return(output_data)
+  
+}
