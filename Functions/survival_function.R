@@ -18,6 +18,7 @@
 # - inc_trait = TRUE or FALSE if you want to include a trait as well
 
 ## OUTPUT = a new dataframe with individuals that survived to the next year
+# added to the end of the input data
 
 #### FUNCTION ####
 survival_function <- function(input_data, 
