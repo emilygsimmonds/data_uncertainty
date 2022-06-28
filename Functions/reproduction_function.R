@@ -1,5 +1,7 @@
 # FUNCTION to apply reproduction to a population vector #
 
+################################################################################
+
 ## Function takes a dataframe of individuals at t and applies reproduction and
 # to give a new dataframe of 'offspring' numbers at t+1
 
@@ -47,51 +49,55 @@ library(tidyverse)
 ### INITIAL CHECKS ###
 
 # max_age is specified and a number
-if(is.numeric(max_age) != TRUE){stop("max_age must be a number")}
+  if(is.numeric(max_age) != TRUE){stop("max_age must be a number")}
+  
+# no age in input data exceeds max_age
+  if(length(which(input_data$Age > max_age)) > 0){stop("cannot have individuals
+                                                       older than max_age")}
 
 # i is specified and a number
-if(is.null(i)){stop("i must be supplied")}
-if(is.numeric(i) != TRUE){stop("i must be a number")}
+  if(is.null(i)){stop("i must be supplied")}
+  if(is.numeric(i) != TRUE){stop("i must be a number")}
 
 # input data is correct format i.e. has the correct columns of correct format
 
 # first - check that all columns expected are present
-if(is.null(input_data$ID)){stop("ID column missing")}
-if(is.null(input_data$Year)){stop("Year column missing")}
-if(is.null(input_data$Surv)){stop("Surv column missing")}
-if(is.null(input_data$Recap)){stop("Recap column missing")}
-if(is.null(input_data$Offspring)){stop("Offspring column missing")}
-if(is.null(input_data$Age)){stop("Age column missing")}
-if(is.null(input_data$Trait)){stop("Trait column missing")}
+  if(is.null(input_data$ID)){stop("ID column missing")}
+  if(is.null(input_data$Year)){stop("Year column missing")}
+  if(is.null(input_data$Surv)){stop("Surv column missing")}
+  if(is.null(input_data$Recap)){stop("Recap column missing")}
+  if(is.null(input_data$Offspring)){stop("Offspring column missing")}
+  if(is.null(input_data$Age)){stop("Age column missing")}
+  if(is.null(input_data$Trait)){stop("Trait column missing")}
 
 # then check their format
-if(!is.factor(input_data$Year)){stop("Year should be a factor")}
-if(!is.factor(input_data$ID)){stop("ID should be a factor")}
-if(!is.factor(input_data$Surv)){stop("Surv should be numeric")}
-if(!is.factor(input_data$Recap)){stop("Recap should be numeric")}
-if(!is.factor(input_data$Offspring)){stop("Offspring should be numeric")}
-if(!is.factor(input_data$Age)){stop("Age should be numeric")}
-if(!is.factor(input_data$Trait)){stop("Trait should be numeric")}
+  if(!is.factor(input_data$Year)){stop("Year should be a factor")}
+  if(!is.factor(input_data$ID)){stop("ID should be a factor")}
+  if(!is.factor(input_data$Surv)){stop("Surv should be numeric")}
+  if(!is.factor(input_data$Recap)){stop("Recap should be numeric")}
+  if(!is.factor(input_data$Offspring)){stop("Offspring should be numeric")}
+  if(!is.factor(input_data$Age)){stop("Age should be numeric")}
+  if(!is.factor(input_data$Trait)){stop("Trait should be numeric")}
 
 # then check limits for Surv (0/1), Recap (0/1) and Age (>0<max_age)
-if(length(which(input_data$Surv < 0)|which(input_data$Surv > 1)) > 0){
-  stop("Surv must be 0 or 1")
-}
-if(length(which(input_data$Recap < 0)|which(input_data$Recap > 1)) > 0){
-  stop("Recap must be 0 or 1")
-}
-if(length(which(input_data$Age < 1)|which(input_data$Age > max_age)) > 0){
-  stop("Age must be between 1 and max_age")
-}
+  if(length(which(input_data$Surv < 0)|which(input_data$Surv > 1)) > 0){
+  stop("Surv must be 0 or 1")}
+  if(length(which(input_data$Recap < 0)|which(input_data$Recap > 1)) > 0){
+  stop("Recap must be 0 or 1")}
+  if(length(which(input_data$Age < 1)|which(input_data$Age > max_age)) > 0){
+  stop("Age must be between 1 and max_age")}
 
 # parameters is a matrix of size max_age by max_age
-if(class(parameters)[1] != "matrix"){stop("parameters must be a matrix")}
-if(dim(parameters) != c(max_age, max_age)){stop("parameters must have dim 
+  if(class(parameters)[1] != "matrix"){stop("parameters must be a matrix")}
+  if(dim(parameters) != c(max_age, max_age)){stop("parameters must have dim 
                                                 = max_age by max_age")}
 
 # IF a seed is defined, it is a number
-if(is.null(defined_seed) == FALSE){if(is.numeric(defined_seed)){stop("seed 
-must be a number")}}
+  if(is.null(defined_seed) == FALSE){if(is.numeric(defined_seed)){stop("seed 
+                                                                       must 
+                                                                       be a 
+                                                                       number")}
+    }
 
 ################################################################################
   
@@ -116,6 +122,7 @@ input_data$Offspring <- rpois(n = length(input_data$Offspring),
 if(obs_error == TRUE){
   
 # resample the offspring counts with Poisson error
+if(!is.null(defined_seed)){set.seed(seed)}
 input_data$Offspring <- rpois(length(input_data$Offspring), 
                                      lambda = input_data$Offspring)
 }

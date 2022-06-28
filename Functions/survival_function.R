@@ -1,5 +1,7 @@
 # FUNCTION to apply survival to a population vector #
 
+################################################################################
+
 ## Function takes a dataframe of individuals at t and applies survival and
 # recapture probabilities to give a new dataframe of 'survivors' at t+1
 
@@ -48,6 +50,10 @@ library(tidyverse)
   
 # max_age is specified and a number
   if(is.numeric(max_age) != TRUE){stop("max_age must be a number")}
+  
+# no age in input data exceeds max_age
+  if(length(which(input_data$Age > max_age)) > 0){stop("cannot have individuals
+                                                       older than max_age")}
   
 # i is specified and a number
   if(is.null(i)){stop("i must be supplied")}

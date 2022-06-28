@@ -1,4 +1,6 @@
-# FUNCTION to run the simulation
+# FUNCTION to run the simulation #
+
+################################################################################
 
 ## Function applies the survival and reproduction functions to input data
 

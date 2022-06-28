@@ -1,4 +1,4 @@
-# FUNCTION to process input data
+# FUNCTION to process input data #
 
 ## Function cleans previous output data to become new input data
 
