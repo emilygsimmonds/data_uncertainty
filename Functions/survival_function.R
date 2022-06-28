@@ -92,8 +92,8 @@ library(tidyverse)
   if(dim(p) != max_age){stop("length of p must equal max_age")}
   
 # IF a seed is defined, it is a number
-  if(is.null(seed) == FALSE){if(is.numeric(seed)){stop("seed must be a 
-                                                      number")}}
+  if(is.null(defined_seed) == FALSE){if(is.numeric(defined_seed)){stop("seed 
+  must be a number")}}
 
 ################################################################################
   
@@ -127,7 +127,6 @@ input_data$Surv <- as.numeric(rbinom(n = length(input_data$Surv),
 p <- p[input_data[ ,"Age"]]
 
 # scale by survival - all that die are not recaptured
-
 p[which(input_data$Surv == 0)] <- 0
 
 # get recapture values using rbinom using the phi vector
