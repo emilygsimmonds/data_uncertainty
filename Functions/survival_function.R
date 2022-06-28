@@ -18,6 +18,8 @@
 # - inc_trait = TRUE or FALSE if you want to include a trait as well
 #
 # - i = index to say which year is focal year
+#
+# - defined_seed = if repeatable analysis is desired, specify a numeric seed
 
 ## OUTPUT = a new dataframe with individuals that survived to the next year
 # added to the end of the input data
