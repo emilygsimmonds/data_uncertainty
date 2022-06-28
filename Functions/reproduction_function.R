@@ -114,6 +114,7 @@ input_data <- input_data %>% filter(Year == i)
 lambdas <- parameters[1, input_data$Age]
 
 # get offspring values using rpois using the lambda for each level of condition
+if(!is.null(defined_seed)){set.seed(seed)}
 input_data$Offspring <- rpois(n = length(input_data$Offspring), 
                                       lambda = lambdas)
 
