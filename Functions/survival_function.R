@@ -16,6 +16,8 @@
 # - max_age = maximum age species can get to
 # 
 # - inc_trait = TRUE or FALSE if you want to include a trait as well
+#
+# - i = index to say which year is focal year
 
 ## OUTPUT = a new dataframe with individuals that survived to the next year
 # added to the end of the input data
@@ -32,7 +34,7 @@ survival_function <- function(input_data,
                               p = rep(0.6, 5),
                               max_age = 5,
                               inc_trait = FALSE,
-                              defined_seed = NULL) {
+                              defined_seed = NULL, i) {
   
 ## Load packages
   
@@ -40,10 +42,14 @@ library(tidyverse)
   
 ################################################################################
   
-## INITIAL CHECKS ##
+### INITIAL CHECKS ###
   
 # max_age is specified and a number
   if(is.numeric(max_age) != TRUE){stop("max_age must be a number")}
+  
+# i is specified and a number
+  if(is.null(i)){stop("i must be supplied")}
+  if(is.numeric(i) != TRUE){stop("i must be a number")}
   
 # input data is correct format i.e. has the correct columns of correct format
 
