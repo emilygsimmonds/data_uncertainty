@@ -92,7 +92,8 @@ library(tidyverse)
   
 # parameters is a matrix of size max_age by max_age
   if(class(parameters)[1] != "matrix"){stop("parameters must be a matrix")}
-  if(dim(parameters) != c(max_age, max_age)){stop("parameters must have dim 
+  if(length(which(dim(parameters) != 
+  c(max_age, max_age)) == FALSE)>0){stop("parameters must have dim 
                                                   = max_age by max_age")}
   
 # p is a vector of length max_age
