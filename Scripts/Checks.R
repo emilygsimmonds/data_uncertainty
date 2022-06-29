@@ -2,14 +2,14 @@
 
 ################################################################################
 
-## Source functions to test
+## Source functions to test ####
 
 source("./Functions/survival_function.R")
 source("./Functions/reproduction_function.R")
 source("./Functions/process_input_data.R")
 source("./Functions/run_simulation.R")
 
-## Source required packages
+## Source required packages ####
 
 library(tidyverse)
 
@@ -42,47 +42,102 @@ parameters <- matrix(c(rep(1, 3), 1, 0, 0,
 
 recapture <- rep(1, max_age)
 
-## Test input data = wrong format
+## Test input data = wrong format ####
 
-# ID numeric
-input_data_test <- input_data %>% mutate(ID = is.factor(ID))
+# set up function to change each column to a factor in turn
 
-survival_function(input_data = input_data_test,
-                  parameters = parameters,
-                  p = recapture,
+# first = list of column names 
+column_names <- as.list(1:length(input_data[1,]))
+
+# then use map to run for all columns
+
+map(.x = column_names, safely(~{
+  # change format of focal column
+  input_data[,.x] <- as.factor(input_data[,.x])
+  # then run survival function 'safely'
+  survival_function(input_data = input_data,
+                           parameters = parameters,
+                           p = recapture,
+                           max_age = max_age, 
+                           inc_trait = FALSE,
+                           defined_seed = NULL, 
+                           i = 2)})) # CORRECT 29.06.22
+
+map(.x = column_names, safely(~{
+  # change format of focal column
+  input_data[,.x] <- as.factor(input_data[,.x])
+  # then run reproduction function 'safely'
+  reproduction_function(input_data = input_data,
+                    parameters = parameters,
+                    max_age = max_age, 
+                    inc_trait = FALSE,
+                    defined_seed = NULL, 
+                    i = 2)})) # CORRECT 29.06.22
+
+## Test input data = missing columns ####
+
+# run in map across all columns using list from previous test
+map(.x = column_names, safely(~{
+  # remove focal column
+  input_data <- input_data[,-.x]
+  # then run survival function 'safely'
+  survival_function(input_data = input_data,
+                    parameters = parameters,
+                    p = recapture,
+                    max_age = max_age, 
+                    inc_trait = FALSE,
+                    defined_seed = NULL, 
+                    i = 2)})) # CORRECT 29.06.22
+
+map(.x = column_names, safely(~{
+  # remove focal column
+  input_data <- input_data[,-.x]
+  # then run reproduction function 'safely'
+  reproduction_function(input_data = input_data,
+                        parameters = parameters,
+                        max_age = max_age, 
+                        inc_trait = FALSE,
+                        defined_seed = NULL, 
+                        i = 2)})) # CORRECT 29.06.22
+
+## Test input data = input parameters wrong format ####
+
+# wrong dimensions of parameter matrix
+
+parameters_test1 <- matrix(c(rep(1, 4), 
+                             1, 0, 0, 0,
+                             0, 1, 0, 0,
+                             0, 0, 1, 0), 
+                     byrow = TRUE, 
+                     ncol = max_age+1)
+
+parameters_test2 <- matrix(c(rep(1, 2), 1, 0), 
+                           byrow = TRUE, 
+                           ncol = max_age-1)
+
+# test matrix = too big
+survival_function(input_data = input_data, 
+                  parameters = parameters_test1,
                   max_age = max_age, 
-                  inc_trait = FALSE,
-                  defined_seed = NULL, 
-                  i = 2)
-# CORRECT 29.06.22
+                  i = 2) # CORRECT 29.06.22
 
-reproduction_function(input_data = input_data_test,
-                  parameters = parameters,
+# test matrix too small
+survival_function(input_data = input_data, 
+                  parameters = parameters_test2,
                   max_age = max_age, 
-                  obs_error = FALSE,
-                  inc_trait = FALSE,
-                  defined_seed = NULL, 
-                  i = 2)
-# CORRECT 29.06.22
+                  i = 2) # CORRECT 29.06.22
 
+# test if not a matrix
+survival_function(input_data = input_data, 
+                  parameters = as.numeric(parameters),
+                  max_age = max_age, 
+                  i = 2)  # CORRECT 29.06.22
 
-# ID not a factor
-input_data_test <- input_data %>% mutate(ID = is.numeric(ID))
+reproduction_function(parameters = parameters, max_age = max_age,
+                        inc_trait = inc_trait,
+                        obs_error = obs_error,
+                        defined_seed = defined_seed, i = i)
 
-# ID not a factor
-input_data_test <- input_data %>% mutate(ID = is.numeric(ID))
-
-# ID not a factor
-input_data_test <- input_data %>% mutate(ID = is.numeric(ID))
-
-# ID not a factor
-input_data_test <- input_data %>% mutate(ID = is.numeric(ID))
-
-# ID not a factor
-input_data_test <- input_data %>% mutate(ID = is.numeric(ID))
-
-# input data column missing
-# input parameters wrong format
 # input max_age wrong
 # input seed wrong
 # if you enter input with age > max_age code fails
