@@ -13,7 +13,7 @@ source("./Functions/run_simulation.R")
 
 library(tidyverse)
 
-#### Input error checks for all functions ####
+#### INPUT ERROR CHECKS FOR ALL FUNCTIONS ####
 
 ## Set up inputs
 
@@ -121,11 +121,26 @@ survival_function(input_data = input_data,
                   max_age = max_age, 
                   i = 2) # CORRECT 29.06.22
 
+reproduction_function(input_data = input_data,
+                      parameters = parameters_test1,
+                      max_age = max_age,
+                      inc_trait = inc_trait,
+                      obs_error = obs_error,
+                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
+
 # test matrix too small
 survival_function(input_data = input_data, 
                   parameters = parameters_test2,
                   max_age = max_age, 
                   i = 2) # CORRECT 29.06.22
+
+reproduction_function(input_data = input_data,
+                      parameters = parameters_test2,
+                      max_age = max_age,
+                      inc_trait = inc_trait,
+                      obs_error = obs_error,
+                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
+
 
 # test if not a matrix
 survival_function(input_data = input_data, 
@@ -133,16 +148,61 @@ survival_function(input_data = input_data,
                   max_age = max_age, 
                   i = 2)  # CORRECT 29.06.22
 
-reproduction_function(parameters = parameters, max_age = max_age,
-                        inc_trait = inc_trait,
-                        obs_error = obs_error,
-                        defined_seed = defined_seed, i = i)
+reproduction_function(input_data = input_data,
+                      parameters = as.numeric(parameters),
+                      max_age = max_age,
+                      inc_trait = inc_trait,
+                      obs_error = obs_error,
+                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
 
 # input max_age wrong
+survival_function(input_data = input_data, 
+                  parameters = parameters,
+                  max_age = as.factor(max_age), 
+                  i = 2)  # CORRECT 29.06.22
+
+reproduction_function(input_data = input_data,
+                      parameters = parameters,
+                      max_age = as.factor(max_age),
+                      inc_trait = inc_trait,
+                      obs_error = obs_error,
+                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
+
 # input seed wrong
+
+survival_function(input_data = input_data, 
+                  parameters = parameters,
+                  p = rep(1, max_age),
+                  max_age = max_age,
+                  defined_seed = "l",
+                  i = 2)  # CORRECT 29.06.22
+
+reproduction_function(input_data = input_data,
+                      parameters = parameters,
+                      max_age = max_age,
+                      inc_trait = inc_trait,
+                      obs_error = obs_error,
+                      defined_seed = "l", i = 2) # CORRECT 29.06.22
+
 # if you enter input with age > max_age code fails
 
+input_data$Age[10] <- 7
 
+survival_function(input_data = input_data, 
+                  parameters = parameters,
+                  p = rep(1, max_age),
+                  max_age = max_age,
+                  i = 2)  # CORRECT 29.06.22
+
+reproduction_function(input_data = input_data,
+                      parameters = parameters,
+                      max_age = max_age,
+                      inc_trait = inc_trait,
+                      obs_error = obs_error, i = 2) # CORRECT 29.06.22
+
+################################################################################
+
+#### FUNCTION SPECIFIC CHECKS ####
 #### Survival function ####
 
 # aim of function is to take formatted data for a focal year
