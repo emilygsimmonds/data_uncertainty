@@ -94,12 +94,9 @@ library(tidyverse)
                                                   = max_age by max_age")}
 
 # IF a seed is defined, it is a number
-  if(is.null(defined_seed) == FALSE){if(is.numeric(defined_seed)){stop("seed 
-                                                                       must 
-                                                                       be a 
-                                                                       number")}
-    }
-
+if(!is.null(defined_seed)){if(!is.numeric(defined_seed)){stop("seed 
+must be a number")}}
+  
 ################################################################################
   
 ## Only work on the focal year
@@ -115,7 +112,7 @@ input_data <- input_data %>% filter(Year == i)
 lambdas <- parameters[1, input_data$Age]
 
 # get offspring values using rpois using the lambda for each level of condition
-if(!is.null(defined_seed)){set.seed(seed)}
+if(!is.null(defined_seed)){set.seed(defined_seed)}
 input_data$Offspring <- rpois(n = length(input_data$Offspring), 
                                       lambda = lambdas)
 
