@@ -8,7 +8,7 @@
 ## INPUT :
 #
 # - input_data =a dataframe with column names:
-# ID (factor), Year (factor), Surv (0/1), Recap (0/1), Offspring (num), 
+# ID (num, Year (num), Surv (0/1), Recap (0/1), Offspring (num), 
 # Age (num), Trait (num), Group (factor)
 #
 # - parameters = a transition matrix of size max_age X max_age 
@@ -70,14 +70,14 @@ library(tidyverse)
   if(is.null(input_data$Age)){stop("Age column missing")}
   if(is.null(input_data$Trait)){stop("Trait column missing")}
 
-# then check their format
-  if(!is.factor(input_data$Year)){stop("Year should be a factor")}
-  if(!is.factor(input_data$ID)){stop("ID should be a factor")}
-  if(!is.factor(input_data$Surv)){stop("Surv should be numeric")}
-  if(!is.factor(input_data$Recap)){stop("Recap should be numeric")}
-  if(!is.factor(input_data$Offspring)){stop("Offspring should be numeric")}
-  if(!is.factor(input_data$Age)){stop("Age should be numeric")}
-  if(!is.factor(input_data$Trait)){stop("Trait should be numeric")}
+  # then check their format
+  if(!is.numeric(input_data$Year)){stop("Year should be numeric")}
+  if(!is.numeric(input_data$ID)){stop("ID should be numeric")}
+  if(!is.numeric(input_data$Surv)){stop("Surv should be numeric")}
+  if(!is.numeric(input_data$Recap)){stop("Recap should be numeric")}
+  if(!is.numeric(input_data$Offspring)){stop("Offspring should be numeric")}
+  if(!is.numeric(input_data$Age)){stop("Age should be numeric")}
+  if(!is.numeric(input_data$Trait)){stop("Trait should be numeric")}
 
 # then check limits for Surv (0/1), Recap (0/1) and Age (>0<max_age)
   if(length(which(input_data$Surv < 0)|which(input_data$Surv > 1)) > 0){
