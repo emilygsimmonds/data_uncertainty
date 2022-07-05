@@ -231,6 +231,8 @@ parameters <- matrix(c(rep(1, 3), 1, 0, 0,
 
 recapture <- rep(1, max_age)
 
+################################################################################
+
 #### Survival function ####
 
 # aim of function is to take formatted data for a focal year
@@ -387,20 +389,109 @@ test1$Recap - test_recap1
 test2$Recap - test_recap2
 test3$Recap - test_recap3 # ALL CORRECT 05.07.22
 
+################################################################################
+
 #### Reproduction function ####
 
 # aim of function is to take formatted data for a focal year
 # update the offspring column based on a age/stage specific reproductive rate
 
-## Check code (make sure function gives correct output)
+## Check code (make sure function gives correct output) ####
 
-# if survival set to 0, makes no difference
+## TEST: if survival set to 0, makes no difference ####
 
-# set seed and make sure output matches test column for offspring production
+parameters_test <- matrix(c(rep(1, 3), 
+                            0, 0, 0, 
+                            0, 0, 0), 
+                          byrow = TRUE, 
+                          ncol = max_age)
+
+reproduction_function(input_data = input_data,
+                      parameters = parameters,
+                      max_age = max_age, 
+                      inc_trait = FALSE,
+                      defined_seed = 1, 
+                      i = 1)$Offspring - 
+  reproduction_function(input_data = input_data,
+                      parameters = parameters_test,
+                      max_age = max_age, 
+                      inc_trait = FALSE,
+                      defined_seed = 1, 
+                      i = 1)$Offspring # CORRECT 05.07.22
+
+## TEST: set seed and make sure output matches test ####
 # (try a few different parameter matrices)
 
-# check that offspring column output changes when you add obs_error = TRUE
+# set up a parameter matrix to check
+# set up parameters
+parameters1 <- matrix(c(0.5, 0.5, 0.5, 
+                        1, 0, 0,
+                        0, 1, 0), 
+                      byrow = TRUE, 
+                      ncol = max_age)
+parameters2 <- matrix(c(0.5, 1, 1, 
+                        1, 0, 0,
+                        0, 1, 0), 
+                      byrow = TRUE, 
+                      ncol = max_age)
+parameters3 <- matrix(c(2, 2, 0.5, 
+                        1, 0, 0,
+                        0, 1, 0), 
+                      byrow = TRUE, 
+                      ncol = max_age)
+
+# run test vectors
+set.seed(1)
+test_repro1 <- rpois(n = length(input_data$Offspring), 
+                              lambda = parameters1[1, input_data$Age])
+set.seed(2)
+test_repro2 <- rpois(n = length(input_data$Offspring), 
+                     lambda = parameters2[1, input_data$Age])
+set.seed(3)
+test_repro3 <- rpois(n = length(input_data$Offspring), 
+                     lambda = parameters3[1, input_data$Age])
+
+# then run function and subtract test vector from Offspring column
+test1 <- reproduction_function(input_data = input_data,
+                      parameters = parameters1,
+                      max_age = max_age, 
+                      inc_trait = FALSE,
+                      defined_seed = 1, 
+                      i = 1)$Offspring - test_repro1
+test2 <- reproduction_function(input_data = input_data,
+                               parameters = parameters2,
+                               max_age = max_age, 
+                               inc_trait = FALSE,
+                               defined_seed = 2, 
+                               i = 1)$Offspring - test_repro2
+test3 <- reproduction_function(input_data = input_data,
+                               parameters = parameters3,
+                               max_age = max_age, 
+                               inc_trait = FALSE,
+                               defined_seed = 3, 
+                               i = 1)$Offspring - test_repro3
+
+# CHECK
+
+test1
+test2
+test3 # ALL CORRECT 05.07.22
+
+## TEST: check that offspring column output changes when obs_error = TRUE ####
 # make sure it matches test column with same seed
+
+reproduction_function(input_data = input_data,
+                      parameters = parameters,
+                      max_age = max_age, 
+                      inc_trait = FALSE,
+                      defined_seed = 1, 
+                      i = 1)$Offspring - 
+  reproduction_function(input_data = input_data,
+                        parameters = parameters,
+                        max_age = max_age, 
+                        inc_trait = FALSE,
+                        defined_seed = 1, 
+                        i = 1, obs_error = TRUE)$Offspring # CORRECT 05.07.22
 
 #### Process input data function ####
 

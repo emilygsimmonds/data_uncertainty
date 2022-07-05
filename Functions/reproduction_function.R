@@ -121,7 +121,7 @@ input_data$Offspring <- rpois(n = length(input_data$Offspring),
 if(obs_error == TRUE){
   
 # resample the offspring counts with Poisson error
-if(!is.null(defined_seed)){set.seed(seed)}
+if(!is.null(defined_seed)){set.seed(defined_seed)}
 input_data$Offspring <- rpois(length(input_data$Offspring), 
                                      lambda = input_data$Offspring)
 }
