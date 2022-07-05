@@ -203,22 +203,189 @@ reproduction_function(input_data = input_data,
 ################################################################################
 
 #### FUNCTION SPECIFIC CHECKS ####
+
+## Set up inputs
+
+input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
+                         Year = 1,
+                         Surv = 1,
+                         Recap = 1,
+                         Offspring = rpois(100, 2),
+                         Age = sample(1:3, 100, replace = TRUE),
+                         Trait = rnorm(100, 20, 5))
+
+max_age <- 3
+
+# make sure Recap and Surv = 0 for all of max age
+
+input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
+
+# set up parameters
+
+parameters <- matrix(c(rep(1, 3), 1, 0, 0,
+                       0, 1, 0), 
+                     byrow = TRUE, 
+                     ncol = max_age)
+
+# set up recapture probabilities
+
+recapture <- rep(1, max_age)
+
 #### Survival function ####
 
 # aim of function is to take formatted data for a focal year
 # update the survival column based on age/stage specific survival from a matrix
 # update recapture rate based on age/stage specific recapture probability
 
-## Check code (make sure function gives correct output)
+## Check code (make sure function gives correct output) ####
 
-# if survival/recapture parameters all set to 1 survival/recap column = all 1s
+## TEST: surv/recap parameters all set to 1 survival/recap column = all 1s ####
 
-# if survival/recapture parameters all set to 0 survival/recap column = all 0s
+# make sure all ages are at least 1 below max age
+max_age <- 4
 
-# if reproduction set to 0, makes no difference
+parameters_test <- matrix(c(rep(1, 4), 
+                       1, 0, 0, 0, 
+                       0, 1, 0, 0,
+                       0, 0, 1, 0), 
+                     byrow = TRUE, 
+                     ncol = max_age)
 
-# set seed and make sure output matches test columns for survival and recapture
+recapture_test <- rep(1,max_age)
+
+test <- survival_function(input_data = input_data,
+                  parameters = parameters_test,
+                  p = recapture_test,
+                  max_age = max_age, 
+                  inc_trait = FALSE,
+                  defined_seed = NULL, 
+                  i = 1)
+
+summary(test$Surv)
+summary(test$Recap)
+
+# CORRECT 05.07.22
+
+## TEST: surv/recap parameters all set to 0 survival/recap column = all 0s ####
+
+
+# make sure all ages are at least 1 below max age
+max_age <- 4
+
+parameters_test <- matrix(c(rep(0, 4), 
+                            0, 0, 0, 0, 
+                            0, 0, 0, 0,
+                            0, 0, 0, 0), 
+                          byrow = TRUE, 
+                          ncol = max_age)
+
+recapture_test <- rep(0,max_age)
+
+test <- survival_function(input_data = input_data,
+                          parameters = parameters_test,
+                          p = recapture_test,
+                          max_age = max_age, 
+                          inc_trait = FALSE,
+                          defined_seed = NULL, 
+                          i = 1)
+
+summary(test$Surv)
+summary(test$Recap)
+
+# CORRECT 05.07.22
+
+## TEST: if reproduction set to 0, makes no difference ####
+
+# tested in code above! CORRECT 05.07.22
+
+## TEST: set seed and make sure output matches test ####
 # (try a few different parameter matrices)
+
+# set up a parameter matrix to check
+# set up parameters
+parameters1 <- matrix(c(rep(1, 3), 0.5, 0, 0,
+                       0, 0.5, 0), 
+                     byrow = TRUE, 
+                     ncol = max_age)
+parameters2 <- matrix(c(rep(1, 3), 0.75, 0, 0,
+                        0, 0.75, 0), 
+                      byrow = TRUE, 
+                      ncol = max_age)
+parameters3 <- matrix(c(rep(1, 3), 0.3, 0, 0,
+                        0, 0.3, 0), 
+                      byrow = TRUE, 
+                      ncol = max_age)
+
+# set up recapture probabilities
+recapture1 <- rep(0.5, max_age)
+recapture2 <- rep(0.3, max_age)
+recapture3 <- rep(0.8, max_age)
+
+# set up test vectors
+# MUST scale recap by survival
+set.seed(1)
+test_surv1 <- as.numeric(rbinom(n = length(input_data$Surv), 
+                                size = 1, 
+              prob = c(diag(parameters1[-1,]),0)[input_data[ ,"Age"]]))
+set.seed(1)
+test_recap1 <- as.numeric(rbinom(n = length(input_data$Surv), 
+                                size = 1, 
+                                prob = c(recapture1[input_data[ ,"Age"]])))
+test_recap1[which(test_surv1 == 0)] <- 0
+
+# 2
+set.seed(2)
+test_surv2 <- as.numeric(rbinom(n = length(input_data$Surv), 
+                                size = 1, 
+                      prob = c(diag(parameters2[-1,]),0)[input_data[ ,"Age"]]))
+set.seed(2)
+test_recap2 <- as.numeric(rbinom(n = length(input_data$Surv), 
+                                 size = 1, 
+                      prob = c(recapture2[input_data[ ,"Age"]])))
+test_recap2[which(test_surv2 == 0)] <- 0
+# 3
+set.seed(3)
+test_surv3 <- as.numeric(rbinom(n = length(input_data$Surv), 
+                                size = 1, 
+                      prob = c(diag(parameters3[-1,]),0)[input_data[ ,"Age"]]))
+set.seed(3)
+test_recap3 <- as.numeric(rbinom(n = length(input_data$Surv), 
+                                 size = 1, 
+                                 prob = c(recapture3[input_data[ ,"Age"]])))
+test_recap3[which(test_surv3 == 0)] <- 0
+
+# run survival function
+test1 <- survival_function(input_data = input_data,
+                          parameters = parameters1,
+                          p = recapture1,
+                          max_age = max_age, 
+                          inc_trait = FALSE,
+                          defined_seed = 1, 
+                          i = 1)
+test2 <- survival_function(input_data = input_data,
+                           parameters = parameters2,
+                           p = recapture2,
+                           max_age = max_age, 
+                           inc_trait = FALSE,
+                           defined_seed = 2, 
+                           i = 1)
+test3 <- survival_function(input_data = input_data,
+                           parameters = parameters3,
+                           p = recapture3,
+                           max_age = max_age, 
+                           inc_trait = FALSE,
+                           defined_seed = 3, 
+                           i = 1)
+
+# check - should = 0 if the same
+
+test1$Surv - test_surv1
+test2$Surv - test_surv2
+test3$Surv - test_surv3 # ALL CORRECT 05.07.22
+
+test1$Recap - test_recap1
+test2$Recap - test_recap2
+test3$Recap - test_recap3 # ALL CORRECT 05.07.22
 
 #### Reproduction function ####
 

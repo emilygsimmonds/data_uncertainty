@@ -134,15 +134,15 @@ input_data$Surv <- as.numeric(rbinom(n = length(input_data$Surv),
 # use the vector of p
 p <- p[input_data[ ,"Age"]]
 
-# scale by survival - all that die are not recaptured
-p[which(input_data$Surv == 0)] <- 0
-
 # get recapture values using rbinom using the phi vector
 # need to ensure column Recap remains numeric
 if(!is.null(defined_seed)){set.seed(defined_seed)}
 input_data$Recap <- as.numeric(rbinom(n = length(input_data$Recap), 
                                      size = 1, 
                                      prob = p))
+
+# scale by survival - all that die are not recaptured
+input_data$Recap[which(input_data$Surv == 0)] <- 0
   
 ## Return new input_data file
 return(rbind(old_data, input_data))
