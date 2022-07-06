@@ -493,6 +493,8 @@ reproduction_function(input_data = input_data,
                         defined_seed = 1, 
                         i = 1, obs_error = TRUE)$Offspring # CORRECT 05.07.22
 
+
+################################################################################
 #### Process input data function ####
 
 # aim of function is to take formatted data for all years
@@ -501,21 +503,76 @@ reproduction_function(input_data = input_data,
 
 ## Should add error checks for input data
 
-## Check code
+## Check code ####
 
-# check all individuals with survival = 0 do get removed but survival = 1 remain
+## Set up inputs
+# make sure length is short so easy to check 
+input_data <- data.frame(ID = sample(1:10, 10, replace = FALSE),
+                         Year = 1,
+                         Surv = 1,
+                         Recap = 1,
+                         Offspring = rpois(10, 2),
+                         Age = sample(1:3, 10, replace = TRUE),
+                         Trait = rnorm(10, 20, 5))
 
-# check all individuals with recap = 0 but survival = 1 are retained
+max_age <- 3
 
-# check number of new offspring is correct
+# make sure Recap and Surv = 0 for all of max age
 
-# check ID generation is unique
+input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
 
-#### Run simulation function ####
+# set up parameters
 
-## Code check
+parameters <- matrix(c(rep(1, 3), 1, 0, 0,
+                       0, 1, 0), 
+                     byrow = TRUE, 
+                     ncol = max_age)
 
-# repeat all code checks above but using this wrapper function
+# set up recapture probabilities needs to be < 1
+
+recapture <- rep(0.5, max_age)
+
+## TEST: all individuals with Surv = 0 get removed + Surv = 1 remain ####
+# check which individuals should be removed
+removals <- input_data$ID[which(input_data$Surv == 0)]
+survivors <- input_data$ID[which(input_data$Surv == 1)]
+
+# run function
+output <- process_input_data(input_data, i=2, IDs=1:1000)
+
+# check IDs in Year 2
+output <- output %>% filter(Year == 2)
+output$ID # CORRECT 06.07.22
+
+## TEST: all individuals with Recap = 0 but Surv = 1 are retained ####
+# set up input data so some have some where Surv = 1 but Recap = 0
+# also try vice versa
+input_data$Surv <- c(rep(0,5), rep(1,5))
+input_data$Recap<- c(rep(0:1, times = 5))
+
+# increase max age so none should have died from being old
+max_age <- 4
+
+# run function
+output <- process_input_data(input_data, i = 2, IDs = 1:100)
+
+# CHECK: vector of IDs that should be retained in Year = 2
+retained1 <- input_data$ID[which(input_data$Surv == 1 & input_data$Recap == 0)]
+# vector of IDs that should not make it to Year = 2
+removed2 <- input_data$ID[which(input_data$Surv == 0 & input_data$Recap == 1)]
+output$ID[output$Year == 2] # CORRECT 06.07.22
+
+## CHECK: number of new offspring is correct ##
+# calculate expected number of offspring
+expected_offspring <- sum(input_data$Offspring)
+
+# then run function and add up new individuals
+output <- process_input_data(input_data, i = 2, IDs = 1:100)
+output <- output %>% filter(Year == 2)
+output_offspring <- output$ID[!output$ID %in% input_data$ID]
+
+# should be 0 if same
+length(output_offspring)-expected_offspring # CORRECT 06.07.22
 
 ################################################################################
 
