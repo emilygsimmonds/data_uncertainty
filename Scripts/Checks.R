@@ -576,9 +576,53 @@ length(output_offspring)-expected_offspring # CORRECT 06.07.22
 
 ################################################################################
 
-# Try with a couple of different i
+## TEST RUNNING MULTIPLE ####
 
-# When testing survival probabilities etc make sure to code the
-# test NOT using the input data vector
+source("./Functions/run_simulation.R")
 
-# Also test for all same age so easier to see
+# set up input data
+
+input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
+                         Year = 1,
+                         Surv = rbinom(100, 1, prob = 0.6),
+                         Recap = 1,
+                         Offspring = rpois(100, 1),
+                         Age = sample(1:3, 100, replace = TRUE),
+                         Trait = rnorm(100, 20, 5))
+# set up max age
+
+max_age = 3
+
+# make sure Recap and Surv = 0 for all of max age
+
+input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
+
+# set up parameters 
+
+parameters = matrix(c(0.5, rep(1, 2),
+                      0.3, 0, 0,
+                      0, 0.6, 0), 
+                    byrow = TRUE, 
+                    ncol = max_age)
+
+# set up recapture probabilities
+
+recapture <- rep(0.7, max_age)
+
+# set up IDs
+
+IDs <- 101:10000000
+
+#### TEST ####
+
+output_data <- run_simulation(input_data_old = input_data, 
+                              parameters = parameters, 
+                              p = recapture, 
+                              max_age = max_age,
+                              inc_trait = FALSE,
+                              obs_error = FALSE,
+                              start_i = 2, end_i = 25, IDs = IDs) 
+
+output_data %>% group_by(Year) %>% summarise(count = n(),
+                                             repro = sum(Offspring))
+

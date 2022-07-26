@@ -38,13 +38,13 @@ source("./Functions/run_simulation.R")
 
 # set up input data
 
-input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
+input_data <- data.frame(ID = sample(1:200, 200, replace = FALSE),
                          Year = 1,
-                         Surv = 1,
-                         Recap = 1,
-                         Offspring = rpois(100, 2),
-                         Age = sample(1:5, 100, replace = TRUE),
-                         Trait = rnorm(100, 20, 5))
+                         Surv = rbinom(200, 1, prob = 0.6),
+                         Recap = rbinom(200, 1, prob = 0.8),
+                         Offspring = rpois(200, 1),
+                         Age = sample(1:5, 200, replace = TRUE),
+                         Trait = rnorm(200, 20, 5))
 # set up max age
 
 max_age = 5
@@ -55,11 +55,11 @@ input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
 
 # set up parameters 
 
-parameters = matrix(c(1.6, rep(2, 4),
-                      0.5, 0, 0, 0, 0,
-                      0, 0.7, 0, 0, 0,
-                      0, 0, 0.7, 0, 0,
-                      0, 0, 0, 0.7, 0), 
+parameters = matrix(c(rep(1, 5),
+                      0.3, 0, 0, 0, 0,
+                      0, 0.6, 0, 0, 0,
+                      0, 0, 0.6, 0, 0,
+                      0, 0, 0, 0.6, 0), 
                     byrow = TRUE, 
                     ncol = max_age)
 
@@ -69,26 +69,100 @@ recapture <- rep(0.8, max_age)
 
 # set up IDs
 
-IDs <- 101:1000000
+IDs <- 101:200000000
 
 #### TEST ####
 
-for(i in 2:10){
 output_data <- run_simulation(input_data_old = input_data, 
-               parameters = parameters, 
-               p = recapture, 
-               max_age = max_age,
-               inc_trait = FALSE,
-               obs_error = FALSE,
-               i = i, IDs = IDs) 
-input_data <- output_data
-}
+                              parameters = parameters, 
+                              p = recapture, 
+                              max_age = max_age,
+                              inc_trait = FALSE,
+                              obs_error = FALSE,
+                              start_i = 2, end_i = 25, IDs = IDs) 
+
+save(output_data, file = "test.RData")
+
+output_data %>% group_by(Year) %>% summarise(count = n(),
+                                             repro = sum(Offspring))
+
 
 #### Simulation 1: missing reproductive events (at random) ####
 
+# run normal set of simulations then edit
+baseline <- rerun(100, run_simulation(input_data_old = input_data, 
+                              parameters = parameters, 
+                              p = recapture, 
+                              max_age = max_age,
+                              inc_trait = FALSE,
+                              obs_error = FALSE,
+                              defined_seed = 1,
+                              start_i = 2, end_i = 25, IDs = IDs))
+
+# save
+save(baseline, file = "baseline_simulation.RData")
+
+# randomly add 0s to the offspring column 10%
+
+random_missing_reproduction <- map(.x = baseline, ~{
+  set.seed(1)
+  marker <- sample(1:length(.x$Offspring), length(.x$Offspring)/10)
+  .x$Offspring[marker] <- 0
+  return(.x)
+})
+
+# check that random missing is different to baseline
+baseline[[1]]$Offspring - random_missing_reproduction[[1]]$Offspring 
+# YES are different
+
+# save
+save(random_missing_reproduction, file = "random_missing_simulation.RData")
+
 #### Simulation 2: missing reproductive events (not at random - bias) ####
+# miss juveniles
+
+# add 0s to juveniles in the offspring column 50%
+juvenile_missing_reproduction <- map(.x = baseline, ~{
+  marker1 <- which(.x$Age == 1)
+  set.seed(1)
+  marker2 <- sample(marker1, length(marker1)/50)
+  .x$Offspring[marker2] <- 0
+  return(.x)
+})
+
+baseline[[1]]$Offspring - juvenile_missing_reproduction[[1]]$Offspring
+
+# save
+save(juvenile_missing_reproduction, file = "juvenile_missing_simulation.RData")
+
+# miss adults
+adult_missing_reproduction <- map(.x = baseline, ~{
+  marker1 <- which(.x$Age > 1)
+  set.seed(1)
+  marker2 <- sample(marker1, length(marker1)/50)
+  .x$Offspring[marker2] <- 0
+  return(.x)
+})
+
+adult_missing_reproduction[[1]]$Offspring - 
+  juvenile_missing_reproduction[[1]]$Offspring
+
+# save
+save(adult_missing_reproduction, file = "adult_missing_simulation.RData")
 
 #### Simulation 3: count error in offspring numbers (random) ####
 
-#### Simulation 4: count error in offspring (biased) ####
+# run set of simulations with obs error
+obs_error_simulation <- rerun(100, run_simulation(input_data_old = input_data, 
+                                      parameters = parameters, 
+                                      p = recapture, 
+                                      max_age = max_age,
+                                      inc_trait = FALSE,
+                                      obs_error = TRUE,
+                                      defined_seed = 1,
+                                      start_i = 2, end_i = 25, IDs = IDs))
+
+# save
+save(obs_error_simulation, file = "obs_error_simulation.RData")
+
 

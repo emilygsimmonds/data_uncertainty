@@ -3,6 +3,7 @@
 ################################################################################
 
 ## Function applies the survival and reproduction functions to input data
+## Runs as a loop
 
 ## INPUT :
 #
@@ -24,6 +25,8 @@
 # ßneeded)
 #
 # - defined_seed = if repeatable analysis is desired, specify a numeric seed
+#
+# - start_i and end_i = start and end points of loop
 
 
 ## OUTPUT = filled in dataframe for this year
@@ -42,13 +45,15 @@ run_simulation <- function(input_data_old,
                              max_age = 5,
                              inc_trait = FALSE,
                              obs_error = FALSE,
-                             i, IDs,
+                             start_i, end_i, IDs,
                              defined_seed = NULL) {
   
 ## Source necessary functions
 source("./Functions/survival_function.R")
 source("./Functions/reproduction_function.R")
 source("./Functions/process_input_data.R")
+  
+for(i in start_i:end_i){
 
 ## Edit the previously output data to be new input data
 input_data <- process_input_data(output_data = input_data_old,
@@ -60,6 +65,7 @@ output_data <- input_data %>%
   survival_function(parameters = parameters,
                     max_age = max_age, 
                     inc_trait = inc_trait,
+                    p = p,
                     defined_seed = defined_seed, i = i) %>%
   reproduction_function(parameters = parameters, max_age = max_age,
                         inc_trait = inc_trait,
@@ -69,10 +75,14 @@ output_data <- input_data %>%
 ## Clean output_data
   
 # remove all with recap = 0 DON'T as will look like they've died 
-  # output_data <- output_data %>% filter(Recap == 1)
+# output_data <- output_data %>% filter(Recap == 1)
+
+input_data_old <- output_data
+
+}
   
 ## Output simulated data 
-  
+
 return(output_data)
   
 }

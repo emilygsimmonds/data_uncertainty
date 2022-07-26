@@ -1,4 +1,4 @@
-# T1.1: Data simulation for scenario 2: bias and error in fecundity #
+# T1.1: Data simulation for scenario 2: measurement error in all #
 
 ## MAKE SURE ALL SIMULATIONS ARE 25 YEARS - can then reduce for Scenario 3
 
@@ -10,8 +10,6 @@
 
 #### Simulation 1: measurement error in survival ####
 
-#### Simulation 2: measurement error in fecundity ####
+# Simulation 2: measurement error in fecundity #### ALREADY DONE IN SIM 3 SCEN 1
 
 #### Simulation 3: measurement error in both ####
-
-#### Simulation 4: measurement error in continuous variable ####
