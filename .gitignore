@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+./Scripts/nimble_query_example.R
+./Scripts/nimble_query_example_DT.R
