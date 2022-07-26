@@ -81,7 +81,7 @@ output_data <- run_simulation(input_data_old = input_data,
                               obs_error = FALSE,
                               start_i = 2, end_i = 25, IDs = IDs) 
 
-save(output_data, file = "test.RData")
+save(output_data, file = "./Data files/test.RData")
 
 output_data %>% group_by(Year) %>% summarise(count = n(),
                                              repro = sum(Offspring))
@@ -100,7 +100,7 @@ baseline <- rerun(100, run_simulation(input_data_old = input_data,
                               start_i = 2, end_i = 25, IDs = IDs))
 
 # save
-save(baseline, file = "baseline_simulation.RData")
+save(baseline, file = "./Data files/baseline_simulation.RData")
 
 # randomly add 0s to the offspring column 10%
 
@@ -116,7 +116,7 @@ baseline[[1]]$Offspring - random_missing_reproduction[[1]]$Offspring
 # YES are different
 
 # save
-save(random_missing_reproduction, file = "random_missing_simulation.RData")
+save(random_missing_reproduction, file = "./Data files/random_missing_simulation.RData")
 
 #### Simulation 2: missing reproductive events (not at random - bias) ####
 # miss juveniles
@@ -133,7 +133,7 @@ juvenile_missing_reproduction <- map(.x = baseline, ~{
 baseline[[1]]$Offspring - juvenile_missing_reproduction[[1]]$Offspring
 
 # save
-save(juvenile_missing_reproduction, file = "juvenile_missing_simulation.RData")
+save(juvenile_missing_reproduction, file = "./Data files/juvenile_missing_simulation.RData")
 
 # miss adults
 adult_missing_reproduction <- map(.x = baseline, ~{
@@ -148,7 +148,7 @@ adult_missing_reproduction[[1]]$Offspring -
   juvenile_missing_reproduction[[1]]$Offspring
 
 # save
-save(adult_missing_reproduction, file = "adult_missing_simulation.RData")
+save(adult_missing_reproduction, file = "./Data files/adult_missing_simulation.RData")
 
 #### Simulation 3: count error in offspring numbers (random) ####
 
@@ -163,6 +163,6 @@ obs_error_simulation <- rerun(100, run_simulation(input_data_old = input_data,
                                       start_i = 2, end_i = 25, IDs = IDs))
 
 # save
-save(obs_error_simulation, file = "obs_error_simulation.RData")
+save(obs_error_simulation, file = "./Data files/obs_error_simulation.RData")
 
 

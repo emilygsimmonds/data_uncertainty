@@ -34,47 +34,48 @@ initial_survival[3] <- 0
 
 # matrix of transitions from juv, to adult, to dead (STATE)
 # the probabilities should be the probability of being 1, 2 or 3
+# STATES = alive juv 1, alive adult 2, dead 3
 
-transition[1, 1] <- 0 # Pr(juv alive -> juv alive)
-transition[1, 2] <- mean_phi_juv # Pr(juvenile alive -> adult alive)
-transition[1, 3] <- 1 - mean_phi_juv # Pr(juv alive -> dead)
-transition[2, 1] <- 0 # Pr(adult alive -> juv alive)
-transition[2, 2] <- mean_phi_adult # Pr(adult alive -> adult alive)
-transition[2, 3] <- 1 - mean_phi_adult # Pr(adult alive -> dead)
-transition[3, 1] <- 0 # Pr(dead -> juvenile alive)
-transition[3, 2] <- 0 # Pr(dead -> adult alive)
-transition[3, 3] <- 1 # Pr(dead -> dead)
+transition[1, 1] <- 0 # Pr(juv alive t -> juv alive t+1)
+transition[1, 2] <- mean_phi_juv # Pr(juv alive t -> adult alive t+1)
+transition[1, 3] <- 1-mean_phi_juv # Pr(juv alive t -> dead t+1)
+transition[2, 1] <- 0 # Pr(adult alive t -> juv alive t+1)
+transition[2, 2] <- mean_phi_adult # Pr(adult alive t -> adult alive t+1)
+transition[2, 3] <- 1 - mean_phi_adult # Pr(adult alive t -> dead t+1)
+transition[3, 1] <- 0 # Pr(dead t -> juvenile alive t+1)
+transition[3, 2] <- 0 # Pr(dead t -> adult alive t+1)
+transition[3, 3] <- 1 # Pr(dead t -> dead t+1)
 
 # observation matrix (captures recapture probability)
-# row 1 = alive juvenile
+# OBS =  alive juv 1, alive adult 2, not detected 3
+# row 1 = alive juv
 # row 2 = alive adult
 # row 3 = dead
-# column 1 = observed juv, column 2 = observed adult, column 3 = not observed 
-# need to add a third column that is the eventuality that was not possible
-# e.g. juvenile obs but for an adult
 
-observations[1, 1] <- mean_p # Pr(juv alive and detected)
-observations[1, 2] <- 0 # Pr(juv alive and detected as adult)
-observations[1, 3] <- 1 - mean_p # Pr(juv alive but not detected)
-observations[2, 1] <- 0 # Pr(adult alive but detected as juv)
-observations[2, 2] <- mean_p # Pr(adult alive and detected)
-observations[2, 3] <- 1 - mean_p # Pr(adult alive and not detected)
-observations[3, 1] <- 0 # Pr(dead and detected as adult)
-observations[3, 2] <- 0 # Pr(dead and detected as juvenile)
-observations[3, 3] <- 1 # Pr(dead and not detected)
+# column 1 = not observed, column 2 = observed juv, column 3 observed adult
+observations[1, 1] <- mean_p # Pr(juv alive t and detected t)
+observations[1, 2] <- 0 # Pr(juv alive t and detected as adult t)
+observations[1, 3] <- 1 - mean_p # Pr(juv alive t but not detected t)
+observations[2, 1] <- 0 # Pr(adult alive t but detected as juv t)
+observations[2, 2] <- mean_p # Pr(adult alive t and detected t)
+observations[2, 3] <- 1 - mean_p # Pr(adult alive t and not detected t)
+observations[3, 1] <- 0 # Pr(dead t and detected as juvenile t)
+observations[3, 2] <- 0 # Pr(dead t and detected as adult t)
+observations[3, 3] <- 1 # Pr(dead t and not detected t)
 
 ## likelihood survival
 
 # need to iterate over each individual and time
 # first go over time for individual i using categorical distribution
+# need to identify the first entry in the state where the individual is alive
+# THEN apply the likelihood
 for (i in 1:N){
-  surv_state[i, 1] ~ dcat(initial_survival[1:3])
-  for (j in 2:occasions){
+  surv_state[i, first[i]] ~ dcat(initial_survival[1:3])
+  for (j in (first[i]+1):occasions){
     surv_state[i,j] ~ dcat(transition[surv_state[i, j-1], 1:3])
     surv_obs[i,j] ~ dcat(observations[surv_state[i, j], 1:3])
   }
 }
-
 
 #-------------------------------------------------------------------------------
 ## DEFINE PRIORS FECUNDITY 
@@ -93,7 +94,8 @@ offspring_obs[f] ~ dpois(offspring_state[f])
 
 # process for offspring
 offspring_state[f] ~ dpois(fecundity_rate[f])
-log(fecundity_rate[f]) <- alpha + beta_age*age[f]
+log(fecundity_rate[f]) <- log_fecundity_rate[f]
+log_fecundity_rate[f] <- alpha + beta_age*age[f]
 
 }
 
@@ -131,9 +133,7 @@ log(fecundity_rate[f]) <- alpha + beta_age*age[f]
 
 #### Define constants, data and inits ####
 
-load("test.RData")
-
-input_data <- output_data %>% filter(Year < 10)
+load("./Data files/test.RData")
 
 # re-code some of raw data
 output_data <- input_data %>%
@@ -162,25 +162,32 @@ data_input <- list(surv_obs = capture_history[,2:10],
                    age = age,
                    offspring_obs = offspring_obs)
 
+## INITS
+
+# set up initial values for survival states (1 on first occasion and 2 after)
+surv_state_init <- capture_history[,2:10]
+# create a vector of first occasions (THIS WILL BE A CONSTANT)
+first <- apply(surv_state_init, 1, function(x) which(x<3)[1])
+for(i in 1:nrow(surv_state_init)){
+  if(first[i] < 9)
+    surv_state_init[i, (first[i]+1):9] <- 2}
+
+
+inits <- list(mean_phi_juv = runif(1, 0, 1),
+              mean_phi_adult = runif(1, 0, 1),
+              mean_p = runif(1, 0, 1),
+              alpha = rnorm(1, 0, 0.1),
+              beta_age = rnorm(1, 0, 0.1),
+              surv_state = surv_state_init,
+              offspring_state = offspring_obs,
+              fecundity_rate = rep(1, length(offspring_obs)))
+
 ## CONSTANTS
 
 # number of occasions (Occasions) and number of individuals (N)
 constants <- list(N = nrow(capture_history), 
-                     occasions = 9)
-
-## INITS
-
-surv_state_init <- capture_history[,2:10]
-surv_state_init[surv_state_init == 3] <- 1
-surv_state_init[surv_state_init == 2] <- 1
-inits <- list(mean_phi_juv = 0.3,
-              mean_phi_adult = 0.6,
-              mean_p = runif(1, 0, 1),
-              alpha = rnorm(1, -0.05, 0.1),
-              beta_age = rnorm(1, 0.05, 0.1),
-              surv_state = surv_state_init,
-              offspring_state = rpois(length(offspring_obs),offspring_obs),
-              fecundity_rate = rep(1, length(offspring_obs)))
+                  occasions = 9, 
+                  first = first)
 
  #### Define parameters to track ####
 
