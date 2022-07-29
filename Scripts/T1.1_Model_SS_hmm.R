@@ -1,4 +1,4 @@
-#### T1.1: Model script: state-space model ####
+#### T1.1: Model script: state-space model with hMM coding ####
 
 ################################################################################
 
@@ -18,8 +18,8 @@ library(MCMCvis)
 
 #### Model ####
 
-Model_SS_raw <- nimbleCode({
-
+Model_SS_hmm <- nimbleCode({
+  
 #-------------------------------------------------------------------------------
 ## DEFINE PRIORS SURVIVAL
 # outside of loop as constant
@@ -31,8 +31,8 @@ mean_p ~ dunif(0, 1)
 ## parameters
 
 # vector of initial state probabilities (juv surv, adult surv, death)
-initial_survival[1] <- 1
-initial_survival[2] <- 1
+initial_survival[1] <- 0.5
+initial_survival[2] <- 0.5
 initial_survival[3] <- 0
 
 # matrix of transitions from juv, to adult, to dead (STATE)
@@ -73,11 +73,13 @@ observations[3, 3] <- 1 # Pr(dead t and not detected t)
 # need to identify the first entry in the state where the individual is alive
 # THEN apply the likelihood
 for (i in 1:N){
-  surv_state[i, first[i]] ~ dcat(initial_survival[1:3])
-  for (j in (first[i]+1):occasions){
-    surv_state[i,j] ~ dcat(transition[surv_state[i, j-1], 1:3])
-    surv_obs[i,j] ~ dcat(observations[surv_state[i, j], 1:3])
-  }
+  init[i, 1:3] <- initial_survival[1:3]}
+for (i in 1:N){
+  surv_obs[i,(first[i]+1):occasions] ~ dHMM(init = init[i, 1:3], 
+                  probObs = observations[1:3,1:3], # observation matrix
+                  probTrans = transition[1:3,1:3], # transition matrix
+                  len = occasions-first[i], # nb of sampling occasions
+                  checkRowSums = 0)
 }
 
 #-------------------------------------------------------------------------------
@@ -91,15 +93,15 @@ beta_age ~ dnorm(0, sd = 1.5)
 ## LIKELIHOOD FECUNDITY IN LOOP
 
 for(f in 1:length(offspring_obs)){
-
-# observed offspring
-offspring_obs[f] ~ dpois(offspring_state[f])
-
-# process for offspring
-offspring_state[f] ~ dpois(fecundity_rate[f])
-log(fecundity_rate[f]) <- log_fecundity_rate[f]
-log_fecundity_rate[f] <- alpha + beta_age*age[f]
-
+  
+  # observed offspring
+  offspring_obs[f] ~ dpois(offspring_state[f])
+  
+  # process for offspring
+  offspring_state[f] ~ dpois(fecundity_rate[f])
+  log(fecundity_rate[f]) <- log_fecundity_rate[f]
+  log_fecundity_rate[f] <- alpha + beta_age*age[f]
+  
 }
 
 #-------------------------------------------------------------------------------
@@ -108,50 +110,21 @@ log_fecundity_rate[f] <- alpha + beta_age*age[f]
 mean_fecundity_juv <- exp(alpha + (beta_age*1)) # fecundity for juveniles
 mean_fecundity_adult <- exp(alpha + (beta_age*2)) # fecundity for adults 
 
-# make a transition matrix
-#transition_matrix <- makeMPM(f_juv = c(mean_fecundity_juv), 
-#                             s_juv = c(mean_phi_juv),
-#                             f_adult = c(mean_fecundity_adult),
-#                             s_adult = c(mean_phi_adult))
-
 transition_matrix[1,1] <- mean_fecundity_juv
 transition_matrix[1,2] <- mean_fecundity_adult # fecundity for adults                           
 transition_matrix[2,1] <- mean_phi_juv # juvenile survival
 transition_matrix[2,2] <- mean_phi_adult # adult survival
 
-
-
 #-------------------------------------------------------------------------------
 ## Derived quantities MPM
 
-eigen_values <- nimEigen(transition_matrix[1:2,1:2])
-
 # lambda
-#lambda[1] <- eigen(transition_matrix)$values[1]
+lambda <- nimEigen(transition_matrix[1:2,1:2])$values[1]
 
 # stable size distribution
-#size_distribution[1:2] <- eigen(transition_matrix)$vectors[,1]/
-#sum(eigen(transition_matrix)$vectors[,1])
+size_distribution[1:2] <- eigen(transition_matrix[1:2,1:2])$vectors[,1]
 
 })
-
-#### TRY add nimble function to create transition matrix ####
-
-makeMPM <- nimbleFunction( run = function(
-    mat = double(2)
-)
-{ 
-  # Specify matrix of correct dimensions
-  MPM <- nimMatrix(mat, nrow = 2, ncol = 2)
-  
-  eigen_values <- nimEigen(MPM)
-  
-# return
-return(eigen_values)
-returnType(double(2))
-
-} 
-)
 
 
 
