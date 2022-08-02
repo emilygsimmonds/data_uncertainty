@@ -81,6 +81,14 @@ input_data_old <- output_data
 
 }
   
+## Duplicate check
+  
+check <- output_data %>% group_by(ID,Year) %>% summarise(count = n())
+
+marker <- which(check$count > 1)
+
+if(length(marker) > 0){stop("duplicate individuals produced")}
+  
 ## Output simulated data 
 
 return(output_data)

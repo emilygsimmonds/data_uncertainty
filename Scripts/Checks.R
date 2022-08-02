@@ -626,3 +626,10 @@ output_data <- run_simulation(input_data_old = input_data,
 output_data %>% group_by(Year) %>% summarise(count = n(),
                                              repro = sum(Offspring))
 
+#### Check if getting duplicated individuals ####
+
+duplicates <- output_data %>% group_by(ID,Year) %>% summarise(count = n())
+
+summary(duplicates$count)
+
+
