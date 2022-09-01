@@ -2,10 +2,6 @@
 
 ################################################################################
 
-#### FUNCTION TO SET UP THE NIMBLE MODEL
-
-################################################################################
-
 #### Set up ####
 
 # load packages
@@ -55,7 +51,7 @@ transition[3, 3] <- 1 # Pr(dead t -> dead t+1)
 # row 2 = alive adult
 # row 3 = dead
 
-# column 1 = not observed, column 2 = observed juv, column 3 observed adult
+# column 1 = observed juv, column 2 = observed adult, column 3 not detected
 observations[1, 1] <- mean_p # Pr(juv alive t and detected t)
 observations[1, 2] <- 0 # Pr(juv alive t and detected as adult t)
 observations[1, 3] <- 1 - mean_p # Pr(juv alive t but not detected t)
@@ -75,10 +71,11 @@ observations[3, 3] <- 1 # Pr(dead t and not detected t)
 for (i in 1:N){
   init[i, 1:3] <- initial_survival[1:3]}
 for (i in 1:N){
-  surv_obs[i,(first[i]+1):occasions] ~ dHMM(init = init[i, 1:3], 
+  # distribution for first observations
+ surv_obs[i,first[i]:occasions] ~ dHMM(init = init[i, 1:3], 
                   probObs = observations[1:3,1:3], # observation matrix
                   probTrans = transition[1:3,1:3], # transition matrix
-                  len = occasions-first[i], # nb of sampling occasions
+                  len = occasions-(first[i]-1), # nb of sampling occasions
                   checkRowSums = 0)
 }
 
@@ -125,6 +122,4 @@ lambda <- nimEigen(transition_matrix[1:2,1:2])$values[1]
 size_distribution[1:2] <- eigen(transition_matrix[1:2,1:2])$vectors[,1]
 
 })
-
-
 

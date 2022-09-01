@@ -55,13 +55,13 @@ input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
 
 # set up parameters 
 
-parameters = matrix(c(rep(1, 5),
+parameters = matrix(c(rep(0.7, 5),
                       0.3, 0, 0, 0, 0,
-                      0, 0.6, 0, 0, 0,
-                      0, 0, 0.6, 0, 0,
-                      0, 0, 0, 0.6, 0), 
+                      0, 0.4, 0, 0, 0,
+                      0, 0, 0.4, 0, 0,
+                      0, 0, 0, 0.4, 0), 
                     byrow = TRUE, 
-                    ncol = max_age)
+                    ncol = max_age) # made sure that lambda is approx 1!!
 
 # set up recapture probabilities
 
@@ -83,21 +83,23 @@ output_data <- run_simulation(input_data_old = input_data,
 
 save(output_data, file = "./Data files/test.RData")
 
-output_data %>% group_by(Year) %>% summarise(count = n(),
+x <- output_data %>% group_by(Year) %>% summarise(count = n(),
                                              repro = sum(Offspring))
 
 
 #### Simulation 1: missing reproductive events (at random) ####
 
+seeds <- as.list(c(1:100))
+
 # run normal set of simulations then edit
-baseline <- rerun(100, run_simulation(input_data_old = input_data, 
-                              parameters = parameters, 
-                              p = recapture, 
-                              max_age = max_age,
-                              inc_trait = FALSE,
-                              obs_error = FALSE,
-                              defined_seed = 1,
-                              start_i = 2, end_i = 25, IDs = IDs))
+baseline <- map(.x = seeds, ~run_simulation(defined_seed = .x,
+                                            input_data_old = input_data, 
+                                            parameters = parameters, 
+                                            p = recapture, 
+                                            max_age = max_age,
+                                            inc_trait = FALSE,
+                                            obs_error = FALSE,
+                                            start_i = 2, end_i = 25, IDs = IDs)) 
 
 # save
 save(baseline, file = "./Data files/baseline_simulation.RData")
@@ -153,13 +155,13 @@ save(adult_missing_reproduction, file = "./Data files/adult_missing_simulation.R
 #### Simulation 3: count error in offspring numbers (random) ####
 
 # run set of simulations with obs error
-obs_error_simulation <- rerun(100, run_simulation(input_data_old = input_data, 
+obs_error_simulation <- map(.x = seeds, ~run_simulation(defined_seed = .x, 
+                                      input_data_old = input_data, 
                                       parameters = parameters, 
                                       p = recapture, 
                                       max_age = max_age,
                                       inc_trait = FALSE,
                                       obs_error = TRUE,
-                                      defined_seed = 1,
                                       start_i = 2, end_i = 25, IDs = IDs))
 
 # save

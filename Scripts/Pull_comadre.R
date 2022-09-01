@@ -21,7 +21,7 @@ comadre <- cdb_fetch('comadre')
 #### Subset to useful matrices ####
 
 # criteria: at least 5 years of data
-# criteria: published since 2016
+# criteria: published since 2010
 
 comadre_reduced <- comadre %>% filter(as.numeric(YearPublication) > 2010,
                               as.numeric(StudyDuration) > 4,
@@ -60,3 +60,22 @@ write.csv(DOI_summary, "DOIs.csv")
 #### Save working data set of COMADRE ####
 
 save(comadre_reduced, file = "working_comadre.RData")
+
+#### Want the DOIs for all other populations since 2010 (<10 years) ####
+
+# criteria: at least 5 years of data
+# criteria: published since 2016
+
+comadre_short <- comadre %>% filter(as.numeric(YearPublication) > 2010,
+                                      as.numeric(StudyDuration) < 10,
+                                      !is.na(DOI_ISBN),
+                                      DOI_ISBN != "NA")
+
+DOI_summary2 <- comadre_short %>% 
+  group_by(DOI_ISBN) %>% 
+  summarize(n_populations = length(unique(MatrixPopulation))) %>% 
+  arrange(desc(n_populations))
+
+# 61 extra DOIs
+
+write.csv(DOI_summary2, "DOIs_short_studies.csv")
