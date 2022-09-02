@@ -53,13 +53,14 @@ max_age = 5
 
 input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
 
-# set up parameters 
+# set up parameters - 
+# began close to Riecke paper then upped repro to give slightly growing pop
 
-parameters = matrix(c(rep(0.7, 5),
+parameters = matrix(c(rep(0.75, 5),
                       0.3, 0, 0, 0, 0,
-                      0, 0.4, 0, 0, 0,
-                      0, 0, 0.4, 0, 0,
-                      0, 0, 0, 0.4, 0), 
+                      0, 0.5, 0, 0, 0,
+                      0, 0, 0.5, 0, 0,
+                      0, 0, 0, 0.5, 0), 
                     byrow = TRUE, 
                     ncol = max_age) # made sure that lambda is approx 1!!
 
@@ -114,11 +115,13 @@ random_missing_reproduction <- map(.x = baseline, ~{
 })
 
 # check that random missing is different to baseline
-baseline[[1]]$Offspring - random_missing_reproduction[[1]]$Offspring 
+length(which(baseline[[1]]$Offspring - 
+               random_missing_reproduction[[1]]$Offspring != 0))
 # YES are different
 
 # save
-save(random_missing_reproduction, file = "./Data files/random_missing_simulation.RData")
+save(random_missing_reproduction, 
+     file = "./Data files/random_missing_simulation.RData")
 
 #### Simulation 2: missing reproductive events (not at random - bias) ####
 # miss juveniles
@@ -132,10 +135,12 @@ juvenile_missing_reproduction <- map(.x = baseline, ~{
   return(.x)
 })
 
-baseline[[1]]$Offspring - juvenile_missing_reproduction[[1]]$Offspring
+length(which(baseline[[1]]$Offspring - 
+               juvenile_missing_reproduction[[1]]$Offspring != 0))
 
 # save
-save(juvenile_missing_reproduction, file = "./Data files/juvenile_missing_simulation.RData")
+save(juvenile_missing_reproduction, 
+     file = "./Data files/juvenile_missing_simulation.RData")
 
 # miss adults
 adult_missing_reproduction <- map(.x = baseline, ~{
@@ -146,11 +151,12 @@ adult_missing_reproduction <- map(.x = baseline, ~{
   return(.x)
 })
 
-adult_missing_reproduction[[1]]$Offspring - 
-  juvenile_missing_reproduction[[1]]$Offspring
+length(which(adult_missing_reproduction[[1]]$Offspring - 
+  juvenile_missing_reproduction[[1]]$Offspring != 0))
 
 # save
-save(adult_missing_reproduction, file = "./Data files/adult_missing_simulation.RData")
+save(adult_missing_reproduction, 
+     file = "./Data files/adult_missing_simulation.RData")
 
 #### Simulation 3: count error in offspring numbers (random) ####
 
