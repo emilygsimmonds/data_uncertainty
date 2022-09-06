@@ -88,6 +88,16 @@ check <- output_data %>% group_by(ID,Year) %>% summarise(count = n())
 marker <- which(check$count > 1)
 
 if(length(marker) > 0){stop("duplicate individuals produced")}
+
+## Add observation error
+
+if(obs_error == TRUE){
+  
+# resample the offspring counts with Poisson error
+if(!is.null(defined_seed)){set.seed(defined_seed)}
+output_data$Offspring <- rpois(length(output_data$Offspring), 
+                                lambda = output_data$Offspring)
+}
   
 ## Output simulated data 
 

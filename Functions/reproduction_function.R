@@ -17,11 +17,11 @@
 # 
 # - inc_trait = TRUE or FALSE if you want to include a trait as well
 #
-# - obs_error = TRUE or FALSE whether there is observation error
-#
 # - i = index to say which year is focal year
 #
 # - defined_seed = if repeatable analysis is desired, specify a numeric seed
+
+# - obs_error = cannot do that here - do it at the end of the simulation
 
 
 ## OUTPUT = a new dataframe with individuals that survived to the next year
@@ -37,7 +37,6 @@ reproduction_function <- function(input_data,
                                                   ncol = 5),
                               max_age = 5, 
                               inc_trait = FALSE,
-                              obs_error = FALSE,
                               defined_seed = NULL, i) {
   
 ## Load packages
@@ -116,15 +115,8 @@ if(!is.null(defined_seed)){set.seed(defined_seed)}
 input_data$Offspring <- rpois(n = length(input_data$Offspring), 
                                       lambda = lambdas)
 
-## Add observation error
+## DO NOT ADD OBSERVATION ERROR HERE AS THIS SIMULATES THE "STATE"
 
-if(obs_error == TRUE){
-  
-# resample the offspring counts with Poisson error
-if(!is.null(defined_seed)){set.seed(defined_seed)}
-input_data$Offspring <- rpois(length(input_data$Offspring), 
-                                     lambda = input_data$Offspring)
-}
 
 ## Return new input_data file
 return(rbind(old_data, input_data))
