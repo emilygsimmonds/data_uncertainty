@@ -5,7 +5,6 @@
 ## Source functions to test ####
 
 source("./Functions/make_input_data_function.R")
-source("./Scripts/T1.1_Run_Model_SS.R")
 
 ## Source model code ####
 
@@ -142,7 +141,8 @@ inits_hmm <- list(mean_phi_juv = runif(1, 0, 1),
 
 constants <- list(N = nrow(data_input$surv_obs), 
                   occasions = 25, 
-                  first = first[-which(first > 23)])
+                  first = first[-which(first > 23)],
+                  O_N = length(offspring_obs))
 
 ## Define parameters to track
 
@@ -180,13 +180,15 @@ MCMCsummary(mcmc.output, round = 2)
 
 #### CHECK MODEL IN WRAPPER ####
 
+load('./Data files/test.RData')
+
 # True values: phi_j = 0.3, phi_a = 0.4, p = 0.8, lambda = 0.7
 
 model_inputs <-  make_input_data(output_data, n_occasions = 25)
 
 start_time <- Sys.time()
 
-output_results<- nimbleMCMC(code = Model_SS_hmm, 
+output_results <- nimbleMCMC(code = Model_SS_hmm, 
              data = model_inputs$data_input,
              constants = model_inputs$constants,
              inits = model_inputs$inits,

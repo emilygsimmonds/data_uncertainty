@@ -59,7 +59,8 @@ data_input <- list(surv_obs = capture_history[,2:(n_occasions+1)],
 # capture occasion (first)
 constants <- list(N = nrow(data_input$surv_obs), 
                   occasions = n_occasions,
-                  first = first)
+                  first = first,
+                  O_N = length(offspring_obs))
 
 #### Step 7: remove all individuals first seen on final occasion ####
 

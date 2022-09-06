@@ -89,7 +89,7 @@ beta_age ~ dnorm(0, sd = 1.5)
 
 ## LIKELIHOOD FECUNDITY IN LOOP
 
-for(f in 1:length(offspring_obs)){
+for(f in 1:O_N){
   
   # observed offspring
   offspring_obs[f] ~ dpois(offspring_state[f])
