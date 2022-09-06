@@ -160,15 +160,12 @@ save(adult_missing_reproduction,
 
 #### Simulation 3: count error in offspring numbers (random) ####
 
-# run set of simulations with obs error
-obs_error_simulation <- map(.x = seeds, ~run_simulation(defined_seed = .x, 
-                                      input_data_old = input_data, 
-                                      parameters = parameters, 
-                                      p = recapture, 
-                                      max_age = max_age,
-                                      inc_trait = FALSE,
-                                      obs_error = TRUE,
-                                      start_i = 2, end_i = 25, IDs = IDs))
+# edit baseline simulations to add observation error
+obs_error_simulation <- map(.x = baseline, ~{.x$Offspring <- 
+  rpois(length(.x$Offspring), 
+  lambda = .x$Offspring)
+return(.x)
+})
 
 # save
 save(obs_error_simulation, file = "./Data files/obs_error_simulation.RData")
