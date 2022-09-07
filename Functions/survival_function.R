@@ -12,8 +12,6 @@
 # Age (num), Trait (num)
 #
 # - parameters = a transition matrix of size max_age X max_age 
-#
-# - p = vector of recapture probabilities length of max_age
 # 
 # - max_age = maximum age species can get to
 # 
@@ -35,7 +33,6 @@ survival_function <- function(input_data,
                                                     0, 0, 0, 0.5, 0), 
                                                   byrow = TRUE, 
                                                   ncol = 5),
-                              p = rep(0.6, 5),
                               max_age = 5,
                               inc_trait = FALSE,
                               defined_seed = NULL, i) {
@@ -96,9 +93,6 @@ library(tidyverse)
   c(max_age, max_age)) == FALSE)>0){stop("parameters must have dim 
                                                   = max_age by max_age")}
   
-# p is a vector of length max_age
-  if(length(p) != max_age){stop("length of p must equal max_age")}
-  
 # IF a seed is defined, it is a number
   if(!is.null(defined_seed)){if(!is.numeric(defined_seed)){stop("seed 
   must be a number")}}
@@ -127,22 +121,6 @@ if(!is.null(defined_seed)){set.seed(defined_seed)}
 input_data$Surv <- as.numeric(rbinom(n = length(input_data$Surv), 
                            size = 1, 
                            prob = phi))
-
-## Fill in recapture values using probabilities in parameter matrix
-
-# make a vector of probabilities based on age of individuals
-# use the vector of p
-p <- p[input_data[ ,"Age"]]
-
-# get recapture values using rbinom using the phi vector
-# need to ensure column Recap remains numeric
-if(!is.null(defined_seed)){set.seed(defined_seed)}
-input_data$Recap <- as.numeric(rbinom(n = length(input_data$Recap), 
-                                     size = 1, 
-                                     prob = p))
-
-# scale by survival - all that die are not recaptured
-input_data$Recap[which(input_data$Surv == 0)] <- 0
   
 ## Return new input_data file
 return(rbind(old_data, input_data))
