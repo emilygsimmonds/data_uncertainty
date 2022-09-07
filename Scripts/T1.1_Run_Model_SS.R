@@ -40,8 +40,8 @@ model_inputs <- map(.x = baseline, .f = make_input_data, n_occasions = 25)
 
 #### Run set up ####
 
-n_iter <- 500000
-n_burnin <- 5000
+n_iter <- 50000
+n_burnin <- 500
 n_chains <- 2
 
 #### Compile models ####
@@ -52,7 +52,7 @@ n_chains <- 2
 
 start_time <- Sys.time()
 
-output_baseline <- map(.x = model_inputs[[1]], ~{
+output_baseline <- map(.x = model_inputs[2], ~{
   nimbleMCMC(code = Model_SS_hmm, 
           data = .x$data_input,
           constants = .x$constants,
@@ -72,5 +72,6 @@ MCMCsummary(output_baseline[[1]], round = 2)
 
 #### 03.08.22 - COMES OUT WITH REALLY BAD ANSWERS. NEED TO CHECK - look at priors etc
 
-#### 
+#### 09.22 - better answers - was missing the first entry when using model so
+# number of juveniles was practically 0. Now fixed. s
 

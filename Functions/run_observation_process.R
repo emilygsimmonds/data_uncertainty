@@ -35,9 +35,9 @@ run_observation_process <- function(state_data,
 # instead will just same from rbinom
 if(juv_recapture == TRUE){
   observed_data <- state_data %>% 
+    mutate(Recapture = rbinom(length(state_data$Age), 1, p)) %>%
     mutate(Recapture = case_when(Age == 1 ~ 1,
-                                 Age > 1 ~ rbinom(1, 1, p),
-                                 TRUE ~ 1))}
+                                 TRUE ~ as.numeric(Recapture)))}
 if(juv_recapture == FALSE){
   observed_data <- state_data %>% 
     mutate(Recapture = rbinom(length(state_data$Age), 1, p))}

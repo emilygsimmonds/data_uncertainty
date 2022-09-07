@@ -62,7 +62,6 @@ library(tidyverse)
   if(is.null(input_data$ID)){stop("ID column missing")}
   if(is.null(input_data$Year)){stop("Year column missing")}
   if(is.null(input_data$Surv)){stop("Surv column missing")}
-  if(is.null(input_data$Recap)){stop("Recap column missing")}
   if(is.null(input_data$Offspring)){stop("Offspring column missing")}
   if(is.null(input_data$Age)){stop("Age column missing")}
   if(is.null(input_data$Trait)){stop("Trait column missing")}
@@ -71,17 +70,13 @@ library(tidyverse)
   if(!is.numeric(input_data$Year)){stop("Year should be numeric")}
   if(!is.numeric(input_data$ID)){stop("ID should be numeric")}
   if(!is.numeric(input_data$Surv)){stop("Surv should be numeric")}
-  if(!is.numeric(input_data$Recap)){stop("Recap should be numeric")}
   if(!is.numeric(input_data$Offspring)){stop("Offspring should be numeric")}
   if(!is.numeric(input_data$Age)){stop("Age should be numeric")}
   if(!is.numeric(input_data$Trait)){stop("Trait should be numeric")}
   
-  # then check limits for Surv (0/1), Recap (0/1) and Age (>0<max_age)
+  # then check limits for Surv (0/1) and Age (>0<max_age)
   if(length(which(input_data$Surv < 0)|which(input_data$Surv > 1)) > 0){
     stop("Surv must be 0 or 1")
-  }
-  if(length(which(input_data$Recap < 0)|which(input_data$Recap > 1)) > 0){
-    stop("Recap must be 0 or 1")
   }
   if(length(which(input_data$Age < 1)|which(input_data$Age > max_age)) > 0){
     stop("Age must be between 1 and max_age")

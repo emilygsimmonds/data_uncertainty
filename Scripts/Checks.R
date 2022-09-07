@@ -20,16 +20,15 @@ library(tidyverse)
 input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
                          Surv = 1,
-                         Recap = 1,
                          Offspring = rpois(100, 2),
                          Age = sample(1:3, 100, replace = TRUE),
                          Trait = rnorm(100, 20, 5))
 
 max_age <- 3
 
-# make sure Recap and Surv = 0 for all of max age
+# make sure Surv = 0 for all of max age
 
-input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
+input_data[which(input_data$Age == max_age), c("Surv")] <- 0
 
 # set up parameters
 
@@ -37,10 +36,6 @@ parameters <- matrix(c(rep(1, 3), 1, 0, 0,
                                     0, 1, 0), 
                                   byrow = TRUE, 
                                   ncol = max_age)
-
-# set up recapture probabilities
-
-recapture <- rep(1, max_age)
 
 ## Test input data = wrong format ####
 
@@ -57,11 +52,10 @@ map(.x = column_names, safely(~{
   # then run survival function 'safely'
   survival_function(input_data = input_data,
                            parameters = parameters,
-                           p = recapture,
                            max_age = max_age, 
                            inc_trait = FALSE,
                            defined_seed = NULL, 
-                           i = 2)})) # CORRECT 29.06.22
+                           i = 2)})) # CORRECT 29.06.22 + 09.22
 
 map(.x = column_names, safely(~{
   # change format of focal column
@@ -72,7 +66,7 @@ map(.x = column_names, safely(~{
                     max_age = max_age, 
                     inc_trait = FALSE,
                     defined_seed = NULL, 
-                    i = 2)})) # CORRECT 29.06.22
+                    i = 2)})) # CORRECT 29.06.22+ 09.22
 
 ## Test input data = missing columns ####
 
@@ -83,11 +77,10 @@ map(.x = column_names, safely(~{
   # then run survival function 'safely'
   survival_function(input_data = input_data,
                     parameters = parameters,
-                    p = recapture,
                     max_age = max_age, 
                     inc_trait = FALSE,
                     defined_seed = NULL, 
-                    i = 2)})) # CORRECT 29.06.22
+                    i = 2)})) # CORRECT 29.06.22 + 09.22
 
 map(.x = column_names, safely(~{
   # remove focal column
@@ -98,7 +91,7 @@ map(.x = column_names, safely(~{
                         max_age = max_age, 
                         inc_trait = FALSE,
                         defined_seed = NULL, 
-                        i = 2)})) # CORRECT 29.06.22
+                        i = 2)})) # CORRECT 29.06.22 + 09.22
 
 ## Test input data = input parameters wrong format ####
 
@@ -119,41 +112,38 @@ parameters_test2 <- matrix(c(rep(1, 2), 1, 0),
 survival_function(input_data = input_data, 
                   parameters = parameters_test1,
                   max_age = max_age, 
-                  i = 2) # CORRECT 29.06.22
+                  i = 2) # CORRECT 29.06.22 + 09.22
 
 reproduction_function(input_data = input_data,
                       parameters = parameters_test1,
                       max_age = max_age,
                       inc_trait = inc_trait,
-                      obs_error = obs_error,
-                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
+                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
 
 # test matrix too small
 survival_function(input_data = input_data, 
                   parameters = parameters_test2,
                   max_age = max_age, 
-                  i = 2) # CORRECT 29.06.22
+                  i = 2) # CORRECT 29.06.22 + 09.22
 
 reproduction_function(input_data = input_data,
                       parameters = parameters_test2,
                       max_age = max_age,
                       inc_trait = inc_trait,
-                      obs_error = obs_error,
-                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
+                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
 
 
 # test if not a matrix
 survival_function(input_data = input_data, 
                   parameters = as.numeric(parameters),
                   max_age = max_age, 
-                  i = 2)  # CORRECT 29.06.22
+                  i = 2)  # CORRECT 29.06.22 + 09.22
 
 reproduction_function(input_data = input_data,
                       parameters = as.numeric(parameters),
                       max_age = max_age,
                       inc_trait = inc_trait,
-                      obs_error = obs_error,
-                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
+                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
 
 # input max_age wrong
 survival_function(input_data = input_data, 
@@ -241,7 +231,7 @@ recapture <- rep(1, max_age)
 
 ## Check code (make sure function gives correct output) ####
 
-## TEST: surv/recap parameters all set to 1 survival/recap column = all 1s ####
+## TEST: surv parameters all set to 1 survival column = all 1s ####
 
 # make sure all ages are at least 1 below max age
 max_age <- 4
@@ -253,23 +243,18 @@ parameters_test <- matrix(c(rep(1, 4),
                      byrow = TRUE, 
                      ncol = max_age)
 
-recapture_test <- rep(1,max_age)
-
 test <- survival_function(input_data = input_data,
                   parameters = parameters_test,
-                  p = recapture_test,
                   max_age = max_age, 
                   inc_trait = FALSE,
                   defined_seed = NULL, 
                   i = 1)
 
 summary(test$Surv)
-summary(test$Recap)
 
-# CORRECT 05.07.22
+# CORRECT 05.07.22 + 09.22
 
-## TEST: surv/recap parameters all set to 0 survival/recap column = all 0s ####
-
+## TEST: surv parameters all set to 0 survival column = all 0s ####
 
 # make sure all ages are at least 1 below max age
 max_age <- 4
@@ -281,20 +266,16 @@ parameters_test <- matrix(c(rep(0, 4),
                           byrow = TRUE, 
                           ncol = max_age)
 
-recapture_test <- rep(0,max_age)
-
 test <- survival_function(input_data = input_data,
                           parameters = parameters_test,
-                          p = recapture_test,
                           max_age = max_age, 
                           inc_trait = FALSE,
                           defined_seed = NULL, 
                           i = 1)
 
 summary(test$Surv)
-summary(test$Recap)
 
-# CORRECT 05.07.22
+# CORRECT 05.07.22 + 09.22
 
 ## TEST: if reproduction set to 0, makes no difference ####
 
@@ -305,6 +286,9 @@ summary(test$Recap)
 
 # set up a parameter matrix to check
 # set up parameters
+
+max_age = 3
+
 parameters1 <- matrix(c(rep(1, 3), 0.5, 0, 0,
                        0, 0.5, 0), 
                      byrow = TRUE, 
@@ -318,62 +302,39 @@ parameters3 <- matrix(c(rep(1, 3), 0.3, 0, 0,
                       byrow = TRUE, 
                       ncol = max_age)
 
-# set up recapture probabilities
-recapture1 <- rep(0.5, max_age)
-recapture2 <- rep(0.3, max_age)
-recapture3 <- rep(0.8, max_age)
-
 # set up test vectors
 # MUST scale recap by survival
 set.seed(1)
 test_surv1 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
               prob = c(diag(parameters1[-1,]),0)[input_data[ ,"Age"]]))
-set.seed(1)
-test_recap1 <- as.numeric(rbinom(n = length(input_data$Surv), 
-                                size = 1, 
-                                prob = c(recapture1[input_data[ ,"Age"]])))
-test_recap1[which(test_surv1 == 0)] <- 0
 
 # 2
 set.seed(2)
 test_surv2 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
                       prob = c(diag(parameters2[-1,]),0)[input_data[ ,"Age"]]))
-set.seed(2)
-test_recap2 <- as.numeric(rbinom(n = length(input_data$Surv), 
-                                 size = 1, 
-                      prob = c(recapture2[input_data[ ,"Age"]])))
-test_recap2[which(test_surv2 == 0)] <- 0
 # 3
 set.seed(3)
 test_surv3 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
                       prob = c(diag(parameters3[-1,]),0)[input_data[ ,"Age"]]))
-set.seed(3)
-test_recap3 <- as.numeric(rbinom(n = length(input_data$Surv), 
-                                 size = 1, 
-                                 prob = c(recapture3[input_data[ ,"Age"]])))
-test_recap3[which(test_surv3 == 0)] <- 0
 
 # run survival function
 test1 <- survival_function(input_data = input_data,
                           parameters = parameters1,
-                          p = recapture1,
                           max_age = max_age, 
                           inc_trait = FALSE,
                           defined_seed = 1, 
                           i = 1)
 test2 <- survival_function(input_data = input_data,
                            parameters = parameters2,
-                           p = recapture2,
                            max_age = max_age, 
                            inc_trait = FALSE,
                            defined_seed = 2, 
                            i = 1)
 test3 <- survival_function(input_data = input_data,
                            parameters = parameters3,
-                           p = recapture3,
                            max_age = max_age, 
                            inc_trait = FALSE,
                            defined_seed = 3, 
@@ -383,11 +344,8 @@ test3 <- survival_function(input_data = input_data,
 
 test1$Surv - test_surv1
 test2$Surv - test_surv2
-test3$Surv - test_surv3 # ALL CORRECT 05.07.22
+test3$Surv - test_surv3 # ALL CORRECT 05.07.22 + 09.22
 
-test1$Recap - test_recap1
-test2$Recap - test_recap2
-test3$Recap - test_recap3 # ALL CORRECT 05.07.22
 
 ################################################################################
 
@@ -417,7 +375,7 @@ reproduction_function(input_data = input_data,
                       max_age = max_age, 
                       inc_trait = FALSE,
                       defined_seed = 1, 
-                      i = 1)$Offspring # CORRECT 05.07.22
+                      i = 1)$Offspring # CORRECT 05.07.22 + 09.22
 
 ## TEST: set seed and make sure output matches test ####
 # (try a few different parameter matrices)
@@ -475,23 +433,7 @@ test3 <- reproduction_function(input_data = input_data,
 
 test1
 test2
-test3 # ALL CORRECT 05.07.22
-
-## TEST: check that offspring column output changes when obs_error = TRUE ####
-# make sure it matches test column with same seed
-
-reproduction_function(input_data = input_data,
-                      parameters = parameters,
-                      max_age = max_age, 
-                      inc_trait = FALSE,
-                      defined_seed = 1, 
-                      i = 1)$Offspring - 
-  reproduction_function(input_data = input_data,
-                        parameters = parameters,
-                        max_age = max_age, 
-                        inc_trait = FALSE,
-                        defined_seed = 1, 
-                        i = 1, obs_error = TRUE)$Offspring # CORRECT 05.07.22
+test3 # ALL CORRECT 05.07.22 + 09.22
 
 
 ################################################################################
@@ -510,16 +452,15 @@ reproduction_function(input_data = input_data,
 input_data <- data.frame(ID = sample(1:10, 10, replace = FALSE),
                          Year = 1,
                          Surv = 1,
-                         Recap = 1,
                          Offspring = rpois(10, 2),
                          Age = sample(1:3, 10, replace = TRUE),
                          Trait = rnorm(10, 20, 5))
 
 max_age <- 3
 
-# make sure Recap and Surv = 0 for all of max age
+# make sure Surv = 0 for all of max age
 
-input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
+input_data[which(input_data$Age == max_age), c("Surv")] <- 0
 
 # set up parameters
 
@@ -527,10 +468,6 @@ parameters <- matrix(c(rep(1, 3), 1, 0, 0,
                        0, 1, 0), 
                      byrow = TRUE, 
                      ncol = max_age)
-
-# set up recapture probabilities needs to be < 1
-
-recapture <- rep(0.5, max_age)
 
 ## TEST: all individuals with Surv = 0 get removed + Surv = 1 remain ####
 # check which individuals should be removed
@@ -542,25 +479,7 @@ output <- process_input_data(input_data, i=2, IDs=1:1000)
 
 # check IDs in Year 2
 output <- output %>% filter(Year == 2)
-output$ID # CORRECT 06.07.22
-
-## TEST: all individuals with Recap = 0 but Surv = 1 are retained ####
-# set up input data so some have some where Surv = 1 but Recap = 0
-# also try vice versa
-input_data$Surv <- c(rep(0,5), rep(1,5))
-input_data$Recap<- c(rep(0:1, times = 5))
-
-# increase max age so none should have died from being old
-max_age <- 4
-
-# run function
-output <- process_input_data(input_data, i = 2, IDs = 1:100)
-
-# CHECK: vector of IDs that should be retained in Year = 2
-retained1 <- input_data$ID[which(input_data$Surv == 1 & input_data$Recap == 0)]
-# vector of IDs that should not make it to Year = 2
-removed2 <- input_data$ID[which(input_data$Surv == 0 & input_data$Recap == 1)]
-output$ID[output$Year == 2] # CORRECT 06.07.22
+output$ID # CORRECT 06.07.22 + 09.22
 
 ## CHECK: number of new offspring is correct ##
 # calculate expected number of offspring
@@ -572,7 +491,7 @@ output <- output %>% filter(Year == 2)
 output_offspring <- output$ID[!output$ID %in% input_data$ID]
 
 # should be 0 if same
-length(output_offspring)-expected_offspring # CORRECT 06.07.22
+length(output_offspring)-expected_offspring # CORRECT 06.07.22 + 09.22
 
 ################################################################################
 
@@ -585,7 +504,6 @@ source("./Functions/run_simulation.R")
 input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
                          Surv = rbinom(100, 1, prob = 0.6),
-                         Recap = 1,
                          Offspring = rpois(100, 1),
                          Age = sample(1:3, 100, replace = TRUE),
                          Trait = rnorm(100, 20, 5))
@@ -595,7 +513,7 @@ max_age = 3
 
 # make sure Recap and Surv = 0 for all of max age
 
-input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
+input_data[which(input_data$Age == max_age), c("Surv")] <- 0
 
 # set up parameters 
 
@@ -605,22 +523,16 @@ parameters = matrix(c(0.5, rep(1, 2),
                     byrow = TRUE, 
                     ncol = max_age)
 
-# set up recapture probabilities
-
-recapture <- rep(0.7, max_age)
-
 # set up IDs
 
 IDs <- 101:10000000
 
 #### TEST ####
 
-output_data <- run_simulation(input_data_old = input_data, 
+output_data <- run_simulation_state(input_data_old = input_data, 
                               parameters = parameters, 
-                              p = recapture, 
                               max_age = max_age,
                               inc_trait = FALSE,
-                              obs_error = FALSE,
                               start_i = 2, end_i = 25, IDs = IDs) 
 
 output_data %>% group_by(Year) %>% summarise(count = n(),
@@ -632,4 +544,29 @@ duplicates <- output_data %>% group_by(ID,Year) %>% summarise(count = n())
 
 summary(duplicates$count)
 
+#### TEST: observation process ####
+
+source("./Functions/run_observation_process.R")
+
+non_perfect_recap <- run_observation_process(output_data, 
+                                             p = 0.8, 
+                                             fecundity_error = FALSE,
+                                             juv_recapture = TRUE)
+
+count_error_too <- run_observation_process(output_data, 
+                                           p = 0.8, 
+                                           fecundity_error = TRUE,
+                                           juv_recapture = TRUE)
+
+# number of individuals is reduced do they all have recap = 1
+summary(non_perfect_recap) # YES
+
+# are all juveniles still there
+length(which(output_data$Age == 1)) - length(which(non_perfect_recap$Age == 1)) # YES
+
+# how many individuals removed?
+3019/3254 # 92 % remain
+
+# are fecundity counts different?
+count_error_too$Offspring - count_error_too$Offspring_obs
 
