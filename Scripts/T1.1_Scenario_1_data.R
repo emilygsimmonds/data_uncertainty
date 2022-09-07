@@ -1,7 +1,5 @@
 # T1.1: Data simulation for scenario 1: bias and error in fecundity #
 
-## MAKE SURE ALL SIMULATIONS ARE 25 YEARS - can then reduce for Scenario 3
-
 ################################################################################
 #
 # Features of the population:
@@ -18,8 +16,6 @@
 # 
 # - inc_trait = TRUE or FALSE if you want to include a trait as well
 #
-# - obs_error = TRUE or FALSE whether there is observation error
-#
 #
 ################################################################################
 
@@ -33,6 +29,7 @@ library(tidyverse)
 
 # source necessary functions
 source("./Functions/run_simulation.R")
+source("./Functions/run_observation_process.R")
 
 #### Create simulated data ####
 
@@ -40,8 +37,7 @@ source("./Functions/run_simulation.R")
 
 input_data <- data.frame(ID = sample(1:200, 200, replace = FALSE),
                          Year = 1,
-                         Surv = rbinom(200, 1, prob = 0.6),
-                         Recap = rbinom(200, 1, prob = 0.8),
+                         Surv = rbinom(200, 1, prob = 0.4),
                          Offspring = rpois(200, 1),
                          Age = sample(1:5, 200, replace = TRUE),
                          Trait = rnorm(200, 20, 5))
@@ -49,9 +45,9 @@ input_data <- data.frame(ID = sample(1:200, 200, replace = FALSE),
 
 max_age = 5
 
-# make sure Recap and Surv = 0 for all of max age
+# make sure Surv = 0 for all of max age
 
-input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
+input_data[which(input_data$Age == max_age), c("Surv")] <- 0
 
 # set up parameters - 
 # began close to Riecke paper then upped repro to give slightly growing pop
@@ -66,7 +62,7 @@ parameters = matrix(c(rep(0.75, 5),
 
 # set up recapture probabilities
 
-recapture <- rep(0.8, max_age)
+recapture <- 0.8
 
 # set up IDs
 
@@ -74,13 +70,18 @@ IDs <- 101:200000000
 
 #### TEST ####
 
-output_data <- run_simulation(input_data_old = input_data, 
+# run state simulation
+output_data <- run_simulation_state(input_data_old = input_data, 
                               parameters = parameters, 
-                              p = recapture, 
                               max_age = max_age,
                               inc_trait = FALSE,
-                              obs_error = FALSE,
-                              start_i = 2, end_i = 25, IDs = IDs) 
+                              start_i = 2, end_i = 10, IDs = IDs) 
+
+# then observation process
+observation <- run_observation_process(output_data, 
+                                       p = recapture,
+                                       juv_recapture = TRUE,
+                                       fecundity_error = FALSE)
 
 save(output_data, file = "./Data files/test.RData")
 
@@ -90,17 +91,23 @@ x <- output_data %>% group_by(Year) %>% summarise(count = n(),
 
 #### Simulation 1: missing reproductive events (at random) ####
 
+### BASELINE INCLUDES COLUMN OF OBSERVATION ERROR IN FECUNDITY 
+
 seeds <- as.list(c(1:100))
 
 # run normal set of simulations then edit
-baseline <- map(.x = seeds, ~run_simulation(defined_seed = .x,
-                                            input_data_old = input_data, 
-                                            parameters = parameters, 
-                                            p = recapture, 
-                                            max_age = max_age,
-                                            inc_trait = FALSE,
-                                            obs_error = FALSE,
-                                            start_i = 2, end_i = 25, IDs = IDs)) 
+baseline <- map(.x = seeds, ~{
+  state <- run_simulation_state(defined_seed = .x,
+                       input_data_old = input_data, 
+                       parameters = parameters, 
+                       max_age = max_age,
+                       inc_trait = FALSE,
+                       start_i = 2, end_i = 10, IDs = IDs)
+  observations <- run_observation_process(state,
+                                          p = recapture,
+                                          juv_recapture = TRUE,
+                                          fecundity_error = TRUE)
+  }) 
 
 # save
 save(baseline, file = "./Data files/baseline_simulation.RData")
@@ -160,14 +167,7 @@ save(adult_missing_reproduction,
 
 #### Simulation 3: count error in offspring numbers (random) ####
 
-# edit baseline simulations to add observation error
-obs_error_simulation <- map(.x = baseline, ~{.x$Offspring <- 
-  rpois(length(.x$Offspring), 
-  lambda = .x$Offspring)
-return(.x)
-})
-
-# save
-save(obs_error_simulation, file = "./Data files/obs_error_simulation.RData")
+# already included in baseline simulation just need to choose which
+# column to put in model
 
 

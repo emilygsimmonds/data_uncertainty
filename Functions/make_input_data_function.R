@@ -3,21 +3,22 @@
 # Takes raw simulated data and reformats into a capture history, observed offspring
 # numbers etc
 
+# need to define if there is fecundity error or not - determines which offspring
+# column to use
+
 # OUTPUT is input data, inits and constants
 
 ################################################################################
 
 make_input_data <- function(simulations,
-                            n_occasions){
+                            n_occasions,
+                            fecundity_error = FALSE){
   
 #### Step 1: recode age ####
   
 # re-code raw data so that adult = 2, juvenile = 1
 output_data <- simulations %>%
-  filter(Recap == 1) %>% # only keep those that were recaptured
-  mutate(Surv = case_when(Age > 1 ~ 2, 
-                          TRUE ~ Recap), 
-         Age = case_when(Age == 1 ~ 1,
+  mutate(Age = case_when(Age == 1 ~ 1,
                          Age > 1 ~ 2)) # change age to just juv (1) and adult (2)
 
 #### Step 2: make a capture history ####
@@ -25,7 +26,7 @@ output_data <- simulations %>%
 # capture history
 capture_history <- output_data %>%
   # spread out data. The fill = 3 fills in 3s when combo was not observed (dead/non detected)
-  pivot_wider(id_cols = ID, names_from = Year, values_from = Surv,
+  pivot_wider(id_cols = ID, names_from = Year, values_from = Age,
               values_fill = 3) %>%
   as.matrix()
 
@@ -45,6 +46,9 @@ for(i in 1:nrow(surv_state_init)){
 # need to make a capture history and save out age and offspring columns
 offspring_obs <- output_data$Offspring
 age <- output_data$Age
+
+# IF fecundity error is present, use offspring_obs column
+if(fecundity_error == TRUE){offspring_obs <- output_data$Offspring_obs}
 
 #### Step 5: create list of data inputs ####
 
