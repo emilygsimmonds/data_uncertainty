@@ -21,10 +21,6 @@ process_input_data <- function(output_data,
   
 ## Take the previous output data and clean up ready to be input data
   
-# remove all with recap = 0 
-  ### ACTUALLY DON'T!!! 
-  #Leave in until end of simulation as long as survival = 1
-  
 ## Create new data frame for the next time step
   
 # remove all those with surv = 0 and age by 1
@@ -47,7 +43,6 @@ IDs_new <- sample(setdiff(IDs, output_data$ID),
 offspring <- data.frame(ID = IDs_new,
                         Year = i,
                         Surv = NA,
-                        Recap = NA,
                         Offspring = NA,
                         Age = 1,
                         Trait = NA)

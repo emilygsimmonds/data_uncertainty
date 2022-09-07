@@ -8,7 +8,7 @@
 ## INPUT :
 #
 # - input_data =a dataframe with column names:
-# ID (num), Year (num), Surv (0/1), Recap (0/1), Offspring (num), 
+# ID (num), Year (num), Surv (0/1), Offspring (num), 
 # Age (num), Trait (num)
 #
 # - parameters = a transition matrix of size max_age X max_age 

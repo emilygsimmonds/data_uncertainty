@@ -8,12 +8,10 @@
 ## INPUT :
 #
 # - input_data =a dataframe with column names:
-# ID (factor), Year (factor), Surv (0/1), Recap (0/1), Offspring (num), 
+# ID (factor), Year (factor), Surv (0/1), Offspring (num), 
 # Age (num), Trait (num)
 #
 # - parameters = matrix of parameter values (transition matrix) inc phi, f
-#
-# - p = vector of recapture probabilities length of max_age
 # 
 # - max_age = maximum age species can get to
 # 
@@ -39,10 +37,8 @@ run_simulation <- function(input_data_old,
                                                    0, 0, 0, 0.5, 0), 
                                                  byrow = TRUE, 
                                                  ncol = 5), 
-                             p = rep(0.6, 5),
                              max_age = 5,
                              inc_trait = FALSE,
-                             obs_error = FALSE,
                              start_i, end_i, IDs,
                              defined_seed = NULL) {
   
@@ -63,11 +59,9 @@ output_data <- input_data %>%
   survival_function(parameters = parameters,
                     max_age = max_age, 
                     inc_trait = inc_trait,
-                    p = p,
                     defined_seed = defined_seed, i = i) %>%
   reproduction_function(parameters = parameters, max_age = max_age,
                         inc_trait = inc_trait,
-                        obs_error = obs_error,
                         defined_seed = defined_seed, i = i)
   
 ## Clean output_data
