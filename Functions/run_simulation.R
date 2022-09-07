@@ -29,7 +29,7 @@
 
 #### FUNCTION ####
 
-run_simulation <- function(input_data_old, 
+run_simulation_state <- function(input_data_old, 
                              parameters = matrix(c(rep(1.6, 5),
                                                    0.5, 0, 0, 0, 0,
                                                    0, 0.5, 0, 0, 0,

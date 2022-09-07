@@ -23,7 +23,7 @@ process_input_data <- function(output_data,
   
 ## Create new data frame for the next time step
   
-# remove all those with surv = 0 and age by 1
+# remove all those with surv = 0 and increase age by 1
 # restrict to the focal year
   
 input_data_new <- output_data %>% filter(Surv == 1,
