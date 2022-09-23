@@ -79,9 +79,13 @@ output_data <- run_simulation_state(input_data_old = input_data,
 
 # then observation process
 observation <- run_observation_process(output_data, 
-                                       p = recapture,
-                                       juv_recapture = TRUE,
+                                       p_adult = recapture,
+                                       p_juvenile = 1,
                                        fecundity_error = FALSE)
+
+# number of juveniles = same
+
+# number of adults = reduced to 80%
 
 save(output_data, file = "./Data files/test.RData")
 
@@ -91,39 +95,51 @@ x <- output_data %>% group_by(Year) %>% summarise(count = n(),
 
 #### Simulation 1: missing reproductive events (at random) ####
 
-### BASELINE INCLUDES COLUMN OF OBSERVATION ERROR IN FECUNDITY 
+# Simulate the state only
 
 seeds <- as.list(c(1:100))
 
 # run normal set of simulations then edit
-baseline <- map(.x = seeds, ~{
+baseline_state <- map(.x = seeds, ~{
   state <- run_simulation_state(defined_seed = .x,
                        input_data_old = input_data, 
                        parameters = parameters, 
                        max_age = max_age,
                        inc_trait = FALSE,
                        start_i = 2, end_i = 10, IDs = IDs)
-  observations <- run_observation_process(state,
-                                          p = recapture,
-                                          juv_recapture = TRUE,
-                                          fecundity_error = TRUE)
+  return(state)
   }) 
 
 # save
-save(baseline, file = "./Data files/baseline_simulation.RData")
+save(baseline_state, file = "./Data files/baseline_simulation_state.RData")
+
+### ADD IN OBSERVATION ERROR INC. COLUMN OF OBSERVATION ERROR IN FECUNDITY 
+
+baseline_observations <- map(.x = baseline_state, ~{run_observation_process(.x,
+                                        p_adult = recapture,
+                                        p_juvenile = recapture,
+                                        fecundity_error = TRUE,
+                                        phi_adult = 0.5,
+                                        phi_juvenile = 0.3,
+                                        fecundity = 0.75)
+})
+
+# save
+save(baseline_observations, file = "./Data files/baseline_simulation_observations.RData")
 
 # randomly add 0s to the offspring column 10%
 
-random_missing_reproduction <- map(.x = baseline, ~{
+random_missing_reproduction <- map(.x = baseline_state, ~{
   set.seed(1)
   marker <- sample(1:length(.x$Offspring), length(.x$Offspring)/10)
-  .x$Offspring[marker] <- 0
+  .x <- .x %>% mutate(Offspring_obs = Offspring)
+  .x$Offspring_obs[marker] <- 0
   return(.x)
 })
 
 # check that random missing is different to baseline
-length(which(baseline[[1]]$Offspring - 
-               random_missing_reproduction[[1]]$Offspring != 0))
+length(which(baseline_state[[1]]$Offspring - 
+               random_missing_reproduction[[1]]$Offspring_obs != 0))
 # YES are different
 
 # save
@@ -134,27 +150,29 @@ save(random_missing_reproduction,
 # miss juveniles
 
 # add 0s to juveniles in the offspring column 50%
-juvenile_missing_reproduction <- map(.x = baseline, ~{
+juvenile_missing_reproduction <- map(.x = baseline_state, ~{
   marker1 <- which(.x$Age == 1)
   set.seed(1)
   marker2 <- sample(marker1, length(marker1)/50)
-  .x$Offspring[marker2] <- 0
+  .x <- .x %>% mutate(Offspring_obs = Offspring)
+  .x$Offspring_obs[marker2] <- 0
   return(.x)
 })
 
-length(which(baseline[[1]]$Offspring - 
-               juvenile_missing_reproduction[[1]]$Offspring != 0))
+length(which(baseline_state[[1]]$Offspring - 
+               juvenile_missing_reproduction[[1]]$Offspring_obs != 0))
 
 # save
 save(juvenile_missing_reproduction, 
      file = "./Data files/juvenile_missing_simulation.RData")
 
 # miss adults
-adult_missing_reproduction <- map(.x = baseline, ~{
+adult_missing_reproduction <- map(.x = baseline_state, ~{
   marker1 <- which(.x$Age > 1)
   set.seed(1)
   marker2 <- sample(marker1, length(marker1)/50)
-  .x$Offspring[marker2] <- 0
+  .x <- .x %>% mutate(Offspring_obs = Offspring)
+  .x$Offspring_obs[marker2] <- 0
   return(.x)
 })
 

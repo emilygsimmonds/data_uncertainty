@@ -1,4 +1,4 @@
-# T1.1: Script to run the nimble model #
+## T1.1_Run_Model_SS_Server ## Server version of the code
 
 ################################################################################
 
@@ -10,6 +10,8 @@ library(tidyverse)
 library(nimble)
 library(nimbleEcology)
 library(MCMCvis)
+library(furrr)
+library(magrittr)
 
 # source model
 source("./Scripts/T1.1_Model_SS_hmm.R")
@@ -47,45 +49,18 @@ n_iter <- 50000
 n_burnin <- 500
 n_chains <- 2
 
-#### Compile models ####
-
-# Don't compile first as constants will change each time anyway
-
-#### Run models ####
-
-start_time <- Sys.time()
-
-output_baseline <- map(.x = model_inputs[2], ~{
-  nimbleMCMC(code = Model_SS_hmm, 
-          data = .x$data_input,
-          constants = .x$constants,
-          inits = .x$inits,
-          monitors = parameters_to_save,
-          niter = n_iter,
-          nburnin = n_burnin,
-          nchains = n_chains)
-})
-
-end_time <- Sys.time()
-end_time - start_time
-
-#### Check results ####
-
-MCMCsummary(output_baseline[[1]], round = 2)
-
-#### 03.08.22 - COMES OUT WITH REALLY BAD ANSWERS. NEED TO CHECK - look at priors etc
-
-#### 09.22 - better answers - was missing the first entry when using model so
-# number of juveniles was practically 0. Now fixed.
-
-#### 12.09.22 - all very good
 
 #### run all baseline p_juv = 1 ####
 
+y <- as.list(1:100)
+
+plan(multisession, workers = 2)
+
 start_time <- Sys.time()
 
-output_baseline_all <- map(.x = model_inputs, ~{
-  nimbleMCMC(code = Model_SS_hmm, 
+output_baseline_all <- map2(.x = model_inputs[1:2],
+                            .y = y[1:2], ~{
+  model_result <- nimbleMCMC(code = Model_SS_hmm, 
              data = .x$data_input,
              constants = .x$constants,
              inits = .x$inits,
@@ -93,8 +68,9 @@ output_baseline_all <- map(.x = model_inputs, ~{
              niter = n_iter,
              nburnin = n_burnin,
              nchains = n_chains)
-})
+  # save out result at each pass
+  save(model_result, file = paste0("baseline_SS_result", .y, ".RData"))
+}, .progress = TRUE)
 
 end_time <- Sys.time()
 end_time - start_time
-
