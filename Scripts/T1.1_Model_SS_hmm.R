@@ -92,10 +92,10 @@ beta_age ~ dnorm(0, sd = 1.5)
 for(f in 1:O_N){
   
   # observed offspring
-  offspring_obs[f] ~ dpois(offspring_state[f])
+  #offspring_obs[f] ~ dpois(offspring_state[f])
   
   # process for offspring
-  offspring_state[f] ~ dpois(fecundity_rate[f])
+  offspring_obs[f] ~ dpois(fecundity_rate[f])
   log(fecundity_rate[f]) <- log_fecundity_rate[f]
   log_fecundity_rate[f] <- alpha + beta_age*age[f]
   

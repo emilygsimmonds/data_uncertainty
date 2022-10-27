@@ -82,7 +82,7 @@ inits <- list(mean_phi_juv = runif(1, 0, 1),
               mean_p = runif(1, 0, 1),
               alpha = rnorm(1, 0, 0.1),
               beta_age = rnorm(1, 0, 0.1),
-              offspring_state = offspring_obs,
+              #offspring_state = offspring_obs,
               fecundity_rate = rep(1, length(offspring_obs)))
 
 #### RETURN: list of data, constants, and inits ####
