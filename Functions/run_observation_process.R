@@ -31,7 +31,7 @@ run_observation_process <- function(state_data,
                                     p_juvenile,
                                     phi_adult,
                                     phi_juvenile,
-                                    fecundity){
+                                    seed = 1){
   
 ## Calculate probability of EVER being recaptured alive
   
@@ -59,16 +59,21 @@ recapture <- c(p_juvenile, rep(p_adult, max(state_data$Age)))
 # instead will just same from rbinom
 
 # index the probability based on age
+set.seed(seed)
 observed_data <- state_data %>% 
     mutate(Recapture = rbinom(length(state_data$Age), 1, 
                               recapture[state_data$Age]))
 
 # scale fecundity by chance of ever being observed
-observed_data$Offspring <- rpois(length(observed_data$Offspring),
-                                 (fecundity*total_prob))
+# binomial probability
+set.seed(seed)
+observed_data$Offspring <- rbinom(n=length(observed_data$Offspring),
+                                  size = observed_data$Offspring,
+                                 prob = total_prob)
 
 # add observation error to fecundity - poisson error (count error)
 if(fecundity_error == TRUE){
+  set.seed(seed)
   observed_data <- observed_data %>% 
     mutate(Offspring_obs = rpois(length(Offspring),
                                  Offspring))

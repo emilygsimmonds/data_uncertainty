@@ -8,7 +8,8 @@
 #
 # Inputs:
 # - Input_data = a dataframe with column names: ID (factor), Year (factor), 
-# Surv (0/1), Recap (0/1), Offspring (num), Age (num), Trait (num)
+# Surv (0/1), Recap (0/1), Clutch_size (num), Offspring (num), Age (num), 
+# Trait (num)
 #
 # - parameters = matrix of parameter values (transition matrix) inc phi, f
 #
@@ -24,23 +25,37 @@
 # load packages
 
 library(tidyverse)
+library(HMMpa)
 
 # load any data
 
 # source necessary functions
-source("./Functions/run_simulation.R")
+source("./Functions/run_simulation_genpois.R")
 source("./Functions/run_observation_process.R")
 
 #### Create simulated data ####
 
 # set up input data
+breeding_probability <- rbinom(200, 1, 0.95)
 
 input_data <- data.frame(ID = sample(1:200, 200, replace = FALSE),
                          Year = 1,
                          Surv = rbinom(200, 1, prob = 0.4),
                          Offspring = rpois(200, 1),
+                         Clutch_size = rgenpois(100, 
+                                                lambda1 = 9, 
+                                                lambda2 = -0.5)*breeding_probability, 
                          Age = sample(1:5, 200, replace = TRUE),
                          Trait = rnorm(200, 20, 5))
+
+# make offspring number dependent on clutch size
+breeding_success <- rbinom(200, 1, 0.88)
+offspring <- rbinom(200, input_data$Clutch_size*breeding_success, 
+                    0.15)
+
+input_data <- input_data %>% 
+  mutate(Offspring = offspring)
+
 # set up max age
 
 max_age = 5
@@ -81,9 +96,16 @@ output_data <- run_simulation_state(input_data_old = input_data,
 observation <- run_observation_process(output_data, 
                                        p_adult = recapture,
                                        p_juvenile = 1,
-                                       fecundity_error = FALSE)
+                                       phi_juvenile = 0.3,
+                                       phi_adult = 0.5,
+                                       fecundity_error = FALSE,
+                                       seed = 2)
 
 # number of juveniles = same
+
+length(which(output_data$Age == 1))
+
+length(which(observation$Age == 1))
 
 # number of adults = reduced to 80%
 
@@ -115,13 +137,14 @@ save(baseline_state, file = "./Data files/baseline_simulation_state.RData")
 
 ### ADD IN OBSERVATION ERROR INC. COLUMN OF OBSERVATION ERROR IN FECUNDITY 
 
-baseline_observations <- map(.x = baseline_state, ~{run_observation_process(.x,
+baseline_observations <- map2(.x = baseline_state,
+                              .y = seeds, ~{run_observation_process(.x,
                                         p_adult = recapture,
                                         p_juvenile = recapture,
                                         fecundity_error = TRUE,
                                         phi_adult = 0.5,
                                         phi_juvenile = 0.3,
-                                        fecundity = 0.75)
+                                        seed = .y)
 })
 
 # save

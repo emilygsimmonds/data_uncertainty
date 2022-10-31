@@ -8,10 +8,14 @@
 ## INPUT :
 #
 # - input_data =a dataframe with column names:
-# ID (num, Year (num), Surv (0/1), Offspring (num), 
+# ID (num, Year (num), Surv (0/1), Offspring (num), Clutch_size (num), 
 # Age (num), Trait (num), Group (factor)
 #
 # - parameters = a transition matrix of size max_age X max_age 
+# - breeding_probability = probability of breeding in a give year
+# - attempt_success = probability of some success of breeding (fledge)
+# - mean_clutch_size = mean number of eggs or babies
+# - young_survival = survival of newborns to t+1
 #
 # - condition = variable that lambda varies by (only used if lambda = vector)
 # 
@@ -35,6 +39,10 @@ reproduction_function <- function(input_data,
                                                     0, 0, 0, 0.5, 0), 
                                                   byrow = TRUE, 
                                                   ncol = 5),
+                              breeding_probability = c(rep(0.95, 5)),
+                              attempt_success = 0.88,
+                              mean_clutch_size = 6,
+                              young_survival = 0.15,
                               max_age = 5, 
                               inc_trait = FALSE,
                               defined_seed = NULL, i) {
@@ -42,21 +50,25 @@ reproduction_function <- function(input_data,
 ## Load packages
 
 library(tidyverse)
+library(HMMpa)
   
 ################################################################################
 
 ### INITIAL CHECKS ###
 
 # max_age is specified and a number
-  if(is.numeric(max_age) != TRUE){stop("max_age must be a number")}
+ if(is.numeric(max_age) != TRUE){stop("max_age must be a number")}
+  
+# attempt_success and young_survival are specified and a number
+ if(is.numeric(attempt_success) != TRUE){stop("attempt_success must be a number")}
+ if(is.numeric(young_survival) != TRUE){stop("young_survival must be a number")}
   
 # no age in input data exceeds max_age
-  if(length(which(input_data$Age > max_age)) > 0){stop("cannot have individuals
+ if(length(which(input_data$Age > max_age)) > 0){stop("cannot have individuals
                                                        older than max_age")}
-
 # i is specified and a number
-  if(is.null(i)){stop("i must be supplied")}
-  if(is.numeric(i) != TRUE){stop("i must be a number")}
+ if(is.null(i)){stop("i must be supplied")}
+ if(is.numeric(i) != TRUE){stop("i must be a number")}
 
 # input data is correct format i.e. has the correct columns of correct format
 
@@ -87,10 +99,15 @@ library(tidyverse)
   if(length(which(dim(parameters) != 
                   c(max_age, max_age)) == FALSE)>0){stop("parameters must have dim 
                                                   = max_age by max_age")}
+  
+# breeding probability is a vector of length max_age
+  if(length(which(dim(breeding_probability) != 
+                  max_age) == FALSE)>0){stop("breeding_probability must have length 
+                                                  = max_age")}
 
 # IF a seed is defined, it is a number
-if(!is.null(defined_seed)){if(!is.numeric(defined_seed)){stop("seed 
-must be a number")}}
+ if(!is.null(defined_seed)){if(!is.numeric(defined_seed)){stop("seed 
+ must be a number")}}
   
 ################################################################################
   
@@ -103,13 +120,30 @@ input_data <- input_data %>% filter(Year == i)
 ## Fill in the offspring column of the input_data
 
 # get a vector of fertility values for each individual based on age
-# take first row of the parameters matrix and index by age column
-lambdas <- parameters[1, input_data$Age]
+# first assign breeding probabilities
+breeding_probabilities <- breeding_probability[input_data$Age]
 
-# get offspring values using rpois using the lambda for each level of condition
 if(!is.null(defined_seed)){set.seed(defined_seed)}
-input_data$Offspring <- rpois(n = length(input_data$Offspring), 
-                                      lambda = lambdas)
+breeding_chance  <- rbinom(length(input_data$Age), 1, 
+                           breeding_probabilities)
+
+# mean of the generalised poisson = lambda1/1-lambda2 so 6 here
+# set up clutch size
+if(!is.null(defined_seed)){set.seed(defined_seed)}
+input_data$Clutch_size <- rgenpois(length(input_data$Age), 
+                                   lambda1 = mean_clutch_size*1.5, 
+                        lambda2 = -0.5)*breeding_chance # upper limit (-lambda1/lambda2)
+
+if(!is.null(defined_seed)){set.seed(defined_seed)}
+attempt_failures <- rbinom(length(input_data$Age), 1, 
+                         attempt_success) # high nest success or litter success 
+# (i.e. low predation, low abandonment)
+
+# get offspring values using rbinom for survival from fledge to 1 
+if(!is.null(defined_seed)){set.seed(defined_seed)}
+input_data$Offspring <- rbinom(n = length(input_data$Offspring), 
+                               size = input_data$Clutch_size*attempt_failures,
+                               prob = young_survival)
 
 ## DO NOT ADD OBSERVATION ERROR HERE AS THIS SIMULATES THE "STATE"
 

@@ -17,7 +17,7 @@ clutch_size <- rgenpois(10000, lambda1 = 9,
 mean(clutch_size)
 var(clutch_size)
 
-nest_success <- rbinom(10000, 1, 0.9) # high nest success or litter success 
+nest_success <- rbinom(10000, 1, 0.88) # high nest success or litter success 
 # (i.e. low predation, low abandonment)
 
 # but low juvenile survival - individuals prone to die later or from individual causes
@@ -30,4 +30,7 @@ var(juvenile_survival)
 # simulation parameters. Also, to give mean and variance that are almost equal
 # so can use Poisson model 
 
+# To get final numbers breeding_prob * mean clutch * nest_success * juvenile survival
+
+0.95 * 6 * 0.88 * 0.15
 
