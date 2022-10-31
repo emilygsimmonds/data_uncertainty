@@ -549,14 +549,20 @@ summary(duplicates$count)
 source("./Functions/run_observation_process.R")
 
 non_perfect_recap <- run_observation_process(output_data, 
-                                             p = 0.8, 
+                                             p_adult = recapture,
+                                             p_juvenile = 1,
+                                             phi_juvenile = 0.3,
+                                             phi_adult = 0.5,
                                              fecundity_error = FALSE,
-                                             juv_recapture = TRUE)
+                                             seed = 2)
 
 count_error_too <- run_observation_process(output_data, 
-                                           p = 0.8, 
+                                           p_adult = recapture,
+                                           p_juvenile = 1,
+                                           phi_juvenile = 0.3,
+                                           phi_adult = 0.5,
                                            fecundity_error = TRUE,
-                                           juv_recapture = TRUE)
+                                           seed = 2)
 
 # number of individuals is reduced do they all have recap = 1
 summary(non_perfect_recap) # YES

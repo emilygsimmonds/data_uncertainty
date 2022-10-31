@@ -199,8 +199,8 @@ adult_missing_reproduction <- map(.x = baseline_state, ~{
   return(.x)
 })
 
-length(which(adult_missing_reproduction[[1]]$Offspring - 
-  juvenile_missing_reproduction[[1]]$Offspring != 0))
+length(which(adult_missing_reproduction[[1]]$Offspring_obs - 
+  juvenile_missing_reproduction[[1]]$Offspring_obs != 0))
 
 # save
 save(adult_missing_reproduction, 
