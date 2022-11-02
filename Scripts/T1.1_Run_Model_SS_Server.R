@@ -27,7 +27,8 @@ load("./Data files/baseline_simulation_observations.RData")
 
 parameters_to_save <- c("mean_phi_adult",
                         "mean_phi_juv",
-                        "mean_p",
+                        "mean_p_juv",
+                        "mean_p_adult",
                         "alpha",
                         "beta_age",
                         "transition_matrix",
@@ -58,8 +59,8 @@ plan(multisession, workers = 2)
 
 start_time <- Sys.time()
 
-output_baseline_all <- map2(.x = model_inputs[1:2],
-                            .y = y[1:2], ~{
+output_baseline_all <- map2(.x = model_inputs,
+                            .y = y, ~{
   model_result <- nimbleMCMC(code = Model_SS_hmm, 
              data = .x$data_input,
              constants = .x$constants,
@@ -74,3 +75,5 @@ output_baseline_all <- map2(.x = model_inputs[1:2],
 
 end_time <- Sys.time()
 end_time - start_time
+
+

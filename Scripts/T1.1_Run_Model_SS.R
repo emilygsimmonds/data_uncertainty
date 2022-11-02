@@ -25,7 +25,8 @@ load("./Data files/baseline_simulation_observations.RData")
 
 parameters_to_save <- c("mean_phi_adult",
                         "mean_phi_juv",
-                        "mean_p",
+                        "mean_p_juv",
+                        "mean_p_adult",
                         "alpha",
                         "beta_age",
                         "transition_matrix",

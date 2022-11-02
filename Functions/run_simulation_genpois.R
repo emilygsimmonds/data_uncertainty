@@ -62,7 +62,8 @@ output_data <- input_data %>%
                     defined_seed = defined_seed, i = i) %>%
   reproduction_function(parameters = parameters, max_age = max_age,
                         inc_trait = inc_trait,
-                        defined_seed = defined_seed, i = i)
+                        defined_seed = defined_seed, 
+                        i = i)
   
 ## Clean output_data
   

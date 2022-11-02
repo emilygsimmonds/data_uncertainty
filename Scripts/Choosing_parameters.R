@@ -32,5 +32,6 @@ var(juvenile_survival)
 
 # To get final numbers breeding_prob * mean clutch * nest_success * juvenile survival
 
-0.95 * 6 * 0.88 * 0.15
+0.85 * 6 * 0.80 * 0.15
 
+0.95 * 6 * 0.95 * 0.15

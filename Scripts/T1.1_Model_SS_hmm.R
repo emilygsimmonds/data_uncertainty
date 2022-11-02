@@ -22,7 +22,8 @@ Model_SS_hmm <- nimbleCode({
 
 mean_phi_juv ~ dunif(0, 1)
 mean_phi_adult ~ dunif(0, 1)
-mean_p ~ dunif(0, 1)
+mean_p_juv ~ dunif(0, 1)
+mean_p_adult ~ dunif(0, 1)
 
 ## parameters
 
@@ -52,12 +53,12 @@ transition[3, 3] <- 1 # Pr(dead t -> dead t+1)
 # row 3 = dead
 
 # column 1 = observed juv, column 2 = observed adult, column 3 not detected
-observations[1, 1] <- mean_p # Pr(juv alive t and detected t)
+observations[1, 1] <- mean_p_juv # Pr(juv alive t and detected t)
 observations[1, 2] <- 0 # Pr(juv alive t and detected as adult t)
-observations[1, 3] <- 1 - mean_p # Pr(juv alive t but not detected t)
+observations[1, 3] <- 1 - mean_p_juv # Pr(juv alive t but not detected t)
 observations[2, 1] <- 0 # Pr(adult alive t but detected as juv t)
-observations[2, 2] <- mean_p # Pr(adult alive t and detected t)
-observations[2, 3] <- 1 - mean_p # Pr(adult alive t and not detected t)
+observations[2, 2] <- mean_p_adult # Pr(adult alive t and detected t)
+observations[2, 3] <- 1 - mean_p_adult # Pr(adult alive t and not detected t)
 observations[3, 1] <- 0 # Pr(dead t and detected as juvenile t)
 observations[3, 2] <- 0 # Pr(dead t and detected as adult t)
 observations[3, 3] <- 1 # Pr(dead t and not detected t)

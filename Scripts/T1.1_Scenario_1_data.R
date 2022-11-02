@@ -35,21 +35,26 @@ source("./Functions/run_observation_process.R")
 
 #### Create simulated data ####
 
-# set up input data
-breeding_probability <- rbinom(200, 1, 0.95)
-
 input_data <- data.frame(ID = sample(1:200, 200, replace = FALSE),
                          Year = 1,
                          Surv = rbinom(200, 1, prob = 0.4),
                          Offspring = rpois(200, 1),
                          Clutch_size = rgenpois(100, 
                                                 lambda1 = 9, 
-                                                lambda2 = -0.5)*breeding_probability, 
+                                                lambda2 = -0.5), 
                          Age = sample(1:5, 200, replace = TRUE),
                          Trait = rnorm(200, 20, 5))
 
+# set up input data
+breeding_probability <- c(0.85, rep(0.95, 4))
+breeding_probability <- rbinom(200, 1, breeding_probability[input_data$Age])
+
+input_data$Clutch_size <- input_data$Clutch_size*breeding_probability
+
 # make offspring number dependent on clutch size
-breeding_success <- rbinom(200, 1, 0.88)
+breeding_success <- c(0.8, rep(0.95, 4))
+breeding_success <- rbinom(200, 1, breeding_success[input_data$Age])
+
 offspring <- rbinom(200, input_data$Clutch_size*breeding_success, 
                     0.15)
 
@@ -67,7 +72,7 @@ input_data[which(input_data$Age == max_age), c("Surv")] <- 0
 # set up parameters - 
 # began close to Riecke paper then upped repro to give slightly growing pop
 
-parameters = matrix(c(rep(0.75, 5),
+parameters = matrix(c(0.6, rep(0.8, 4),
                       0.3, 0, 0, 0, 0,
                       0, 0.5, 0, 0, 0,
                       0, 0, 0.5, 0, 0,
@@ -109,11 +114,13 @@ length(which(observation$Age == 1))
 
 # number of adults = reduced to 80%
 
+length(which(observation$Age > 1))/
+length(which(output_data$Age > 1))
+
 save(output_data, file = "./Data files/test.RData")
 
 x <- output_data %>% group_by(Year) %>% summarise(count = n(),
                                              repro = sum(Offspring))
-
 
 #### Simulation 1: missing reproductive events (at random) ####
 
@@ -135,12 +142,13 @@ baseline_state <- map(.x = seeds, ~{
 # save
 save(baseline_state, file = "./Data files/baseline_simulation_state.RData")
 
-### ADD IN OBSERVATION ERROR INC. COLUMN OF OBSERVATION ERROR IN FECUNDITY 
+### ADD IN OBSERVATION ERROR INC. COLUMN OF OBSERVATION ERROR IN FECUNDITY
+# can be removed at modelling stage
 
 baseline_observations <- map2(.x = baseline_state,
                               .y = seeds, ~{run_observation_process(.x,
                                         p_adult = recapture,
-                                        p_juvenile = recapture,
+                                        p_juvenile = 1,
                                         fecundity_error = TRUE,
                                         phi_adult = 0.5,
                                         phi_juvenile = 0.3,
@@ -151,8 +159,9 @@ baseline_observations <- map2(.x = baseline_state,
 save(baseline_observations, file = "./Data files/baseline_simulation_observations.RData")
 
 # randomly add 0s to the offspring column 10%
+# apply it to observations file as need recapture to be < 1
 
-random_missing_reproduction <- map(.x = baseline_state, ~{
+random_missing_reproduction <- map(.x = baseline_observations, ~{
   set.seed(1)
   marker <- sample(1:length(.x$Offspring), length(.x$Offspring)/10)
   .x <- .x %>% mutate(Offspring_obs = Offspring)
@@ -161,7 +170,7 @@ random_missing_reproduction <- map(.x = baseline_state, ~{
 })
 
 # check that random missing is different to baseline
-length(which(baseline_state[[1]]$Offspring - 
+length(which(baseline_observations[[1]]$Offspring - 
                random_missing_reproduction[[1]]$Offspring_obs != 0))
 # YES are different
 
@@ -173,7 +182,7 @@ save(random_missing_reproduction,
 # miss juveniles
 
 # add 0s to juveniles in the offspring column 50%
-juvenile_missing_reproduction <- map(.x = baseline_state, ~{
+juvenile_missing_reproduction <- map(.x = baseline_observations, ~{
   marker1 <- which(.x$Age == 1)
   set.seed(1)
   marker2 <- sample(marker1, length(marker1)/50)
@@ -182,7 +191,7 @@ juvenile_missing_reproduction <- map(.x = baseline_state, ~{
   return(.x)
 })
 
-length(which(baseline_state[[1]]$Offspring - 
+length(which(baseline_observations[[1]]$Offspring - 
                juvenile_missing_reproduction[[1]]$Offspring_obs != 0))
 
 # save
@@ -190,7 +199,7 @@ save(juvenile_missing_reproduction,
      file = "./Data files/juvenile_missing_simulation.RData")
 
 # miss adults
-adult_missing_reproduction <- map(.x = baseline_state, ~{
+adult_missing_reproduction <- map(.x = baseline_observations, ~{
   marker1 <- which(.x$Age > 1)
   set.seed(1)
   marker2 <- sample(marker1, length(marker1)/50)

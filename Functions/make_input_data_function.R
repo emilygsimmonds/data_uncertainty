@@ -79,7 +79,8 @@ constants$N <- nrow(data_input$surv_obs) # redefine N to make new nrow()
 
 inits <- list(mean_phi_juv = runif(1, 0, 1),
               mean_phi_adult = runif(1, 0, 1),
-              mean_p = runif(1, 0, 1),
+              mean_p_juv = runif(1, 0, 1),
+              mean_p_adult = runif(1, 0, 1),
               alpha = rnorm(1, 0, 0.1),
               beta_age = rnorm(1, 0, 0.1),
               #offspring_state = offspring_obs,

@@ -39,8 +39,8 @@ reproduction_function <- function(input_data,
                                                     0, 0, 0, 0.5, 0), 
                                                   byrow = TRUE, 
                                                   ncol = 5),
-                              breeding_probability = c(rep(0.95, 5)),
-                              attempt_success = 0.88,
+                              breeding_probability = c(0.85, rep(0.95, 4)),
+                              attempt_success = c(0.8, rep(0.95, 4)),
                               mean_clutch_size = 6,
                               young_survival = 0.15,
                               max_age = 5, 
@@ -133,6 +133,9 @@ if(!is.null(defined_seed)){set.seed(defined_seed)}
 input_data$Clutch_size <- rgenpois(length(input_data$Age), 
                                    lambda1 = mean_clutch_size*1.5, 
                         lambda2 = -0.5)*breeding_chance # upper limit (-lambda1/lambda2)
+
+# assign attempt success
+attempt_success <- attempt_success[input_data$Age]
 
 if(!is.null(defined_seed)){set.seed(defined_seed)}
 attempt_failures <- rbinom(length(input_data$Age), 1, 
