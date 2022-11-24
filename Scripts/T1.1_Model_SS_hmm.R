@@ -98,15 +98,15 @@ for(f in 1:O_N){
   # process for offspring
   offspring_obs[f] ~ dpois(fecundity_rate[f])
   log(fecundity_rate[f]) <- log_fecundity_rate[f]
-  log_fecundity_rate[f] <- alpha + beta_age*age[f]
+  log_fecundity_rate[f] <- alpha + beta_age*(age[f]-1)
   
 }
 
 #-------------------------------------------------------------------------------
 ## Set up MPM
 
-mean_fecundity_juv <- exp(alpha + (beta_age*1)) # fecundity for juveniles
-mean_fecundity_adult <- exp(alpha + (beta_age*2)) # fecundity for adults 
+mean_fecundity_juv <- exp(alpha) # fecundity for juveniles
+mean_fecundity_adult <- exp(alpha + beta_age) # fecundity for adults 
 
 transition_matrix[1,1] <- mean_fecundity_juv
 transition_matrix[1,2] <- mean_fecundity_adult # fecundity for adults                           

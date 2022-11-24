@@ -95,7 +95,10 @@ output_data <- run_simulation_state(input_data_old = input_data,
                               parameters = parameters, 
                               max_age = max_age,
                               inc_trait = FALSE,
-                              start_i = 2, end_i = 10, IDs = IDs) 
+                              start_i = 2, end_i = 10, IDs = IDs)
+
+((200*0.5)+(100*0.5)+(50*0.5)+(25*0))/(200+100+50+25) 
+# 46.6667 = actual adult survival
 
 # then observation process
 observation <- run_observation_process(output_data, 
@@ -117,7 +120,7 @@ length(which(observation$Age == 1))
 length(which(observation$Age > 1))/
 length(which(output_data$Age > 1))
 
-save(output_data, file = "./Data files/test.RData")
+save(observation, file = "./Data files/test.RData")
 
 x <- output_data %>% group_by(Year) %>% summarise(count = n(),
                                              repro = sum(Offspring))

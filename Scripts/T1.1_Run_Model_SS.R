@@ -19,6 +19,8 @@ source("./Functions/make_input_data_function.R")
 
 # load data
 
+load("./Data files/test.RData")
+
 load("./Data files/baseline_simulation_observations.RData")
 
 #### Define parameters to track ####
@@ -41,6 +43,10 @@ model_inputs <- map(.x = baseline_observations,
                     .f = make_input_data, 
                     n_occasions = 10,
                     fecundity_error = FALSE)
+
+model_inputs <- make_input_data(observation,
+                                n_occasions = 10,
+                                fecundity_error = FALSE)
 
 #### Run set up ####
 
@@ -70,9 +76,20 @@ output_baseline <- map(.x = model_inputs[2], ~{
 end_time <- Sys.time()
 end_time - start_time
 
+MCMCsummary(output_baseline[[1]],  round = 2)
+
 #### Check results ####
 
-MCMCsummary(output_baseline[[1]], round = 2)
+test <- nimbleMCMC(code = Model_SS_hmm, 
+           data = model_inputs$data_input,
+           constants = model_inputs$constants,
+           inits = model_inputs$inits,
+           monitors = parameters_to_save,
+           niter = n_iter,
+           nburnin = n_burnin,
+           nchains = n_chains)
+
+MCMCsummary(test,  round = 2)
 
 #### 03.08.22 - COMES OUT WITH REALLY BAD ANSWERS. NEED TO CHECK - look at priors etc
 
