@@ -116,9 +116,10 @@ x <- output_data %>% group_by(Year) %>% summarise(count = n(),
 seeds <- as.list(c(1:100))
 
 # run normal set of simulations then edit
-baseline_state <- map(.x = seeds, ~{
+baseline_state <- map2(.x = seeds,
+                       .y = input_data, ~{
   state <- run_simulation_state(defined_seed = .x,
-                       input_data_old = input_data, 
+                       input_data_old = .y, 
                        parameters = parameters, 
                        max_age = max_age,
                        inc_trait = FALSE,
