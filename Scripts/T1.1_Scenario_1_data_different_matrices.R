@@ -25,38 +25,70 @@
 # load packages
 
 library(tidyverse)
+library(HMMpa)
 
 # load any data
 
 # source necessary functions
-source("./Functions/run_simulation.R")
+source("./Functions/run_simulation_genpois.R")
 source("./Functions/run_observation_process.R")
+
+#### Create matrices ####
+
+min_no0 <- matrix(c(0.02,0.11,0.49,0.68), byrow = TRUE,
+                  nrow = 2)
+
+max_no0 <- matrix(c(0.02,0.11,0.49,0.68), byrow = TRUE,
+                  nrow = 2)
+
+max_0 <- matrix(c(0.02,0.11,0.49,0.68), byrow = TRUE,
+                  nrow = 2)
 
 #### Create simulated data ####
 
+set.seed(1)
+Age <- sample(1:2, 200, replace = TRUE)
+
+input_data <- data.frame(ID = sample(1:200, 200, replace = FALSE),
+                         Year = 1,
+                         Surv = rbinom(200, 1, prob = min_no0[2, Age]),
+                         Offspring = rpois(200, min_no0[1, Age]),
+                         Clutch_size = rgenpois(100, 
+                                                lambda1 = 9, 
+                                                lambda2 = -0.5), 
+                         Age = Age,
+                         Trait = rnorm(200, 20, 5))
+
+# set up input data
+breeding_probability <- c(0.85, rep(0.95, 4))
+breeding_probability <- rbinom(200, 1, breeding_probability[input_data$Age])
+
+input_data$Clutch_size <- input_data$Clutch_size*breeding_probability
+
+# make offspring number dependent on clutch size
+breeding_success <- c(0.8, rep(0.95, 4))
+breeding_success <- rbinom(200, 1, breeding_success[input_data$Age])
+
+offspring <- rbinom(200, input_data$Clutch_size*breeding_success, 
+                    0.15)
+
+input_data <- input_data %>% 
+  mutate(Offspring = offspring)
+
 # set up max age
 
-max_age = 5
+max_age = 2
 
-# set up parameters - 
-# began close to Riecke paper then upped repro to give slightly growing pop
+# make sure Surv = 0 for all of max age
 
-parameters = matrix(c(0.6, rep(0.8, 4),
-                      0.3, 0, 0, 0, 0,
-                      0, 0.5, 0, 0, 0,
-                      0, 0, 0.5, 0, 0,
-                      0, 0, 0, 0.5, 0), 
+input_data[which(input_data$Age == max_age), c("Surv")] <- 0
+
+# set up parameters - taken from comadre
+
+parameters_min = matrix(c(0.02, 0.11,
+                      0.49, 0.68), 
                     byrow = TRUE, 
                     ncol = max_age) # made sure that lambda is approx 1!!
-
-# set up i
-
-i <- as.list(1:100)
-
-input_data <- map(.x = i, ~{simulation_setup(parameter_matrix = parameters,
-                                             i = .x,
-                                             max_age = max_age)})
-
 
 # set up recapture probabilities
 
@@ -69,20 +101,14 @@ IDs <- 101:200000000
 #### TEST ####
 
 # run state simulation
-output_data <- run_simulation_state(input_data_old = input_data[[3]], 
-                              parameters = parameters, 
-                              max_age = max_age,
-                              inc_trait = FALSE,
-                              start_i = 2, end_i = 10, IDs = IDs)
+output_data <- run_simulation_state(input_data_old = input_data, 
+                                    parameters = parameters, 
+                                    max_age = max_age,
+                                    inc_trait = FALSE,
+                                    start_i = 2, end_i = 10, IDs = IDs)
 
 ((200*0.5)+(100*0.5)+(50*0.5)+(25*0))/(200+100+50+25) 
 # 46.6667 = actual adult survival
-
-# checks
-mean(output_data$Offspring[output_data$Age == 1])
-mean(output_data$Offspring[output_data$Age > 1])
-mean(output_data$Surv[output_data$Age == 1])
-mean(output_data$Surv[output_data$Age > 1])
 
 # then observation process
 observation <- run_observation_process(output_data, 
@@ -102,12 +128,12 @@ length(which(observation$Age == 1))
 # number of adults = reduced to 80%
 
 length(which(observation$Age > 1))/
-length(which(output_data$Age > 1))
+  length(which(output_data$Age > 1))
 
 save(observation, file = "./Data files/test.RData")
 
 x <- output_data %>% group_by(Year) %>% summarise(count = n(),
-                                             repro = sum(Offspring))
+                                                  repro = sum(Offspring))
 
 #### Simulation 1: missing reproductive events (at random) ####
 
@@ -118,13 +144,13 @@ seeds <- as.list(c(1:100))
 # run normal set of simulations then edit
 baseline_state <- map(.x = seeds, ~{
   state <- run_simulation_state(defined_seed = .x,
-                       input_data_old = input_data, 
-                       parameters = parameters, 
-                       max_age = max_age,
-                       inc_trait = FALSE,
-                       start_i = 2, end_i = 10, IDs = IDs)
+                                input_data_old = input_data, 
+                                parameters = parameters, 
+                                max_age = max_age,
+                                inc_trait = FALSE,
+                                start_i = 2, end_i = 10, IDs = IDs)
   return(state)
-  }) 
+}) 
 
 # save
 save(baseline_state, file = "./Data files/baseline_simulation_state.RData")
@@ -134,13 +160,13 @@ save(baseline_state, file = "./Data files/baseline_simulation_state.RData")
 
 baseline_observations <- map2(.x = baseline_state,
                               .y = seeds, ~{run_observation_process(.x,
-                                        p_adult = recapture,
-                                        p_juvenile = 1,
-                                        fecundity_error = TRUE,
-                                        phi_adult = 0.5,
-                                        phi_juvenile = 0.3,
-                                        seed = .y)
-})
+                                                                    p_adult = recapture,
+                                                                    p_juvenile = 1,
+                                                                    fecundity_error = TRUE,
+                                                                    phi_adult = 0.5,
+                                                                    phi_juvenile = 0.3,
+                                                                    seed = .y)
+                              })
 
 # save
 save(baseline_observations, file = "./Data files/baseline_simulation_observations.RData")
@@ -196,7 +222,7 @@ adult_missing_reproduction <- map(.x = baseline_observations, ~{
 })
 
 length(which(adult_missing_reproduction[[1]]$Offspring_obs - 
-  juvenile_missing_reproduction[[1]]$Offspring_obs != 0))
+               juvenile_missing_reproduction[[1]]$Offspring_obs != 0))
 
 # save
 save(adult_missing_reproduction, 
