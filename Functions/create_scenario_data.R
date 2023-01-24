@@ -16,7 +16,7 @@ source("./Functions/run_observation_process.R")
 #### FUNCTION ####
 
 create_scenario_data <- function(parameters,
-                                 max_age, 
+                                 stages, 
                                  name,
                                  recapture_a, recapture_j){
   
@@ -30,7 +30,7 @@ i <- as.list(1:100)
 
 input_data <- map(.x = i, ~{simulation_setup(parameter_matrix = parameters,
                                                  i = .x,
-                                                 max_age = max_age)})
+                                                 stages = stages)})
   
 # set up recapture probabilities
 
@@ -45,16 +45,16 @@ IDs <- 101:200000000
 # Simulate the state only
 
 seeds <- as.list(c(1:100))
-max_age <- max_age
 
 # run normal set of simulations then edit
-baseline_state <- map(.x = seeds, ~{
+baseline_state <- map2(.x = seeds,
+                       .y = input_data, ~{
   state <- run_simulation_state(defined_seed = .x,
-                                input_data_old = input_data, 
+                                input_data_old = .y, 
                                 parameters = parameters, 
-                                max_age = max_age,
+                                stages = stages,
                                 inc_trait = FALSE,
-                                start_i = 2, end_i = 10, IDs = IDs)
+                                start_i = 2, end_i = 5, IDs = IDs)
   return(state)
 }) 
 

@@ -13,6 +13,8 @@ source("./Scripts/T1.1_Model_SS_hmm.R")
 ## Source required packages ####
 
 library(tidyverse)
+library(nimble)
+library(nimbleEcology)
 
 ## Load test dataset ##
 
@@ -180,13 +182,26 @@ MCMCsummary(mcmc.output, round = 2)
 
 #### CHECK MODEL IN WRAPPER ####
 
-load('./Data files/test.RData')
+parameters_to_save <- c("mean_phi_adult",
+                        "mean_phi_juv",
+                        "mean_p_juv",
+                        "mean_p_adult",
+                        "alpha",
+                        "beta_age",
+                        "transition_matrix",
+                        "lambda", 
+                        "size_distribution"
+)
+
+n_iter <- 50000
+n_burnin <- 500
+n_chains <- 2
+
+load("./Data files/baseline_simulation_statemat1.RData")
 
 # True values: phi_j = 0.3, phi_a = 0.4, p = 0.8, lambda = 0.7
 
-model_inputs <-  make_input_data(output_data, n_occasions = 25)
-
-start_time <- Sys.time()
+model_inputs <- make_input_data(baseline_state[[1]], n_occasions = 5)
 
 output_results <- nimbleMCMC(code = Model_SS_hmm, 
              data = model_inputs$data_input,
@@ -197,7 +212,28 @@ output_results <- nimbleMCMC(code = Model_SS_hmm,
              nburnin = n_burnin,
              nchains = n_chains)
 
-end_time <- Sys.time()
-end_time - start_time
-
 MCMCsummary(output_results, round = 2)
+
+#### CHECK DIRECT ESTIMATE MODEL ####
+
+library(popbio)
+
+# source functions
+source("./Functions/make_input_data_function.R")
+source("./Functions/transition_frequency.R")
+
+# load data - test on the state
+load("./Data files/baseline_simulation_statemat1.RData")
+
+#### construct a transition frequency table
+
+# for the state
+tf_table_state <- create_transition_frequency_table(baseline_state[[1]],
+                                                    max_year = max(baseline_state[[1]]$Year)) # seems to work :)
+# make population matrix
+make_matrix(tf_table_state)
+
+#### run bootstrap to get CIs for vital rates and lambda
+
+
+

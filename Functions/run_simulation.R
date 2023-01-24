@@ -30,14 +30,10 @@
 #### FUNCTION ####
 
 run_simulation_state <- function(input_data_old, 
-                             parameters = matrix(c(rep(1.6, 5),
-                                                   0.5, 0, 0, 0, 0,
-                                                   0, 0.5, 0, 0, 0,
-                                                   0, 0, 0.5, 0, 0,
-                                                   0, 0, 0, 0.5, 0), 
-                                                 byrow = TRUE, 
-                                                 ncol = 5), 
-                             max_age = 5,
+                             parameters = matrix(data = c(0.5, 0.5, 0.3, 0.7),
+                                                 nrow = 2, byrow = TRUE), 
+                             stages = c("juvenile", 
+                                        "adult"),
                              inc_trait = FALSE,
                              start_i, end_i, IDs,
                              defined_seed = NULL) {
@@ -57,10 +53,10 @@ input_data <- process_input_data(output_data = input_data_old,
   
 output_data <- input_data %>% 
   survival_function(parameters = parameters,
-                    max_age = max_age, 
+                    stages = stages, 
                     inc_trait = inc_trait,
                     defined_seed = defined_seed, i = i) %>%
-  reproduction_function(parameters = parameters, max_age = max_age,
+  reproduction_function(parameters = parameters, stages = stages,
                         inc_trait = inc_trait,
                         defined_seed = defined_seed, i = i)
   

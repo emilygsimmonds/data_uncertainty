@@ -1,4 +1,11 @@
+# T1.1: Script to run the nimble model #
+
 ## T1.1_Run_Model_SS_Server ## Server version of the code
+
+################################################################################
+
+# This script is a wrapper to run the nimble model to estimate parameters
+# from the different simulated datasets. 
 
 ################################################################################
 
@@ -22,6 +29,8 @@ source("./Functions/make_input_data_function.R")
 # load data
 
 load("./Data files/baseline_simulation_observations.RData")
+
+################################################################################
 
 #### Define parameters to track ####
 

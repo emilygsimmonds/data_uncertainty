@@ -51,7 +51,8 @@ year3 <- prod(dbinom(0, 1, p_juvenile),
 total_prob <- sum(year1, year2, year3)   
 
 # combine the recapture probabilities into a vector
-recapture <- c(p_juvenile, rep(p_adult, max(state_data$Age)))
+recapture <- c(p_juvenile, p_adult)
+names(recapture) <- c("juvenile", "adult")
   
 # fill in recapture probabilities
 # as survival is "did they survive until next year?" it is sort of lagged
@@ -61,8 +62,8 @@ recapture <- c(p_juvenile, rep(p_adult, max(state_data$Age)))
 # index the probability based on age
 set.seed(seed)
 observed_data <- state_data %>% 
-    mutate(Recapture = rbinom(length(state_data$Age), 1, 
-                              recapture[state_data$Age]))
+    mutate(Recapture = rbinom(length(state_data$Stage), 1, 
+                              recapture[state_data$Stage]))
 
 # scale fecundity by chance of ever being observed
 # binomial probability

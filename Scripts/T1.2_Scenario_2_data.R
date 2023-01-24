@@ -1,6 +1,28 @@
 #### T1.1: Data simulation for scenario 2: different sample sizes #
 
-# this script will generate data including parametric bootstrap confidence intervals
+################################################################################
+# This script generates data using different sampling techniques
+# e.g. just taking a single year of data, only part of population each year (50%)
+# or 50% from a single year. Mimics real data collection methods. 
+#
+#
+# Features of the population:
+# - female-based (reproduction is the number of juv. females)
+# - does NOT include density-dependence
+#
+# Inputs:
+# - Input_data = a dataframe with column names: ID (factor), Year (factor), 
+# Surv (0/1), Recap (0/1), Clutch_size (num), Offspring (num), Age (num), 
+# Trait (num)
+#
+# - parameters = matrix of parameter values (transition matrix) inc phi, f
+#
+# - max_age = maximum age species can get to
+# 
+# - inc_trait = TRUE or FALSE if you want to include a trait as well
+#
+#
+################################################################################
 
 
 ################################################################################

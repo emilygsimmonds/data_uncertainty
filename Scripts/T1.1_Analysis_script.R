@@ -35,148 +35,152 @@ true_parameters <- data.frame(parameter = c("reproduction_juvenile",
                                         1,
                                         0.8,
                                         0.3,
-                                        0.47,
-                                        1.04,
+                                        0.4666,
+                                        1.03,
                                         0.88,
-                                        0.48))
+                                        0.47))
 
 #### Baseline ####
 
 ## import each datafile and get a summary
 
-filenames <- as.list(list.files("./Data files/Baseline_results/"))
+filenames <- c(as.list(list.files("./Data files/Baseline_results/", 
+                                  full.names = TRUE)[str_detect(list.files("./Data files/Baseline_results/"), 
+                                "SS")]),
+               as.list(list.files("./Data files/Adult_results_20/", 
+                                  full.names = TRUE)[str_detect(list.files("./Data files/Adult_results_20/"), 
+                                                                               "SS")]),
+               as.list(list.files("./Data files/Juvenile_results_20/", 
+                                  full.names = TRUE)[str_detect(list.files("./Data files/Juvenile_results_20/"), 
+                                                                               "SS")]),
+               as.list(list.files("./Data files/Random_error_results/", 
+                                  full.names = TRUE)[str_detect(list.files("./Data files/Random_error_results/"), 
+                                                                               "SS")]))
 
-baseline_summary_results <- map(.x = filenames, ~{
-  load(paste("./Data files/Baseline_results/", .x, sep = ""))
+
+results100 <- map(.x = filenames[1:100], ~{
+  load(.x)
   summary <- MCMCsummary(model_result, round = 2)
   return(summary)
 })
 
+results200 <- map(.x = filenames[101:200], ~{
+  load(.x)
+  summary <- MCMCsummary(model_result, round = 2)
+  return(summary)
+})
+
+results300 <- map(.x = filenames[201:300], ~{
+  load(.x)
+  summary <- MCMCsummary(model_result, round = 2)
+  return(summary)
+})
+
+results400 <- map(.x = filenames[301:400], ~{
+  load(.x)
+  summary <- MCMCsummary(model_result, round = 2)
+  return(summary)
+})
+
+results <- c(results100,
+             results200,
+             results300,
+             results400)
+
+
 ## summarise the summaries
 
-i <- as.list(1:100)
+i <- as.list(rep(c("baseline",
+                   "adult_missing",
+                   "juvenile_missing",
+                   "random_error"), each = 100))
 
-baseline_summary_results2 <- map2_df(.x = baseline_summary_results,
-                                    .y = i, ~{
+summary_results <- map2_df(.x = results,
+                           .y = i, ~{
                                     summary_summary(results = .x,
                                                     true_parameters = true_parameters,
                                                     i = .y)  
                                     })
 
-## % of simulations when certain criteria achieved
+save(summary_results, file = "summary_results.RData")
 
-# plot of error
+###############################################################################
 
-ggplot(data = filter(baseline_summary_results2,
-                     parameter != "stable_adult" &
-                       parameter != "stable_juvenile"), 
-       aes(x = parameter, y = error, fill = parameter)) +
-  geom_hline(yintercept = 0, colour = "grey") +
-  geom_violin() +
-  plain_theme() +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 90))
+colours <- c("#FFFFFF", "#feff54", "#30666B", "#1E2E39")
 
-# % with true in CI by parameter
+# re-order the factor levels
+summary_results <- summary_results %>%
+  dplyr::mutate(scenario = as.factor(scenario),
+                scenario = plyr::revalue(scenario, 
+                                                 c("baseline"="baseline", 
+                                                   "adult_missing"="adult \nmissing",
+                                                   "juvenile_missing" = "juvenile \nmissing",
+                                                   "random_error" = "random \nerror")),
+                scenario = fct_relevel(scenario, 
+                                               "baseline",
+                                               "random \nerror",
+                                               "adult \nmissing",
+                                               "juvenile \nmissing"))
 
-baseline_summary_results2 %>% 
-  group_by(parameter, true_in_CI) %>%
-  summarise(percent = n())
+#### FIGURE 1 BES: impact on accuracy of lambda ####
 
-# mean CI width
+# plot error for each scenario
 
-baseline_summary_results2 %>% 
-  group_by(parameter) %>%
-  summarise(mean = mean(CI_width))
-
-#### Random error ####
-
-## import each datafile and get a summary
-
-filenames <- as.list(list.files("./Data files/Random_error_results/"))
-
-random_error_summary_results <- map(.x = filenames, ~{
-  load(paste("./Data files/Random_error_results/", .x, sep = ""))
-  summary <- MCMCsummary(model_result, round = 2)
-  return(summary)
-})
-
-## summarise the summaries
-
-i <- as.list(1:100)
-
-random_error_summary_results2 <- map2_df(.x = random_error_summary_results,
-                                     .y = i, ~{
-                                       summary_summary(results = .x,
-                                                       true_parameters = true_parameters,
-                                                       i = .y)  
-                                     })
-
-## % of simulations when certain criteria achieved
-
-# plot of error
-
-ggplot(data = random_error_summary_results2, 
-       aes(x = parameter, y = error, fill = parameter)) +
-  geom_hline(yintercept = 0, colour = "grey") +
-  geom_violin() +
-  plain_theme() +
+ggplot(data = filter(summary_results, parameter == "lambda"),
+       aes(x = scenario,
+           y = error, fill = scenario,
+           colour = scenario)) +
+  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
+  scale_fill_manual(values = colours) +
+  scale_color_manual(values = c("black", "grey50", "white", "white"))+
+  BES_theme() +
+  labs(x = "", y = "Estimate - True") +
   theme(legend.position = "none")
 
-# % with true in CI by parameter
+ggsave("BES_Fig4.png", last_plot(), width = 15, height = 15, units = "cm", 
+       dpi = 300)
 
-random_error_summary_results2 %>% 
-  group_by(parameter, true_in_CI) %>%
-  summarise(percent = n())
+#### FIGURE 2 BES: impact on uncertainty of lambda ####
 
-# mean CI width
+# CI width
 
-random_error_summary_results2 %>% 
-  group_by(parameter) %>%
-  summarise(mean = mean(CI_width))
-
-#### Random missing ####
-
-## import each datafile and get a summary
-
-filenames <- as.list(list.files("./Data files/Random_missing_results/"))
-
-random_missing_summary_results <- map(.x = filenames, ~{
-  load(paste("./Data files/Random_missing_results/", .x, sep = ""))
-  summary <- MCMCsummary(model_result, round = 2)
-  return(summary)
-})
-
-## summarise the summaries
-
-i <- as.list(1:100)
-
-random_missing_summary_results2 <- map2_df(.x = random_missing_summary_results,
-                                         .y = i, ~{
-                                           summary_summary(results = .x,
-                                                           true_parameters = true_parameters,
-                                                           i = .y)  
-                                         })
-
-## % of simulations when certain criteria achieved
-
-# plot of error
-
-ggplot(data = random_missing_summary_results2, 
-       aes(x = parameter, y = error, fill = parameter)) +
-  geom_hline(yintercept = 0, colour = "grey") +
-  geom_violin() +
-  plain_theme() +
+ggplot(data = filter(summary_results, parameter == "lambda"),
+       aes(x = scenario,
+           y = CI_width, fill = scenario, colour = scenario)) +
+  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
+  scale_fill_manual(values = colours) +
+  scale_color_manual(values = c(colours[1:2], "white", "white"))+
+  BES_theme() +
+  labs(x = "", y = "CI width") +
   theme(legend.position = "none")
 
-# % with true in CI by parameter
+ggsave("BES_Fig5.png", last_plot(), width = 15, height = 15, units = "cm", 
+       dpi = 300)
 
-random_missing_summary_results2 %>% 
-  group_by(parameter, true_in_CI) %>%
-  summarise(percent = n())
+#### FIGURE 3 BES: impact on accuracy of uncertainty ####
 
-# mean CI width
+# True in CI - might just need to be a %
 
-random_missing_summary_results2 %>% 
-  group_by(parameter) %>%
-  summarise(mean = mean(CI_width))
+summary_results %>% filter(parameter == "lambda") %>%
+  group_by(scenario, parameter, true_in_CI) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count/sum(count)) %>%
+  filter(true_in_CI == TRUE)
 
+summary_results %>% filter(parameter == "reproduction_juvenile") %>%
+  group_by(scenario, parameter, true_in_CI) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count/sum(count)) %>%
+  filter(true_in_CI == TRUE)
+
+summary_results %>% filter(parameter == "reproduction_adult") %>%
+  group_by(scenario, parameter, true_in_CI) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count/sum(count)) %>%
+  filter(true_in_CI == TRUE)
+
+summary_results %>% filter(parameter == "survival_juvenile") %>%
+  group_by(scenario, parameter, true_in_CI) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count/sum(count)) %>%
+  filter(true_in_CI == TRUE)

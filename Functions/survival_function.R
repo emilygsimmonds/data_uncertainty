@@ -26,14 +26,10 @@
 
 #### FUNCTION ####
 survival_function <- function(input_data, 
-                              parameters = matrix(c(rep(1.6, 5),
-                                                    0.5, 0, 0, 0, 0,
-                                                    0, 0.5, 0, 0, 0,
-                                                    0, 0, 0.5, 0, 0,
-                                                    0, 0, 0, 0.5, 0), 
-                                                  byrow = TRUE, 
-                                                  ncol = 5),
-                              max_age = 5,
+                              parameters = matrix(data = c(0.5, 0.5, 0.3, 0.7),
+                                                  nrow = 2, byrow = TRUE), 
+                              stages = c("juvenile", 
+                                         "adult"),
                               inc_trait = FALSE,
                               defined_seed = NULL, i) {
   
@@ -44,13 +40,6 @@ library(tidyverse)
 ################################################################################
   
 ### INITIAL CHECKS ###
-  
-# max_age is specified and a number
-  if(is.numeric(max_age) != TRUE){stop("max_age must be a number")}
-  
-# no age in input data exceeds max_age
-  if(length(which(input_data$Age > max_age)) > 0){stop("cannot have individuals
-                                                       older than max_age")}
   
 # i is specified and a number
   if(is.null(i)){stop("i must be supplied")}
@@ -63,7 +52,7 @@ library(tidyverse)
   if(is.null(input_data$Year)){stop("Year column missing")}
   if(is.null(input_data$Surv)){stop("Surv column missing")}
   if(is.null(input_data$Offspring)){stop("Offspring column missing")}
-  if(is.null(input_data$Age)){stop("Age column missing")}
+  if(is.null(input_data$Stage)){stop("Stage column missing")}
   if(is.null(input_data$Trait)){stop("Trait column missing")}
   
   # then check their format
@@ -71,22 +60,19 @@ library(tidyverse)
   if(!is.numeric(input_data$ID)){stop("ID should be numeric")}
   if(!is.numeric(input_data$Surv)){stop("Surv should be numeric")}
   if(!is.numeric(input_data$Offspring)){stop("Offspring should be numeric")}
-  if(!is.numeric(input_data$Age)){stop("Age should be numeric")}
+  if(!is.character(input_data$Stage)){stop("Stage should be character")}
   if(!is.numeric(input_data$Trait)){stop("Trait should be numeric")}
   
-  # then check limits for Surv (0/1) and Age (>0<max_age)
+  # then check limits for Surv (0/1), Recap (0/1)
   if(length(which(input_data$Surv < 0)|which(input_data$Surv > 1)) > 0){
-    stop("Surv must be 0 or 1")
-  }
-  if(length(which(input_data$Age < 1)|which(input_data$Age > max_age)) > 0){
-    stop("Age must be between 1 and max_age")
-  }
+    stop("Surv must be 0 or 1")}
+
   
 # parameters is a matrix of size max_age by max_age
   if(class(parameters)[1] != "matrix"){stop("parameters must be a matrix")}
   if(length(which(dim(parameters) != 
-  c(max_age, max_age)) == FALSE)>0){stop("parameters must have dim 
-                                                  = max_age by max_age")}
+  c(length(stages), length(stages))) == FALSE)>0){stop("parameters must have dim 
+                                                  = stages x stages")}
   
 # IF a seed is defined, it is a number
   if(!is.null(defined_seed)){if(!is.numeric(defined_seed)){stop("seed 
@@ -101,14 +87,22 @@ old_data <- input_data %>% filter(Year < i)
 input_data <- input_data %>% filter(Year == i)
   
 ## Fill in the survival column of the input_data
+# name parameter matrix rows and cols
+rownames(parameters) <- stages
+colnames(parameters) <- stages
 
 ## Fill in survival values using probabilities in parameter matrix
   
 # make a vector of probabilities based on age of individuals
 # remove first row of parameter matrix as this is reproduction
-# then add a final 0 as oldest individuals all die
-# then index based on age
-phi <- c(diag(parameters[-1,]),0)[input_data[ ,"Age"]]
+# then index based on stage
+if(length(stages) == 2){
+phi <- parameters[-1,input_data[, "Stage"]]
+}else{
+phi <- c(diag(parameters[-1,]), parameters[length(stages),
+                                           length(stages)])
+names(phi) <- stages
+phi <- as.numeric(phi[input_data[ ,"Stage"]])}
 
 # get survival values using rbinom using the phi vector
 # need to ensure column Surv remains numeric

@@ -21,21 +21,18 @@ input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
                          Surv = 1,
                          Offspring = rpois(100, 2),
-                         Age = sample(1:3, 100, replace = TRUE),
+                         Stage = sample(c("juvenile", "adult"), 100, 
+                                        replace = TRUE),
                          Trait = rnorm(100, 20, 5))
-
-max_age <- 3
-
-# make sure Surv = 0 for all of max age
-
-input_data[which(input_data$Age == max_age), c("Surv")] <- 0
 
 # set up parameters
 
-parameters <- matrix(c(rep(1, 3), 1, 0, 0,
-                                    0, 1, 0), 
+parameters <- matrix(c(rep(1, 2),
+                                    0.9, 0.9), 
                                   byrow = TRUE, 
-                                  ncol = max_age)
+                                  ncol = 2)
+
+stages <- c("juvenile", "adult")
 
 ## Test input data = wrong format ####
 
@@ -52,7 +49,6 @@ map(.x = column_names, safely(~{
   # then run survival function 'safely'
   survival_function(input_data = input_data,
                            parameters = parameters,
-                           max_age = max_age, 
                            inc_trait = FALSE,
                            defined_seed = NULL, 
                            i = 2)})) # CORRECT 29.06.22 + 09.22
@@ -63,7 +59,6 @@ map(.x = column_names, safely(~{
   # then run reproduction function 'safely'
   reproduction_function(input_data = input_data,
                     parameters = parameters,
-                    max_age = max_age, 
                     inc_trait = FALSE,
                     defined_seed = NULL, 
                     i = 2)})) # CORRECT 29.06.22+ 09.22
@@ -77,7 +72,6 @@ map(.x = column_names, safely(~{
   # then run survival function 'safely'
   survival_function(input_data = input_data,
                     parameters = parameters,
-                    max_age = max_age, 
                     inc_trait = FALSE,
                     defined_seed = NULL, 
                     i = 2)})) # CORRECT 29.06.22 + 09.22
@@ -88,7 +82,6 @@ map(.x = column_names, safely(~{
   # then run reproduction function 'safely'
   reproduction_function(input_data = input_data,
                         parameters = parameters,
-                        max_age = max_age, 
                         inc_trait = FALSE,
                         defined_seed = NULL, 
                         i = 2)})) # CORRECT 29.06.22 + 09.22
@@ -102,93 +95,40 @@ parameters_test1 <- matrix(c(rep(1, 4),
                              0, 1, 0, 0,
                              0, 0, 1, 0), 
                      byrow = TRUE, 
-                     ncol = max_age+1)
-
-parameters_test2 <- matrix(c(rep(1, 2), 1, 0), 
-                           byrow = TRUE, 
-                           ncol = max_age-1)
+                     ncol = 4)
 
 # test matrix = too big
 survival_function(input_data = input_data, 
                   parameters = parameters_test1,
-                  max_age = max_age, 
+                  stages = stages, 
                   i = 2) # CORRECT 29.06.22 + 09.22
 
 reproduction_function(input_data = input_data,
                       parameters = parameters_test1,
-                      max_age = max_age,
                       inc_trait = inc_trait,
                       defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
-
-# test matrix too small
-survival_function(input_data = input_data, 
-                  parameters = parameters_test2,
-                  max_age = max_age, 
-                  i = 2) # CORRECT 29.06.22 + 09.22
-
-reproduction_function(input_data = input_data,
-                      parameters = parameters_test2,
-                      max_age = max_age,
-                      inc_trait = inc_trait,
-                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
-
 
 # test if not a matrix
 survival_function(input_data = input_data, 
                   parameters = as.numeric(parameters),
-                  max_age = max_age, 
                   i = 2)  # CORRECT 29.06.22 + 09.22
 
 reproduction_function(input_data = input_data,
                       parameters = as.numeric(parameters),
-                      max_age = max_age,
                       inc_trait = inc_trait,
                       defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
-
-# input max_age wrong
-survival_function(input_data = input_data, 
-                  parameters = parameters,
-                  max_age = as.factor(max_age), 
-                  i = 2)  # CORRECT 29.06.22
-
-reproduction_function(input_data = input_data,
-                      parameters = parameters,
-                      max_age = as.factor(max_age),
-                      inc_trait = inc_trait,
-                      obs_error = obs_error,
-                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22
 
 # input seed wrong
 
 survival_function(input_data = input_data, 
                   parameters = parameters,
-                  p = rep(1, max_age),
-                  max_age = max_age,
                   defined_seed = "l",
                   i = 2)  # CORRECT 29.06.22
 
 reproduction_function(input_data = input_data,
                       parameters = parameters,
-                      max_age = max_age,
                       inc_trait = inc_trait,
-                      obs_error = obs_error,
                       defined_seed = "l", i = 2) # CORRECT 29.06.22
-
-# if you enter input with age > max_age code fails
-
-input_data$Age[10] <- 7
-
-survival_function(input_data = input_data, 
-                  parameters = parameters,
-                  p = rep(1, max_age),
-                  max_age = max_age,
-                  i = 2)  # CORRECT 29.06.22
-
-reproduction_function(input_data = input_data,
-                      parameters = parameters,
-                      max_age = max_age,
-                      inc_trait = inc_trait,
-                      obs_error = obs_error, i = 2) # CORRECT 29.06.22
 
 ################################################################################
 
@@ -199,27 +139,21 @@ reproduction_function(input_data = input_data,
 input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
                          Surv = 1,
-                         Recap = 1,
                          Offspring = rpois(100, 2),
-                         Age = sample(1:3, 100, replace = TRUE),
+                         Stage = sample(c("juvenile", "adult"), 100, 
+                                        replace = TRUE),
                          Trait = rnorm(100, 20, 5))
-
-max_age <- 3
-
-# make sure Recap and Surv = 0 for all of max age
-
-input_data[which(input_data$Age == max_age), c("Recap", "Surv")] <- 0
 
 # set up parameters
 
-parameters <- matrix(c(rep(1, 3), 1, 0, 0,
-                       0, 1, 0), 
+
+parameters <- matrix(c(rep(1, 2),
+                       0.9, 0.9), 
                      byrow = TRUE, 
-                     ncol = max_age)
+                     ncol = 2)
 
-# set up recapture probabilities
+stages <- c("juvenile", "adult")
 
-recapture <- rep(1, max_age)
 
 ################################################################################
 
@@ -227,25 +161,17 @@ recapture <- rep(1, max_age)
 
 # aim of function is to take formatted data for a focal year
 # update the survival column based on age/stage specific survival from a matrix
-# update recapture rate based on age/stage specific recapture probability
 
 ## Check code (make sure function gives correct output) ####
 
 ## TEST: surv parameters all set to 1 survival column = all 1s ####
 
-# make sure all ages are at least 1 below max age
-max_age <- 4
-
-parameters_test <- matrix(c(rep(1, 4), 
-                       1, 0, 0, 0, 
-                       0, 1, 0, 0,
-                       0, 0, 1, 0), 
+parameters_test <- matrix(c(rep(1, 4)), 
                      byrow = TRUE, 
-                     ncol = max_age)
+                     ncol = 2)
 
 test <- survival_function(input_data = input_data,
                   parameters = parameters_test,
-                  max_age = max_age, 
                   inc_trait = FALSE,
                   defined_seed = NULL, 
                   i = 1)
@@ -256,19 +182,12 @@ summary(test$Surv)
 
 ## TEST: surv parameters all set to 0 survival column = all 0s ####
 
-# make sure all ages are at least 1 below max age
-max_age <- 4
-
-parameters_test <- matrix(c(rep(0, 4), 
-                            0, 0, 0, 0, 
-                            0, 0, 0, 0,
-                            0, 0, 0, 0), 
+parameters_test <- matrix(c(rep(0, 4)), 
                           byrow = TRUE, 
-                          ncol = max_age)
+                          ncol = 2)
 
 test <- survival_function(input_data = input_data,
                           parameters = parameters_test,
-                          max_age = max_age, 
                           inc_trait = FALSE,
                           defined_seed = NULL, 
                           i = 1)
@@ -276,6 +195,21 @@ test <- survival_function(input_data = input_data,
 summary(test$Surv)
 
 # CORRECT 05.07.22 + 09.22
+
+## TEST: surv parameters all set to 0.5 survival column = get 50% 0s ####
+
+parameters_test <- matrix(c(rep(0, 2),
+                            rep(0.5, 2)), 
+                          byrow = TRUE, 
+                          ncol = 2)
+
+test <- survival_function(input_data = input_data,
+                          parameters = parameters_test,
+                          inc_trait = FALSE,
+                          defined_seed = NULL, 
+                          i = 1)
+
+summary(test$Surv) # CORRECT 23.01.23
 
 ## TEST: if reproduction set to 0, makes no difference ####
 
@@ -287,55 +221,50 @@ summary(test$Surv)
 # set up a parameter matrix to check
 # set up parameters
 
-max_age = 3
-
-parameters1 <- matrix(c(rep(1, 3), 0.5, 0, 0,
-                       0, 0.5, 0), 
+parameters1 <- matrix(c(rep(1, 2), 0.4, 0.5), 
                      byrow = TRUE, 
-                     ncol = max_age)
-parameters2 <- matrix(c(rep(1, 3), 0.75, 0, 0,
-                        0, 0.75, 0), 
+                     ncol = 2)
+parameters2 <- matrix(c(rep(1, 2), 0.65, 0.75), 
                       byrow = TRUE, 
-                      ncol = max_age)
-parameters3 <- matrix(c(rep(1, 3), 0.3, 0, 0,
-                        0, 0.3, 0), 
+                      ncol = 2)
+parameters3 <- matrix(c(rep(1, 2), 0.2, 0.3), 
                       byrow = TRUE, 
-                      ncol = max_age)
+                      ncol = 2)
+
+rownames(parameters1) <- rownames(parameters2) <- rownames(parameters3) <-  stages
+colnames(parameters1) <- colnames(parameters2) <- colnames(parameters3) <- stages
 
 # set up test vectors
 # MUST scale recap by survival
 set.seed(1)
 test_surv1 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
-              prob = c(diag(parameters1[-1,]),0)[input_data[ ,"Age"]]))
+              prob = as.numeric(parameters1[-1,][input_data[,"Stage"]])))
 
 # 2
 set.seed(2)
 test_surv2 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
-                      prob = c(diag(parameters2[-1,]),0)[input_data[ ,"Age"]]))
+                                prob = as.numeric(parameters2[-1,][input_data[,"Stage"]])))
 # 3
 set.seed(3)
 test_surv3 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
-                      prob = c(diag(parameters3[-1,]),0)[input_data[ ,"Age"]]))
+                                prob = as.numeric(parameters3[-1,][input_data[,"Stage"]])))
 
 # run survival function
 test1 <- survival_function(input_data = input_data,
                           parameters = parameters1,
-                          max_age = max_age, 
                           inc_trait = FALSE,
                           defined_seed = 1, 
                           i = 1)
 test2 <- survival_function(input_data = input_data,
                            parameters = parameters2,
-                           max_age = max_age, 
                            inc_trait = FALSE,
                            defined_seed = 2, 
                            i = 1)
 test3 <- survival_function(input_data = input_data,
                            parameters = parameters3,
-                           max_age = max_age, 
                            inc_trait = FALSE,
                            defined_seed = 3, 
                            i = 1)
@@ -344,8 +273,17 @@ test3 <- survival_function(input_data = input_data,
 
 test1$Surv - test_surv1
 test2$Surv - test_surv2
-test3$Surv - test_surv3 # ALL CORRECT 05.07.22 + 09.22
+test3$Surv - test_surv3 # ALL CORRECT 05.07.22 + 09.22 + 01.23
 
+# now check that is right survival rate
+
+sum(test_surv1[which(input_data$Stage == "juvenile")])/length(which(input_data$Stage == "juvenile"))
+sum(test_surv2[which(input_data$Stage == "juvenile")])/length(which(input_data$Stage == "juvenile"))
+sum(test_surv3[which(input_data$Stage == "juvenile")])/length(which(input_data$Stage == "juvenile"))
+
+sum(test_surv1[which(input_data$Stage == "adult")])/length(which(input_data$Stage == "adult"))
+sum(test_surv2[which(input_data$Stage == "adult")])/length(which(input_data$Stage == "adult"))
+sum(test_surv3[which(input_data$Stage == "adult")])/length(which(input_data$Stage == "adult"))
 
 ################################################################################
 
@@ -358,21 +296,18 @@ test3$Surv - test_surv3 # ALL CORRECT 05.07.22 + 09.22
 
 ## TEST: if survival set to 0, makes no difference ####
 
-parameters_test <- matrix(c(rep(1, 3), 
-                            0, 0, 0, 
-                            0, 0, 0), 
+parameters_test <- matrix(c(rep(1, 2), 
+                            0, 0), 
                           byrow = TRUE, 
-                          ncol = max_age)
+                          ncol = 2)
 
 reproduction_function(input_data = input_data,
                       parameters = parameters,
-                      max_age = max_age, 
                       inc_trait = FALSE,
                       defined_seed = 1, 
                       i = 1)$Offspring - 
   reproduction_function(input_data = input_data,
                       parameters = parameters_test,
-                      max_age = max_age, 
                       inc_trait = FALSE,
                       defined_seed = 1, 
                       i = 1)$Offspring # CORRECT 05.07.22 + 09.22
@@ -382,49 +317,45 @@ reproduction_function(input_data = input_data,
 
 # set up a parameter matrix to check
 # set up parameters
-parameters1 <- matrix(c(0.5, 0.5, 0.5, 
-                        1, 0, 0,
-                        0, 1, 0), 
+parameters1 <- matrix(c(0.5, 0.5, 1, 1), 
                       byrow = TRUE, 
-                      ncol = max_age)
+                      ncol = 2)
 parameters2 <- matrix(c(0.5, 1, 1, 
-                        1, 0, 0,
-                        0, 1, 0), 
+                        1), 
                       byrow = TRUE, 
-                      ncol = max_age)
+                      ncol = 2)
 parameters3 <- matrix(c(2, 2, 0.5, 
-                        1, 0, 0,
-                        0, 1, 0), 
+                        1), 
                       byrow = TRUE, 
-                      ncol = max_age)
+                      ncol = 2)
+
+rownames(parameters1) <- rownames(parameters2) <- rownames(parameters3) <-  stages
+colnames(parameters1) <- colnames(parameters2) <- colnames(parameters3) <- stages
 
 # run test vectors
 set.seed(1)
 test_repro1 <- rpois(n = length(input_data$Offspring), 
-                              lambda = parameters1[1, input_data$Age])
+                              lambda = parameters1[1, input_data$Stage])
 set.seed(2)
 test_repro2 <- rpois(n = length(input_data$Offspring), 
-                     lambda = parameters2[1, input_data$Age])
+                     lambda = parameters2[1, input_data$Stage])
 set.seed(3)
 test_repro3 <- rpois(n = length(input_data$Offspring), 
-                     lambda = parameters3[1, input_data$Age])
+                     lambda = parameters3[1, input_data$Stage])
 
 # then run function and subtract test vector from Offspring column
 test1 <- reproduction_function(input_data = input_data,
                       parameters = parameters1,
-                      max_age = max_age, 
                       inc_trait = FALSE,
                       defined_seed = 1, 
                       i = 1)$Offspring - test_repro1
 test2 <- reproduction_function(input_data = input_data,
                                parameters = parameters2,
-                               max_age = max_age, 
                                inc_trait = FALSE,
                                defined_seed = 2, 
                                i = 1)$Offspring - test_repro2
 test3 <- reproduction_function(input_data = input_data,
                                parameters = parameters3,
-                               max_age = max_age, 
                                inc_trait = FALSE,
                                defined_seed = 3, 
                                i = 1)$Offspring - test_repro3
@@ -448,26 +379,26 @@ test3 # ALL CORRECT 05.07.22 + 09.22
 ## Check code ####
 
 ## Set up inputs
-# make sure length is short so easy to check 
-input_data <- data.frame(ID = sample(1:10, 10, replace = FALSE),
+
+input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
-                         Surv = 1,
-                         Offspring = rpois(10, 2),
-                         Age = sample(1:3, 10, replace = TRUE),
-                         Trait = rnorm(10, 20, 5))
-
-max_age <- 3
-
-# make sure Surv = 0 for all of max age
-
-input_data[which(input_data$Age == max_age), c("Surv")] <- 0
+                         Surv = sample(c(0,1), size = 100, replace = TRUE, 
+                                       prob = c(0.9,0.9)),
+                         Offspring = rpois(100, 2),
+                         Stage = sample(c("juvenile", "adult"), 100, 
+                                        replace = TRUE),
+                         Trait = rnorm(100, 20, 5))
 
 # set up parameters
 
-parameters <- matrix(c(rep(1, 3), 1, 0, 0,
-                       0, 1, 0), 
+
+parameters <- matrix(c(rep(1, 2),
+                       0.9, 0.9), 
                      byrow = TRUE, 
-                     ncol = max_age)
+                     ncol = 2)
+
+stages <- c("juvenile", "adult")
+
 
 ## TEST: all individuals with Surv = 0 get removed + Surv = 1 remain ####
 # check which individuals should be removed
@@ -479,14 +410,17 @@ output <- process_input_data(input_data, i=2, IDs=1:1000)
 
 # check IDs in Year 2
 output <- output %>% filter(Year == 2)
-output$ID # CORRECT 06.07.22 + 09.22
+output$ID %in% removals
+output$ID[output$Stage=="adult"] %in% survivors
+
+# CORRECT 06.07.22 + 09.22
 
 ## CHECK: number of new offspring is correct ##
 # calculate expected number of offspring
 expected_offspring <- sum(input_data$Offspring)
 
 # then run function and add up new individuals
-output <- process_input_data(input_data, i = 2, IDs = 1:100)
+output <- process_input_data(input_data, i = 2, IDs = 1:1000)
 output <- output %>% filter(Year == 2)
 output_offspring <- output$ID[!output$ID %in% input_data$ID]
 
@@ -499,29 +433,26 @@ length(output_offspring)-expected_offspring # CORRECT 06.07.22 + 09.22
 
 source("./Functions/run_simulation.R")
 
-# set up input data
+## Set up inputs
 
 input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
-                         Surv = rbinom(100, 1, prob = 0.6),
-                         Offspring = rpois(100, 1),
-                         Age = sample(1:3, 100, replace = TRUE),
+                         Surv = sample(c(0,1), size = 100, replace = TRUE, 
+                                       prob = c(0.9,0.9)),
+                         Offspring = rpois(100, 2),
+                         Stage = sample(c("juvenile", "adult"), 100, 
+                                        replace = TRUE),
                          Trait = rnorm(100, 20, 5))
-# set up max age
 
-max_age = 3
+# set up parameters
 
-# make sure Recap and Surv = 0 for all of max age
 
-input_data[which(input_data$Age == max_age), c("Surv")] <- 0
+parameters <- matrix(c(rep(1, 2),
+                       0.7, 0.9), 
+                     byrow = TRUE, 
+                     ncol = 2)
 
-# set up parameters 
-
-parameters = matrix(c(0.5, rep(1, 2),
-                      0.3, 0, 0,
-                      0, 0.6, 0), 
-                    byrow = TRUE, 
-                    ncol = max_age)
+stages <- c("juvenile", "adult")
 
 # set up IDs
 
@@ -531,12 +462,29 @@ IDs <- 101:10000000
 
 output_data <- run_simulation_state(input_data_old = input_data, 
                               parameters = parameters, 
-                              max_age = max_age,
                               inc_trait = FALSE,
-                              start_i = 2, end_i = 25, IDs = IDs) 
+                              start_i = 2, end_i = 5, IDs = IDs) 
 
-output_data %>% group_by(Year) %>% summarise(count = n(),
-                                             repro = sum(Offspring))
+output_data %>% group_by(Year, Stage) %>% summarise(count = n(),
+                                             repro = sum(Offspring),
+                                             surv = sum(Surv)/count)
+
+# check that each year has the survival level expected 0.7 for juv 0.9 adults
+
+# and then try some different parameters and make sure it changes
+parameters <- matrix(c(rep(1, 2),
+                       0.3, 0.2), 
+                     byrow = TRUE, 
+                     ncol = 2)
+
+output_data <- run_simulation_state(input_data_old = input_data, 
+                                    parameters = parameters, 
+                                    inc_trait = FALSE,
+                                    start_i = 2, end_i = 5, IDs = IDs) 
+
+output_data %>% group_by(Year, Stage) %>% summarise(count = n(),
+                                                    repro = sum(Offspring),
+                                                    surv = sum(Surv)/count)
 
 #### Check if getting duplicated individuals ####
 

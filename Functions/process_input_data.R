@@ -28,7 +28,7 @@ process_input_data <- function(output_data,
   
 input_data_new <- output_data %>% filter(Surv == 1,
                                          Year == i-1) %>%
-    mutate(Age = Age + 1,
+    mutate(Stage = "adult",
            Year = Year + 1)
   
 # add new individuals based on offspring numbers - all with age = 1
@@ -44,7 +44,7 @@ offspring <- data.frame(ID = IDs_new,
                         Year = i,
                         Surv = NA,
                         Offspring = NA,
-                        Age = 1,
+                        Stage = "juvenile",
                         Trait = NA)
   
 # assign group and trait values

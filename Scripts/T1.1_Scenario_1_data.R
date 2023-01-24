@@ -31,31 +31,22 @@ library(tidyverse)
 # source necessary functions
 source("./Functions/run_simulation.R")
 source("./Functions/run_observation_process.R")
+source("./Functions/simulation_setup.R")
+source("./Functions/create_scenario_data.R")
 
-#### Create simulated data ####
-
-# set up max age
-
-max_age = 5
-
-# set up parameters - 
-# began close to Riecke paper then upped repro to give slightly growing pop
-
-parameters = matrix(c(0.6, rep(0.8, 4),
-                      0.3, 0, 0, 0, 0,
-                      0, 0.5, 0, 0, 0,
-                      0, 0, 0.5, 0, 0,
-                      0, 0, 0, 0.5, 0), 
-                    byrow = TRUE, 
-                    ncol = max_age) # made sure that lambda is approx 1!!
+#### Set up simulation parameters TEST ####
 
 # set up i
 
 i <- as.list(1:100)
 
+parameters <- matrix(data = c(0.5, 0.5, 0.3, 0.7),
+                     nrow = 2, byrow = TRUE)
+
 input_data <- map(.x = i, ~{simulation_setup(parameter_matrix = parameters,
                                              i = .x,
-                                             max_age = max_age)})
+                                             stages = c("juvenile",
+                                                        "adult"))})
 
 
 # set up recapture probabilities
@@ -71,18 +62,16 @@ IDs <- 101:200000000
 # run state simulation
 output_data <- run_simulation_state(input_data_old = input_data[[3]], 
                               parameters = parameters, 
-                              max_age = max_age,
+                              stages = c("juvenile",
+                                         "adult"),
                               inc_trait = FALSE,
-                              start_i = 2, end_i = 10, IDs = IDs)
-
-((200*0.5)+(100*0.5)+(50*0.5)+(25*0))/(200+100+50+25) 
-# 46.6667 = actual adult survival
+                              start_i = 2, end_i = 5, IDs = IDs)
 
 # checks
-mean(output_data$Offspring[output_data$Age == 1])
-mean(output_data$Offspring[output_data$Age > 1])
-mean(output_data$Surv[output_data$Age == 1])
-mean(output_data$Surv[output_data$Age > 1])
+mean(output_data$Offspring[output_data$Stage == "juvenile"])
+mean(output_data$Offspring[output_data$Stage == "adult"])
+mean(output_data$Surv[output_data$Stage == "juvenile"])
+mean(output_data$Surv[output_data$Stage == "adult"])
 
 # then observation process
 observation <- run_observation_process(output_data, 
@@ -95,113 +84,57 @@ observation <- run_observation_process(output_data,
 
 # number of juveniles = same
 
-length(which(output_data$Age == 1))
+length(which(output_data$Stage == "juvenile"))
 
-length(which(observation$Age == 1))
+length(which(observation$Stage == "juvenile"))
 
 # number of adults = reduced to 80%
 
-length(which(observation$Age > 1))/
-length(which(output_data$Age > 1))
+length(which(observation$Stage == "adult"))/
+length(which(output_data$Stage == "adult"))
 
 save(observation, file = "./Data files/test.RData")
 
 x <- output_data %>% group_by(Year) %>% summarise(count = n(),
                                              repro = sum(Offspring))
 
-#### Simulation 1: missing reproductive events (at random) ####
+################################################################################
 
-# Simulate the state only
+#### SIMULATIONS ####
 
-seeds <- as.list(c(1:100))
+#### Import matrices ####
 
-# run normal set of simulations then edit
-baseline_state <- map2(.x = seeds,
-                       .y = input_data, ~{
-  state <- run_simulation_state(defined_seed = .x,
-                       input_data_old = .y, 
-                       parameters = parameters, 
-                       max_age = max_age,
-                       inc_trait = FALSE,
-                       start_i = 2, end_i = 10, IDs = IDs)
-  return(state)
-  }) 
+load("./Data files/twobytwo_matrices.RData")
 
-# save
-save(baseline_state, file = "./Data files/baseline_simulation_state.RData")
+# name each matrix
 
-### ADD IN OBSERVATION ERROR INC. COLUMN OF OBSERVATION ERROR IN FECUNDITY
-# can be removed at modelling stage
+names(output_matrices) <- c("mat1",
+                            "mat2",
+                            "mat3",
+                            "mat4",
+                            "mat5")
 
-baseline_observations <- map2(.x = baseline_state,
-                              .y = seeds, ~{run_observation_process(.x,
-                                        p_adult = recapture,
-                                        p_juvenile = 1,
-                                        fecundity_error = TRUE,
-                                        phi_adult = 0.5,
-                                        phi_juvenile = 0.3,
-                                        seed = .y)
-})
+#### Create simulated data ####
 
-# save
-save(baseline_observations, file = "./Data files/baseline_simulation_observations.RData")
+create_scenario_data(parameters = output_matrices[["mat1"]],
+                     name = "mat1", recapture_a = 0.8, recapture_j = 1,
+                    stages = c("juvenile", "adult")) 
 
-# randomly add 0s to the offspring column 10%
-# apply it to observations file as need recapture to be < 1
+create_scenario_data(parameters = output_matrices[["mat2"]],
+                     name = "mat2", recapture_a = 0.8, recapture_j = 1,
+                     stages = c("juvenile", "adult")) 
 
-random_missing_reproduction <- map(.x = baseline_observations, ~{
-  set.seed(1)
-  marker <- sample(1:length(.x$Offspring), length(.x$Offspring)/10)
-  .x <- .x %>% mutate(Offspring_obs = Offspring)
-  .x$Offspring_obs[marker] <- 0
-  return(.x)
-})
+create_scenario_data(parameters = output_matrices[["mat3"]],
+                     name = "mat3", recapture_a = 0.8, recapture_j = 1,
+                     stages = c("juvenile", "adult")) 
 
-# check that random missing is different to baseline
-length(which(baseline_observations[[1]]$Offspring - 
-               random_missing_reproduction[[1]]$Offspring_obs != 0))
-# YES are different
+create_scenario_data(parameters = output_matrices[["mat4"]],
+                     name = "mat4", recapture_a = 0.8, recapture_j = 1,
+                     stages = c("juvenile", "adult")) 
 
-# save
-save(random_missing_reproduction, 
-     file = "./Data files/random_missing_simulation.RData")
-
-#### Simulation 2: missing reproductive events (not at random - bias) ####
-# miss juveniles
-
-# add 0s to juveniles in the offspring column 50%
-juvenile_missing_reproduction <- map(.x = baseline_observations, ~{
-  marker1 <- which(.x$Age == 1)
-  set.seed(1)
-  marker2 <- sample(marker1, length(marker1)/50)
-  .x <- .x %>% mutate(Offspring_obs = Offspring)
-  .x$Offspring_obs[marker2] <- 0
-  return(.x)
-})
-
-length(which(baseline_observations[[1]]$Offspring - 
-               juvenile_missing_reproduction[[1]]$Offspring_obs != 0))
-
-# save
-save(juvenile_missing_reproduction, 
-     file = "./Data files/juvenile_missing_simulation.RData")
-
-# miss adults
-adult_missing_reproduction <- map(.x = baseline_observations, ~{
-  marker1 <- which(.x$Age > 1)
-  set.seed(1)
-  marker2 <- sample(marker1, length(marker1)/50)
-  .x <- .x %>% mutate(Offspring_obs = Offspring)
-  .x$Offspring_obs[marker2] <- 0
-  return(.x)
-})
-
-length(which(adult_missing_reproduction[[1]]$Offspring_obs - 
-  juvenile_missing_reproduction[[1]]$Offspring_obs != 0))
-
-# save
-save(adult_missing_reproduction, 
-     file = "./Data files/adult_missing_simulation.RData")
+create_scenario_data(parameters = output_matrices[["mat5"]],
+                     name = "mat5", recapture_a = 0.8, recapture_j = 1,
+                     stages = c("juvenile", "adult")) 
 
 
 

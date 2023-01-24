@@ -18,8 +18,8 @@ make_input_data <- function(simulations,
   
 # re-code raw data so that adult = 2, juvenile = 1
 output_data <- simulations %>%
-  mutate(Age = case_when(Age == 1 ~ 1,
-                         Age > 1 ~ 2)) # change age to just juv (1) and adult (2)
+  mutate(Age = case_when(Stage == "juvenile" ~ 1,
+                         Stage != "juvenile" ~ 2)) # change age to just juv (1) and adult (2)
 
 #### Step 2: make a capture history ####
 

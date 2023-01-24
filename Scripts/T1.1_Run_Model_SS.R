@@ -62,7 +62,7 @@ n_chains <- 2
 
 start_time <- Sys.time()
 
-output_baseline <- map(.x = model_inputs[2], ~{
+output_baseline <- map(.x = model_inputs[1], ~{
   nimbleMCMC(code = Model_SS_hmm, 
           data = .x$data_input,
           constants = .x$constants,
