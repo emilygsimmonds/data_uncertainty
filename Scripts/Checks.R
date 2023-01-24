@@ -435,13 +435,18 @@ source("./Functions/run_simulation.R")
 
 ## Set up inputs
 
+Stage = sample(c("juvenile", "adult"), 100, 
+               replace = TRUE)
+
+phi = c(0.7, 0.9)
+names(phi) <- c("juvenile", "adult")
+phi = phi[Stage]
+
 input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                          Year = 1,
-                         Surv = sample(c(0,1), size = 100, replace = TRUE, 
-                                       prob = c(0.9,0.9)),
-                         Offspring = rpois(100, 2),
-                         Stage = sample(c("juvenile", "adult"), 100, 
-                                        replace = TRUE),
+                         Surv = rbinom(100, 1, phi),
+                         Offspring = rpois(100, 1),
+                         Stage = Stage,
                          Trait = rnorm(100, 20, 5))
 
 # set up parameters
@@ -477,6 +482,17 @@ parameters <- matrix(c(rep(1, 2),
                      byrow = TRUE, 
                      ncol = 2)
 
+phi = c(0.3, 0.2)
+names(phi) <- c("juvenile", "adult")
+phi = phi[Stage]
+
+input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
+                         Year = 1,
+                         Surv = rbinom(100, 1, phi),
+                         Offspring = rpois(100, 1),
+                         Stage = Stage,
+                         Trait = rnorm(100, 20, 5))
+
 output_data <- run_simulation_state(input_data_old = input_data, 
                                     parameters = parameters, 
                                     inc_trait = FALSE,
@@ -485,6 +501,8 @@ output_data <- run_simulation_state(input_data_old = input_data,
 output_data %>% group_by(Year, Stage) %>% summarise(count = n(),
                                                     repro = sum(Offspring),
                                                     surv = sum(Surv)/count)
+
+# SEEMS CORRECT 24.01.23
 
 #### Check if getting duplicated individuals ####
 

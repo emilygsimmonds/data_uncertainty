@@ -15,8 +15,9 @@ library(tidyverse)
 library(popbio)
 
 # source functions
-source("./Functions/make_input_data_function.R")
 source("./Functions/transition_frequency.R")
+source("./Functions/make_matrix.R")
+source("./Functions/bootstrap_tf.R")
 
 # load data
 load("./Data files/baseline_simulation_statemat1.RData")
@@ -27,16 +28,12 @@ load("./Data files/baseline_simulation_statemat1.RData")
 
 # for the state
 tf_table_state <- create_transition_frequency_table(baseline_state[[5]],
-                                                    max_year = max(baseline_state[[5]]$Year))
-
-# make population matrix
-make_matrix(tf_table_state)
-
+                  max_year = max(baseline_state[[5]]$Year))
 
 #### run bootstrap to get CIs for vital rates and lambda
 
 # for state
-state_results <- boot.transitions(tf_table_state, 
+state_results <- bootstrap_summary(tf_table_state, 
                                   iterations = 2000)
 
 
