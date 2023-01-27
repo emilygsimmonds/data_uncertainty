@@ -211,6 +211,96 @@ summary5 <- output_data5 %>% group_by(Year, Stage) %>% summarise(count = n(),
                                                      repro = sum(Offspring)/count,
                                                      surv = sum(Surv)/count)
 
+################################################################################
+
+#### Test observation process ####
+
+source("./Functions/run_observation_process.R")
+
+non_perfect_recap3 <- run_observation_process(state_data = output_data3, 
+                                             p = c(1, 0.8, 0.8),
+                                             phi = c(0.3, 0.4, 0.7),
+                                             fecundity_error = FALSE,
+                                             seed = 2,
+                                             stages = stages3)
+
+count_error_too3 <- run_observation_process(output_data, 
+                                           p = c(1, 0.8, 0.8),
+                                           phi = c(0.3, 0.4, 0.7),
+                                           fecundity_error = TRUE,
+                                           seed = 2,
+                                           stages = stages3)
+
+# number of individuals is reduced do they all have recap = 1
+summary(non_perfect_recap3) # YES
+
+# are all juveniles still there
+length(which(output_data3$Age == 1)) - length(which(non_perfect_recap3$Age == 1)) # YES
+
+# how many individuals removed?
+length(unique(non_perfect_recap3$ID))/
+  length(unique(output_data3$ID))
+   # 98 % remain
+
+# check individuals by stage - 70-77% BUT GOES > 80 when using diff seed
+length(non_perfect_recap3$ID[which(non_perfect_recap3$Stage == "subadult")])/
+  length(output_data3$ID[which(output_data3$Stage == "subadult")])
+length(non_perfect_recap3$ID[which(non_perfect_recap3$Stage == "adult")])/
+  length(output_data3$ID[which(output_data3$Stage == "adult")])
+
+length(unique(count_error_too3$ID))/
+  length(unique(output_data3$ID))
+# 98 % remain
+
+# are fecundity counts different?
+count_error_too3$Offspring - count_error_too3$Offspring_obs
+
+###############################################################################
+
+non_perfect_recap5 <- run_observation_process(state_data = output_data5, 
+                                              p = c(1, 0.8, 0.8, 
+                                                    0.8, 0.8),
+                                              phi = c(0.3, 0.4, 0.5, 0.6,
+                                                      0.7),
+                                              fecundity_error = FALSE,
+                                              seed = 2,
+                                              stages = stages5)
+
+count_error_too5 <- run_observation_process(state_data = output_data5, 
+                                            p = c(1, 0.8, 0.8, 
+                                                  0.8, 0.8),
+                                            phi = c(0.3, 0.4, 0.5, 0.6,
+                                                    0.7),
+                                            fecundity_error = TRUE,
+                                            seed = 2,
+                                            stages = stages5)
+
+# number of individuals is reduced do they all have recap = 1
+summary(non_perfect_recap5) # YES
+
+# are all juveniles still there
+length(which(output_data5$Age == 1)) - length(which(non_perfect_recap5$Age == 1)) # YES
+
+# how many individuals removed?
+length(unique(non_perfect_recap5$ID))/
+  length(unique(output_data5$ID))
+# 98 % remain
+
+# check individuals by stage - 70-77%
+length(non_perfect_recap5$ID[which(non_perfect_recap5$Stage == "subadult")])/
+  length(output_data5$ID[which(output_data5$Stage == "subadult")])
+length(non_perfect_recap5$ID[which(non_perfect_recap5$Stage == "adult3")])/
+  length(output_data5$ID[which(output_data5$Stage == "adult3")])
+
+length(unique(count_error_too5$ID))/
+  length(unique(output_data5$ID))
+# 98 % remain
+
+# are fecundity counts different?
+count_error_too5$Offspring - count_error_too5$Offspring_obs
+
+################################################################################
+
 #### CHECK MODEL IN WRAPPER ####
 
 # check eigenvalues of input parameters
@@ -256,20 +346,36 @@ library(popbio)
 # source functions
 source("./Functions/make_matrix.R")
 source("./Functions/transition_frequency.R")
+source("./Functions/bootstrap_tf.R")
 
 #### construct a transition frequency table
 
 # for the state
-tf_table_state <- create_transition_frequency_table(output_data3,
-                                                    max_year = max(output_data3$Year)) # seems to work :)
+tf_table_state <- create_transition_frequency_table(census_data = output_data3,
+                                                    max_year = max(output_data3$Year),
+                                                    stages = stages3) # seems to work :)
 # make population matrix
-make_matrix(tf_table_state)
+make_matrix(tf_table_state, stages = stages3)
 
 #### run bootstrap to get CIs for vital rates and lambda
 
 # for state
 boot_results <- bootstrap_summary(tf_table_state, 
-                                   iterations = 2000)
+                                  iterations = 2000,
+                                  stages = stages3)
 
+# for the state
+tf_table_state <- create_transition_frequency_table(census_data = output_data5,
+                                                    max_year = max(output_data5$Year),
+                                                    stages = stages5) # seems to work :)
+# make population matrix
+make_matrix(tf_table_state, stages = stages5)
+
+#### run bootstrap to get CIs for vital rates and lambda
+
+# for state
+boot_results <- bootstrap_summary(tf_table_state, 
+                                  iterations = 2000,
+                                  stages = stages5)
 
 

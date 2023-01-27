@@ -44,13 +44,13 @@ year2 <- prod(dbinom(0, 1, p[1]),
 # probability of surviving to year 2 and capture
 
 # not captured year 1 or 2 but captured year 3-5
-if(length(stages == 2)){
+if(length(stages)==2){
   year3 <- prod(dbinom(0, 1, p[1]),
               dbinom(0, 1, (p[2]*phi[1])),
               sum(dbinom(1:3, 3, (p[2]*phi[2]))))
 # probability of surviving beyond year 2 and capture
 }
-if(length(stages == 3)){
+if(length(stages)==3){
   # not captured year 1 or 2 but captured year 3
   year3 <- prod(dbinom(0, 1, p[1]),
                 dbinom(0, 1, (p[2]*phi[1])),
@@ -62,7 +62,7 @@ if(length(stages == 3)){
                 sum(dbinom(1:2, 3, (p[3]*phi[3]))))  
   year3 <- sum(year3, year4)
 }
-if(length(stages == 4)){
+if(length(stages)==4){
   # not captured year 1 or 2 but captured year 3
   year3 <- prod(dbinom(0, 1, p[1]),
                 dbinom(0, 1, (p[2]*phi[1])),
@@ -104,7 +104,7 @@ observed_data <- state_data %>%
 set.seed(seed)
 observed_data$Offspring <- rbinom(n=length(observed_data$Offspring),
                                   size = observed_data$Offspring,
-                                 prob = total_prob)
+                                  prob = total_prob)
 
 # add observation error to fecundity - poisson error (count error)
 if(fecundity_error == TRUE){

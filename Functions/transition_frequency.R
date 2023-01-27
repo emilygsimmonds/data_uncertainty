@@ -25,7 +25,8 @@ source("./Functions/stage_fate.R")
 #### FUNCTION ####
 
 create_transition_frequency_table <- function(census_data,
-                                              max_year){
+                                              max_year,
+                                              stages){
   
   # split data into list based on ID
   split_data <- census_data %>% 
@@ -33,11 +34,11 @@ create_transition_frequency_table <- function(census_data,
   
   # then use this as input to fill_stage_fate function using map_df
   transition_table <- map_df(.x = split_data, ~{
-    fill_stage_fate(.x, max_year = max_year)
+    fill_stage_fate(.x, max_year = max_year, stages = stages)
   })
   
   colnames(transition_table) <- c("ID", "year", "stage",
-                                  "year2", "fate", "juvenile")
+                                  "year2", "fate", "fertility")
   
   return(transition_table)
   

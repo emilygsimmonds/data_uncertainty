@@ -21,7 +21,8 @@ library(tidyverse)
 #### FUNCTION ####
 
 fill_stage_fate <- function(census_data,
-                            max_year){
+                            max_year,
+                            stages){
   
   # order by Year
   sorted_census_data <- arrange(census_data, Year) 
@@ -31,30 +32,36 @@ fill_stage_fate <- function(census_data,
   # include max year of the data as a caveat - do not mark individuals
   # dead if they were seen in final year of data
   
+  # set up vector of stages and their fates
+  marker_stages <- c(stages, rep(stages[length(stages)], 5)) # rep final stage 5 times (max in data)
+  marker_fates <- c(marker_stages[-1], stages[(length(stages))]) # remove juvenile and repeat final stage
+  
   # set up output dataframe
-  if(max(sorted_census_data$Year == max_year)){
+  if(max(sorted_census_data$Year) == max_year){ # IF observed in final year - assume survived
     output <- data.frame(ID = census_data$ID[1],
                          Year1 = seq(sorted_census_data$Year[1], 
                                      max(sorted_census_data$Year),
                                      1), # all years that individual was observed AND any gaps - assume alive
-                         Stage1 = c(sorted_census_data$Stage[1],
-                                    rep("adult", number_years-1)), # start with first age seen, all others will be adult or dead
+                         Stage1 = c(marker_stages[(which(marker_stages == sorted_census_data$Stage[1])[1]):
+                                                    (which(marker_stages == sorted_census_data$Stage[1])[1]+(number_years-1))]), # start with first age seen, all others will be adult or dead
                          Year2 = seq(sorted_census_data$Year[1], 
                                      max(sorted_census_data$Year),
                                      1)+1,
-                         Stage2 = rep("adult", number_years),
+                         Stage2 = c(marker_fates[(which(marker_stages == sorted_census_data$Stage[1])[1]):
+                                                   (which(marker_stages == sorted_census_data$Stage[1])[1]+(number_years-1))]),
                          Offspring = NA)
-  }else{
+  }else{ # otherwise, include 'dead' as final fate
   output <- data.frame(ID = census_data$ID[1],
                        Year1 = seq(sorted_census_data$Year[1], 
                                    max(sorted_census_data$Year),
                                    1), # all years that individual was observed AND any gaps - assume alive
-                       Stage1 = c(sorted_census_data$Stage[1],
-                                  rep("adult", number_years-1)), # start with first age seen, all others will be adult or dead
+                       Stage1 = c(marker_stages[(which(marker_stages == sorted_census_data$Stage[1])[1]):
+                                           (which(marker_stages == sorted_census_data$Stage[1])[1]+(number_years-1))]), # start with first age seen, all others will be adult or dead
                        Year2 = seq(sorted_census_data$Year[1], 
                                    max(sorted_census_data$Year),
                                    1)+1,
-                       Stage2 = c(rep("adult", number_years-1),
+                       Stage2 = c(marker_fates[(which(marker_stages == sorted_census_data$Stage[1])[1]):
+                                          (which(marker_stages == sorted_census_data$Stage[1])[1]+(number_years-2))],
                                   "dead"),
                        Offspring = NA)}
   

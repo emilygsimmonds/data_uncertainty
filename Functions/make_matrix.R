@@ -43,7 +43,7 @@ for(i in stages){
     output_matrix[marker+1,marker] <- length(which(frequency_table[stage_marker,"fate"] == 
                                                      rownames(output_matrix)[marker+1]))
     # dead
-    output_matrix["dead",marker] <- length(which(frequency_table[i,"fate"] == "dead"))
+    output_matrix["dead",marker] <- length(which(frequency_table[stage_marker,"fate"] == "dead"))
     
 }
   
@@ -57,10 +57,11 @@ for(i in stages){
   
   marker <- which(stages == i) # reference point in matrix
   
+  stage_marker <- which(frequency_table$stage == i) # where in table is that stage?
+  
   # mean fertility of stage i
   transition_matrix[1,marker] <- transition_matrix[1,marker]+
-    sum(frequency_table[i,"fertility"])/
-    length(frequency_table[i,"fertility"])
+    mean(frequency_table[stage_marker,"fertility"], na.rm = TRUE)
 
  }
   

@@ -19,27 +19,35 @@ source("./Functions/make_matrix.R")
 
 #### FUNCTION 1 : the actual resampling and calculation ####
 
-bootstrap_tf <- function(frequency_table){
+bootstrap_tf <- function(frequency_table,
+                         stages){
   
   # first - bootstrap the data
   new_frequency_table <- frequency_table[sample(1:nrow(frequency_table), 
                                                 nrow(frequency_table),
                                                       replace = TRUE),]
   # use it to create matrix
-  boot_matrix <- make_matrix(new_frequency_table)
+  boot_matrix <- make_matrix(new_frequency_table,
+                             stages = stages)
   
   # calculate parameters and lambda
-  lambda <- as.numeric(eigen(boot_matrix)$values[1])
-  s_adult <- boot_matrix[2,2]
-  s_juvenile <- boot_matrix[2,1]
-  f_juvenile <- boot_matrix[1,2]
-  f_adult <- boot_matrix[2,1]
+
+  output <- data.frame(lambda = as.numeric(eigen(boot_matrix)$values[1]))
   
-  return(data.frame(lambda = lambda,
-                    s_juvenile = s_juvenile,
-                    s_adult = s_adult,
-                    f_juvenile = f_juvenile,
-                    f_adult = f_adult))
+  fates <- c(stages[-1], stages[length(stages)])
+  
+  for(i in stages){
+    names <- c(paste0("s_", i),
+               paste0("f_", i))
+    output$s <- boot_matrix[fates[which(stages == i)],i]
+    output$f <- boot_matrix[1,i]
+    
+    colnames(output) <- c(colnames(output)[1:(length(colnames(output))-2)],
+                          names)
+    
+  }
+  
+  return(output)
   
 }
 
@@ -48,9 +56,11 @@ bootstrap_tf <- function(frequency_table){
 #### FUNCTION 2 : summary of bootstrap ####
 
 bootstrap_summary <- function(frequency_table,
-                              iterations){
+                              iterations,
+                              stages){
   
-  boot_results <- rerun(iterations, bootstrap_tf(frequency_table)) %>%
+  boot_results <- map(1:iterations, ~bootstrap_tf(frequency_table,
+                                                  stages = stages)) %>%
     bind_rows()
   
   boot_summary <- boot_results %>% pivot_longer(everything(), names_to = "parameter",
