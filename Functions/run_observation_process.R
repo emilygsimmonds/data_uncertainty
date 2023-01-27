@@ -11,13 +11,15 @@ library(tidyverse)
 #
 # - input_data =a dataframe with column names:
 # ID (factor), Year (factor), Surv (0/1), Offspring (num), 
-# Age (num), Trait (num)
+# Stage (num), Trait (num)
 #
-# - p_adult = adult recapture probability
+# - p = vector of stage recapture probability
 # 
 # - fecundity error = TRUE/FALSE, is there error in fecundity data?
 #
-# - p_juvenile = probability of capture for juveniles
+# - phi = vector of survival probabilities by stage
+#
+# - stages = vector of stages
 
 
 ## OUTPUT = dataframe of observed data
@@ -26,33 +28,65 @@ library(tidyverse)
 
 
 run_observation_process <- function(state_data, 
-                                    p_adult, 
+                                    p, phi,
                                     fecundity_error = TRUE,
-                                    p_juvenile,
-                                    phi_adult,
-                                    phi_juvenile,
+                                    stages,
                                     seed = 1){
   
-## Calculate probability of EVER being recaptured alive
+## Calculate probability of EVER being recaptured alive in study
   
 # captured alive year 1
-year1 <- dbinom(1, 1, p_juvenile) # probability of initial capture at 1 year
+year1 <- dbinom(1, 1, p[1]) # probability of initial capture at 1 year
 
 # not captured year 1 but captured year 2
-year2 <- prod(dbinom(0, 1, p_juvenile),
-              dbinom(1, 1, (p_adult*phi_juvenile))) 
+year2 <- prod(dbinom(0, 1, p[1]),
+              dbinom(1, 1, (p[2]*phi[1]))) 
 # probability of surviving to year 2 and capture
 
 # not captured year 1 or 2 but captured year 3-5
-year3 <- prod(dbinom(0, 1, p_juvenile),
-              dbinom(0, 1, (p_adult*phi_juvenile)),
-              sum(dbinom(1:3, 3, (p_adult*phi_adult)))) # probability of surviving beyond year 2 and capture
+if(length(stages == 2)){
+  year3 <- prod(dbinom(0, 1, p[1]),
+              dbinom(0, 1, (p[2]*phi[1])),
+              sum(dbinom(1:3, 3, (p[2]*phi[2]))))
+# probability of surviving beyond year 2 and capture
+}
+if(length(stages == 3)){
+  # not captured year 1 or 2 but captured year 3
+  year3 <- prod(dbinom(0, 1, p[1]),
+                dbinom(0, 1, (p[2]*phi[1])),
+                dbinom(1, 1, (p[3]*phi[2])))
+  # not captured year 1,2,3 but captured year 4 or 5
+  year4 <- prod(dbinom(0, 1, p[1]),
+                dbinom(0, 1, (p[2]*phi[1])),
+                dbinom(0, 1, (p[3]*phi[2])),
+                sum(dbinom(1:2, 3, (p[3]*phi[3]))))  
+  year3 <- sum(year3, year4)
+}
+if(length(stages == 4)){
+  # not captured year 1 or 2 but captured year 3
+  year3 <- prod(dbinom(0, 1, p[1]),
+                dbinom(0, 1, (p[2]*phi[1])),
+                dbinom(1, 1, (p[3]*phi[2])))
+  # not captured year 1,2,3 but captured year 4
+  year4 <- prod(dbinom(0, 1, p[1]),
+                dbinom(0, 1, (p[2]*phi[1])),
+                dbinom(0, 1, (p[3]*phi[2])),
+                dbinom(1, 1, (p[4]*phi[3])))  
+  # not captured year 1,2,3 but captured year 4 or 5
+  year5 <- prod(dbinom(0, 1, p[1]),
+                dbinom(0, 1, (p[2]*phi[1])),
+                dbinom(0, 1, (p[3]*phi[2])),
+                dbinom(0, 1, (p[4]*phi[3])),
+                sum(dbinom(1, 1, (p[4]*phi[4])))) 
+  year3 <- sum(year3, year4, year5)
+}
+
 
 total_prob <- sum(year1, year2, year3)   
 
 # combine the recapture probabilities into a vector
-recapture <- c(p_juvenile, p_adult)
-names(recapture) <- c("juvenile", "adult")
+recapture <- p
+names(recapture) <- stages
   
 # fill in recapture probabilities
 # as survival is "did they survive until next year?" it is sort of lagged

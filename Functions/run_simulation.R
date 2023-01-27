@@ -47,7 +47,8 @@ for(i in start_i:end_i){
 
 ## Edit the previously output data to be new input data
 input_data <- process_input_data(output_data = input_data_old,
-                                   i = i, IDs = IDs)
+                                   i = i, IDs = IDs,
+                                 stages = stages)
   
 ## Take the input data and apply the survival and reproduction functions
   
@@ -56,7 +57,8 @@ output_data <- input_data %>%
                     stages = stages, 
                     inc_trait = inc_trait,
                     defined_seed = defined_seed, i = i) %>%
-  reproduction_function(parameters = parameters, stages = stages,
+  reproduction_function(parameters = parameters, 
+                        stages = stages,
                         inc_trait = inc_trait,
                         defined_seed = defined_seed, i = i)
   

@@ -35,22 +35,20 @@ initial_survival[j] <- dunif(0, 1)
 # reset 'dead' to 0
 initial_survival[stage_length] <- 0
 
-for(j in 1:(stage_length-1)){
+
 # matrix of transitions from juv, to adult, to dead (STATE)
 # the probabilities should be the probability of being any stage
 # STATES = alive juv 1, alive adult 2-5, dead 3/4/5/6
 
-transition[j, j] <- 0 # Pr(juv alive t -> juv alive t+1)
-transition[1, 2] <- mean_phi_juv # Pr(juv alive t -> adult alive t+1)
-transition[1, 3] <- 1-mean_phi_juv # Pr(juv alive t -> dead t+1)
+transition[1, 1] <- 0 # Pr(juv alive t -> juv alive t+1)
+transition[1, 2] <- mean_phi[1] # Pr(juv alive t -> adult alive t+1)
+transition[1, 3] <- 1-mean_phi[1]# Pr(juv alive t -> dead t+1)
 transition[2, 1] <- 0 # Pr(adult alive t -> juv alive t+1)
-transition[2, 2] <- mean_phi_adult # Pr(adult alive t -> adult alive t+1)
-transition[2, 3] <- 1 - mean_phi_adult # Pr(adult alive t -> dead t+1)
+transition[2, 2] <- mean_phi[2] # Pr(adult alive t -> adult alive t+1)
+transition[2, 3] <- 1 - mean_phi[2] # Pr(adult alive t -> dead t+1)
 transition[3, 1] <- 0 # Pr(dead t -> juvenile alive t+1)
 transition[3, 2] <- 0 # Pr(dead t -> adult alive t+1)
 transition[3, 3] <- 1 # Pr(dead t -> dead t+1)
-
-}
 
 # observation matrix (captures recapture probability)
 # OBS =  alive juv 1, alive adult 2, not detected 3
@@ -59,12 +57,12 @@ transition[3, 3] <- 1 # Pr(dead t -> dead t+1)
 # row 3 = dead
 
 # column 1 = observed juv, column 2 = observed adult, column 3 not detected
-observations[1, 1] <- mean_p_juv # Pr(juv alive t and detected t)
+observations[1, 1] <- mean_p[1] # Pr(juv alive t and detected t)
 observations[1, 2] <- 0 # Pr(juv alive t and detected as adult t)
-observations[1, 3] <- 1 - mean_p_juv # Pr(juv alive t but not detected t)
+observations[1, 3] <- 1 - mean_p[1] # Pr(juv alive t but not detected t)
 observations[2, 1] <- 0 # Pr(adult alive t but detected as juv t)
-observations[2, 2] <- mean_p_adult # Pr(adult alive t and detected t)
-observations[2, 3] <- 1 - mean_p_adult # Pr(adult alive t and not detected t)
+observations[2, 2] <- mean_p[2] # Pr(adult alive t and detected t)
+observations[2, 3] <- 1 - mean_p[2] # Pr(adult alive t and not detected t)
 observations[3, 1] <- 0 # Pr(dead t and detected as juvenile t)
 observations[3, 2] <- 0 # Pr(dead t and detected as adult t)
 observations[3, 3] <- 1 # Pr(dead t and not detected t)
@@ -116,8 +114,8 @@ mean_fecundity_adult <- exp(alpha + beta_age) # fecundity for adults
 
 transition_matrix[1,1] <- mean_fecundity_juv
 transition_matrix[1,2] <- mean_fecundity_adult # fecundity for adults                           
-transition_matrix[2,1] <- mean_phi_juv # juvenile survival
-transition_matrix[2,2] <- mean_phi_adult # adult survival
+transition_matrix[2,1] <- mean_phi[1] # juvenile survival
+transition_matrix[2,2] <- mean_phi[2] # adult survival
 
 #-------------------------------------------------------------------------------
 ## Derived quantities MPM

@@ -368,6 +368,7 @@ test3 # ALL CORRECT 05.07.22 + 09.22
 
 
 ################################################################################
+
 #### Process input data function ####
 
 # aim of function is to take formatted data for all years

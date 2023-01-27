@@ -30,8 +30,7 @@
 reproduction_function <- function(input_data, 
                                   parameters = matrix(data = c(0.5, 0.5, 0.3, 0.7),
                                                       nrow = 2, byrow = TRUE), 
-                                  stages = c("juvenile", 
-                                             "adult"),
+                                  stages,
                               inc_trait = FALSE,
                               defined_seed = NULL, i) {
   

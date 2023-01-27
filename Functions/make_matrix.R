@@ -23,36 +23,48 @@ make_matrix <- function(frequency_table,
   # want to fill in a table with absolute numbers of transitions
   
   # first set up blank matrix
-  output_matrix <- matrix(data = rep(0,9), nrow = length(stages)+1,
+  output_matrix <- matrix(data = rep(0, (length(stages)+1)^2), 
+                          nrow = length(stages)+1,
                           ncol = length(stages)+1)
   rownames(output_matrix) <- c(stages, "dead")
   colnames(output_matrix) <- c(stages, "dead")
   
-  # now fill in each cell
-  stage1 <- which(frequency_table$stage == stages[1])
-  stage2 <- which(frequency_table$stage == stages[2])
+  # now fill in each cell: loop across the stages
   
-  # any stage1-stage1 stasis
-  output_matrix[1,1] <-  length(which(frequency_table[stage1,"fate"] == stages[1]))
-  # survival of stage1 to stage2
-  output_matrix[2,1] <- length(which(frequency_table[stage1,"fate"] != "dead"))
-  # survival of stage2
-  output_matrix[2,2] <- length(which(frequency_table[stage2,"fate"] != "dead"))
-  # dead - only overwrite those that should not be 0
-  output_matrix[3,1] <- length(which(frequency_table[stage1,"fate"] == "dead"))
-  output_matrix[3,2] <- length(which(frequency_table[stage2,"fate"] == "dead"))
+for(i in stages){
+    
+    marker <- which(stages == i) # reference point in matrix
+    
+    stage_marker <- which(frequency_table$stage == i) # where in table is that stage?
+    
+    # any stasis
+    output_matrix[marker,marker] <- length(which(frequency_table[stage_marker,"fate"] == i))
+    # survival to next stage
+    output_matrix[marker+1,marker] <- length(which(frequency_table[stage_marker,"fate"] == 
+                                                     rownames(output_matrix)[marker+1]))
+    # dead
+    output_matrix["dead",marker] <- length(which(frequency_table[i,"fate"] == "dead"))
+    
+}
   
   # now calculate proportions
-  transition_matrix <- prop.table(output_matrix, 2)
+  transition_matrix <- prop.table(output_matrix, 2)[-(length(stages)+1),
+                                                    -(length(stages)+1)]
   
-  # mean fertility of stage1
-  transition_matrix[1,1] <- transition_matrix[1,1]+sum(frequency_table[stage1,"juvenile"])/
-    length(frequency_table[stage1,"juvenile"])
-  # fertility of stage2
-  transition_matrix[1,2] <- sum(frequency_table[stage2,"juvenile"])/
-    length(frequency_table[stage2,"juvenile"])
+  # then loop for fertility
+  
+for(i in stages){
+  
+  marker <- which(stages == i) # reference point in matrix
+  
+  # mean fertility of stage i
+  transition_matrix[1,marker] <- transition_matrix[1,marker]+
+    sum(frequency_table[i,"fertility"])/
+    length(frequency_table[i,"fertility"])
+
+ }
   
 # return transition matrix - dead column and row
   
-  return(transition_matrix[-3,-3])
+  return(transition_matrix)
 }

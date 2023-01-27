@@ -6,7 +6,7 @@
 #
 # - output_data =a dataframe with column names:
 # ID (factor), Year (factor), Surv (0/1), Recap (0/1), Offspring (num), 
-# Age (num), Trait (num)
+# Stage (num), Trait (num)
 #
 # - i = index for year
 #
@@ -17,21 +17,26 @@
 #### FUNCTION ####
 
 process_input_data <- function(output_data, 
-                             i, IDs) {
+                             i, IDs,
+                             stages) {
   
 ## Take the previous output data and clean up ready to be input data
   
 ## Create new data frame for the next time step
   
-# remove all those with surv = 0 and increase age by 1
+# remove all those with surv = 0 and increase stage by 1, unless adult
 # restrict to the focal year
   
 input_data_new <- output_data %>% filter(Surv == 1,
                                          Year == i-1) %>%
-    mutate(Stage = "adult",
-           Year = Year + 1)
+    mutate(Year = Year + 1)
+
+# loop to change stages, except for 'adults'
+for(j in stages[(length(stages)-1):1]){
+  input_data_new$Stage[input_data_new$Stage == j] <- stages[which(stages == j)+1]
+}
   
-# add new individuals based on offspring numbers - all with age = 1
+# add new individuals based on offspring numbers - all with stage = juvenile
 
 # marker so only consider focal year
 marker <- which(output_data$Year == i-1)

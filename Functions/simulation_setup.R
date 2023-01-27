@@ -37,8 +37,12 @@ set.seed(i)
 Offspring <- rpois(start_size, parameter_matrix[1, Stage])
 
 
+
 set.seed(i) 
-Surv <- rbinom(start_size, 1, prob = parameter_matrix[2, Stage])
+# as there will be no two survival elements per column - sum them
+# this way you can select by stage regardless of how many stages
+Surv <- rbinom(start_size, 1, 
+               prob = sum(parameter_matrix[-1, Stage]))
 
 set.seed(i)
 input_data <- data.frame(ID = sample(1:start_size, start_size, replace = FALSE),

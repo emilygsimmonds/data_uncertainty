@@ -13,54 +13,37 @@
 
 summary_summary <- function(results,
                             true_parameters,
+                            stages,
                             i){
   
-# output rows: lambda, stable_juvenile, stable_adult,
-#              recapture_juvenile, recapture_adult, 
-#              reproduction_juvenile, reproduction_adult,
-#              survival_juvenile, survival_adult
+###### CHECK ######
+# names in true_parameters match those in results
+
+if(length(which(true_parameters$parameter %in% rownames(results) == FALSE)) > 0){
+  stop("parameter names not found in results")
+}
   
-output <- data.frame(parameter = c("lambda", "stable_juvenile",
-                                   "stable_adult", "recapture_juvenile", 
-                                   "recapture_adult", "reproduction_juvenile",
-                                   "reproduction_adult", "survival_juvenile", 
-                                   "survival_adult"),
-  true = c(filter(true_parameters, parameter == "lambda")$value,
-              filter(true_parameters, parameter == "stable_juvenile")$value,
-              filter(true_parameters, parameter == "stable_adult")$value,
-              filter(true_parameters, parameter == "recapture_juvenile")$value,
-              filter(true_parameters, parameter == "recapture_adult")$value,
-              filter(true_parameters, parameter == "reproduction_juvenile")$value,
-              filter(true_parameters, parameter == "reproduction_adult")$value,
-              filter(true_parameters, parameter == "survival_juvenile")$value,
-              filter(true_parameters, parameter == "survival_adult")$value),
-     estimated = c(results["lambda", "mean"],
-                   results["size_distribution[1]", "mean"],
-                   results["size_distribution[2]", "mean"],
-                   results["mean_p_juv", "mean"],
-                   results["mean_p_adult", "mean"],
-                   results["transition_matrix[1, 1]", "mean"],
-                   results["transition_matrix[1, 2]", "mean"],
-                   results["mean_phi_juv", "mean"],
-                   results["mean_phi_adult", "mean"]),
-     CI_lower = c(results["lambda", "2.5%"],
-                  results["size_distribution[1]", "2.5%"],
-                  results["size_distribution[2]", "2.5%"],
-                  results["mean_p_juv", "2.5%"],
-                  results["mean_p_adult", "2.5%"],
-                  results["transition_matrix[1, 1]", "2.5%"],
-                  results["transition_matrix[1, 2]", "2.5%"],
-                  results["mean_phi_juv", "2.5%"],
-                  results["mean_phi_adult", "2.5%"]),
-     CI_upper = c(results["lambda", "97.5%"],
-                  results["size_distribution[1]", "97.5%"],
-                  results["size_distribution[2]", "97.5%"],
-                  results["mean_p_juv", "97.5%"],
-                  results["mean_p_adult", "97.5%"],
-                  results["transition_matrix[1, 1]", "97.5%"],
-                  results["transition_matrix[1, 2]", "97.5%"],
-                  results["mean_phi_juv", "97.5%"],
-                  results["mean_phi_adult", "97.5%"]))
+# output rows: lambda,
+#              recapture - all stages
+#              reproduction - all stages
+#              survival - all stages
+  
+# to get names for parameters use loop
+  
+parameter_names <- c("lambda")
+
+for(j in stages){
+  parameter_names <- c(parameter_names,
+                       paste0("recapture_", j),
+                       paste0("reproduction_", j),
+                       paste0("survival_", j))
+}
+  
+output <- data.frame(parameter = parameter_name,
+  true = c(filter(true_parameters, parameter == parameter_name)$value),
+  estimated = c(filter(results, rownames(results) == parameter_name)$mean),
+  CI_lower = c(filter(results, rownames(results) == parameter_name)$"2.5%"),
+  CI_upper = c(filter(results, rownames(results) == parameter_name)$"97.5%"))
   
 # Then calculate error, CI width, and if parameter in CI
   

@@ -235,5 +235,10 @@ make_matrix(tf_table_state)
 
 #### run bootstrap to get CIs for vital rates and lambda
 
+# for state
+boot_results <- bootstrap_summary(tf_table_state, 
+                                   iterations = 2000)
+
+
 
 

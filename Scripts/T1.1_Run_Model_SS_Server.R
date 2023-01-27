@@ -32,19 +32,6 @@ load("./Data files/baseline_simulation_observations.RData")
 
 ################################################################################
 
-#### Define parameters to track ####
-
-parameters_to_save <- c("mean_phi_adult",
-                        "mean_phi_juv",
-                        "mean_p_juv",
-                        "mean_p_adult",
-                        "alpha",
-                        "beta_age",
-                        "transition_matrix",
-                        "lambda", 
-                        "size_distribution"
-)
-
 #### Edit data ####
 
 # take all of the simulated datasets and edit into model inputs
@@ -74,7 +61,7 @@ output_baseline_all <- map2(.x = model_inputs,
              data = .x$data_input,
              constants = .x$constants,
              inits = .x$inits,
-             monitors = parameters_to_save,
+             monitors = .x$parameters_to_save,
              niter = n_iter,
              nburnin = n_burnin,
              nchains = n_chains)

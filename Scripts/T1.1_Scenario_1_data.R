@@ -100,7 +100,7 @@ x <- output_data %>% group_by(Year) %>% summarise(count = n(),
 
 ################################################################################
 
-#### SIMULATIONS ####
+#### SIMULATIONS 2x2 ####
 
 #### Import matrices ####
 
