@@ -6,9 +6,9 @@
 
 # load packages
 
-library(tidyverse)
-library(nimble)
-library(MCMCvis)
+#library(tidyverse)
+#library(nimble)
+#library(MCMCvis)
 
 ################################################################################
 
@@ -25,16 +25,14 @@ for(j in 1:stage_length){
 mean_phi[j] ~ dunif(0, 1)
 mean_p[j] ~ dunif(0, 1)
 
-## parameters
-
-# vector of initial state probabilities (juv surv, adult stages, death)
-initial_survival[j] <- dunif(0, 1)
-
 }
-
-# reset 'dead' to 0
-initial_survival[stage_length] <- 0
-
+  
+## parameters
+  
+# set initial survivals
+initial_survival[1] <- 0.5
+initial_survival[2] <- 0.5
+initial_survival[3] <- 0
 
 # matrix of transitions from juv, to adult, to dead (STATE)
 # the probabilities should be the probability of being any stage
@@ -123,8 +121,15 @@ transition_matrix[2,2] <- mean_phi[2] # adult survival
 # lambda
 lambda <- nimEigen(transition_matrix[1:2,1:2])$values[1]
 
-# stable size distribution
-size_distribution[1:2] <- eigen(transition_matrix[1:2,1:2])$vectors[,1]
+## Final parameters
+reproduction_juvenile <- mean_fecundity_juv
+reproduction_adult <- mean_fecundity_adult # fecundity for adults 
+
+recapture_juvenile <- mean_p[1]
+recapture_adult <- mean_p[2]
+
+survival_juvenile <- mean_phi[1]
+survival_adult <- mean_phi[2]
 
 })
 

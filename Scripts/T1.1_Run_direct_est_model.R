@@ -20,15 +20,17 @@ source("./Functions/make_matrix.R")
 source("./Functions/bootstrap_tf.R")
 
 # load data
-load("./Data files/baseline_simulation_statemat1.RData")
+load("./Data files/baseline_observations_statemat1.RData")
 
 ################################################################################
 
 #### construct a transition frequency table
 
 # for the state
-tf_table_state <- create_transition_frequency_table(baseline_state[[5]],
-                  max_year = max(baseline_state[[5]]$Year))
+tf_tables <- map(.x = baseline_observations, 
+                 ~{create_transition_frequency_table(.x,
+                  max_year = max(.x$Year),
+                  stages = c("juvenile", "adult")})
 
 #### run bootstrap to get CIs for vital rates and lambda
 
