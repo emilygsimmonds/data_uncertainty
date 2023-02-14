@@ -58,7 +58,28 @@ matrices_22 <- arrange(summary_matrices, sum_fecundity)$matrix_number[seq(1,10,2
 
 output_matrices <- matrices_data[matrices_22]
 
-save(output_matrices, file = "twobytwo_matrices.RData")
+save(output_matrices, file = "./Data files/2x2/twobytwo_matrices.RData")
 
 ################################################################################
 
+#### make 3x3 and 5x5 matrices ####
+
+# source functions
+source("./Functions/expand_matrix.R")
+
+# load 2x2 matrices
+load("./Data files/2x2/twobytwo_matrices.RData")
+
+# make 3x3 matrices
+matrices_33 <- map(.x = output_matrices, 
+                   .f = expand_matrix,
+                   size = 3)
+
+save(matrices_33, file = "./Data files/3x3/threebythree_matrices.RData")
+
+# make 5x5 matrices
+matrices_55 <- map(.x = output_matrices, 
+                   .f = expand_matrix,
+                   size = 5)
+
+save(matrices_55, file = "./Data files/5x5/fivebyfive_matrices.RData")

@@ -104,7 +104,7 @@ x <- output_data %>% group_by(Year) %>% summarise(count = n(),
 
 #### Import matrices ####
 
-load("./Data files/twobytwo_matrices.RData")
+load("./Data files/2x2/twobytwo_matrices.RData")
 
 # name each matrix
 
@@ -117,24 +117,82 @@ names(output_matrices) <- c("mat1",
 #### Create simulated data ####
 
 create_scenario_data(parameters = output_matrices[["mat1"]],
-                     name = "mat1", recapture_a = 0.8, recapture_j = 1,
-                    stages = c("juvenile", "adult")) 
+                     name = "mat1", recapture = c(1,0.8),
+                     phi = c(output_matrices[["mat1"]][2,]),
+                    stages = c("juvenile", "adult"),
+                    repro_stages = c("juvenile", "adult"),
+                    location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat2"]],
-                     name = "mat2", recapture_a = 0.8, recapture_j = 1,
-                     stages = c("juvenile", "adult")) 
+                     name = "mat2", recapture = c(1,0.8),
+                     phi = c(output_matrices[["mat2"]][2,]),
+                     stages = c("juvenile", "adult"),
+                     repro_stages = c("juvenile", "adult"),
+                     location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat3"]],
-                     name = "mat3", recapture_a = 0.8, recapture_j = 1,
-                     stages = c("juvenile", "adult")) 
+                     name = "mat3", recapture = c(1,0.8),
+                     phi = c(output_matrices[["mat3"]][2,]),
+                     stages = c("juvenile", "adult"),
+                     repro_stages = c("juvenile", "adult"),
+                     location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat4"]],
-                     name = "mat4", recapture_a = 0.8, recapture_j = 1,
-                     stages = c("juvenile", "adult")) 
+                     name = "mat4", recapture = c(1,0.8),
+                     phi = c(output_matrices[["mat4"]][2,]),
+                     stages = c("juvenile", "adult"),
+                     repro_stages = c("juvenile", "adult"),
+                     location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat5"]],
-                     name = "mat5", recapture_a = 0.8, recapture_j = 1,
-                     stages = c("juvenile", "adult")) 
+                     name = "mat5", recapture = c(1,0.8),
+                     phi = c(output_matrices[["mat5"]][2,]),
+                     stages = c("juvenile", "adult"),
+                     repro_stages = c("juvenile", "adult"),
+                     location = "./Data files/2x2/") 
+
+################################################################################
+
+#### Split simulations for faster programming ####
 
 
+#### source function
 
+source("./Functions/split_simulations_function.R")
+
+# get filenames
+
+filenames <- list.files("./Data files/2x2", 
+                        pattern = "baseline_simulation_observations",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/2x2/")
+
+
+filenames <- list.files("./Data files/2x2", 
+                        pattern = "random_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/2x2/")
+
+
+filenames <- list.files("./Data files/2x2", 
+                        pattern = "adult_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/2x2/")
+
+
+filenames <- list.files("./Data files/2x2", 
+                        pattern = "juvenile_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/2x2/")

@@ -4,8 +4,11 @@
 
 ## INPUT :
 #
-# - parameter matrix and max age and name of scenario
-# - juvenile and adult recapture rates
+# - parameter matrix and name of scenario
+# - vector of stages
+# - vector of recapture rates
+# - vector of survival rates
+# - vector of reproductive stages
 
 ## OUTPUT = saves out simulated datasets
 
@@ -18,7 +21,10 @@ source("./Functions/run_observation_process.R")
 create_scenario_data <- function(parameters,
                                  stages, 
                                  name,
-                                 recapture_a, recapture_j){
+                                 recapture,
+                                 phi,
+                                 repro_stages,
+                                 location){
   
 #### Create simulated data ####
 
@@ -34,7 +40,7 @@ input_data <- map(.x = i, ~{simulation_setup(parameter_matrix = parameters,
   
 # set up recapture probabilities
 
-recapture <- recapture_a
+recapture <- recapture
 
 # set up IDs
 
@@ -60,24 +66,23 @@ baseline_state <- map2(.x = seeds,
 
 # save
 save(baseline_state, 
-     file = paste0("./Data files/baseline_simulation_state", name, ".RData"))
+     file = paste0(location, length(stages), "baseline_simulation_state", name, ".RData"))
 
 ### ADD IN OBSERVATION ERROR INC. COLUMN OF OBSERVATION ERROR IN FECUNDITY
 # can be removed at modelling stage
 
 baseline_observations <- map2(.x = baseline_state,
                               .y = seeds, ~{run_observation_process(.x,
-                              p_adult = recapture,
-                              p_juvenile = recapture_j,
+                              p = recapture,
                               fecundity_error = TRUE,
-                              phi_adult = parameters[2,2],
-                              phi_juvenile = parameters[2,1],
-                              seed = .y)
+                              phi = phi,
+                              seed = .y,
+                              stages = stages)
                               })
 
 # save
 save(baseline_observations, 
-     file = paste0("./Data files/baseline_simulation_observations", name, ".RData"))
+     file = paste0(location, length(stages), "baseline_simulation_observations", name, ".RData"))
 
 # randomly add 0s to the offspring column 10%
 # apply it to observations file as need recapture to be < 1
@@ -97,14 +102,14 @@ length(which(baseline_observations[[1]]$Offspring -
 
 # save
 save(random_missing_reproduction, 
-file = paste0("./Data files/random_missing_simulation", name, ".RData"))
+file = paste0(location, length(stages), "random_missing_simulation", name, ".RData"))
 
 #### Simulation 2: missing reproductive events (not at random - bias) ####
-# miss juveniles
+# miss lowest breeding class
 
 # add 0s to juveniles in the offspring column 50%
 juvenile_missing_reproduction <- map(.x = baseline_observations, ~{
-  marker1 <- which(.x$Age == 1)
+  marker1 <- which(.x$Stage == repro_stages[1])
   set.seed(1)
   marker2 <- sample(marker1, length(marker1)/50)
   .x <- .x %>% mutate(Offspring_obs = Offspring)
@@ -114,11 +119,11 @@ juvenile_missing_reproduction <- map(.x = baseline_observations, ~{
 
 # save
 save(juvenile_missing_reproduction, 
-file = paste0("./Data files/juvenile_missing_simulation", name, ".RData"))
+file = paste0(location, length(stages), "juvenile_missing_simulation", name, ".RData"))
 
 # miss adults
 adult_missing_reproduction <- map(.x = baseline_observations, ~{
-  marker1 <- which(.x$Age > 1)
+  marker1 <- which(.x$Stage %in% repro_stages[-1])
   set.seed(1)
   marker2 <- sample(marker1, length(marker1)/50)
   .x <- .x %>% mutate(Offspring_obs = Offspring)
@@ -129,6 +134,6 @@ adult_missing_reproduction <- map(.x = baseline_observations, ~{
 
 # save
 save(adult_missing_reproduction, 
-     file = paste0("./Data files/adult_missing_simulation", name, ".RData"))
+     file = paste0(location, length(stages), "adult_missing_simulation", name, ".RData"))
 
 }

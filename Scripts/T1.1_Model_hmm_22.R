@@ -22,8 +22,8 @@ Model_SS_hmm <- nimbleCode({
 # but within a stage-size loop
 
 for(j in 1:stage_length){
-mean_phi[j] ~ dunif(0, 1)
-mean_p[j] ~ dunif(0, 1)
+mean_phi[j] ~ dunif(0, 1) # uninformative prior
+mean_p[j] ~ dunif(0, 1) 
 
 }
   

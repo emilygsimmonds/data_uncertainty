@@ -1,10 +1,6 @@
-#### T1.1: Data simulation for scenario 2: different sample sizes #
+#### T1.1: Data simulation for scenario 2: different matrix sizes #
 
 ################################################################################
-# This script generates data using different sampling techniques
-# e.g. just taking a single year of data, only part of population each year (50%)
-# or 50% from a single year. Mimics real data collection methods. 
-#
 #
 # Features of the population:
 # - female-based (reproduction is the number of juv. females)
@@ -24,152 +20,408 @@
 #
 ################################################################################
 
-
-################################################################################
-
 #### Set up ####
 
 # load packages
 
 library(tidyverse)
-library(HMMpa)
 
 # load any data
 
-load("./Data files/baseline_simulation_observations.RData")
+# source necessary functions
+source("./Functions/run_simulation.R")
+source("./Functions/run_observation_process.R")
+source("./Functions/simulation_setup.R")
+source("./Functions/create_scenario_data.R")
 
-# source functions
+#### Set up simulation parameters TEST ####
 
-source("./Functions/parametric_bootstrap_function.R")
+# set up i
 
-#### Simulation 3: reduced sample ####
-
-# these are direct calculations so need to save out
-output_reduced_sample <- data.frame(scenario = rep(1:100, 4),
-                                    sample = rep(c("all",
-                                                   "50%",
-                                                   "1year",
-                                                   "50%1year"), each = 100),
-
-                                    CI_lower = NA,
-                                    CI_upper = NA)
-
-# add means and variances
 i <- as.list(1:100)
 
-# function to calculate means and variances
-output_reduced_sample_means <- map2_df(.x = baseline_observations,
-                                 .y = i, ~{
-                                   
-# define datasets for each scenario to ensure mean and var calc on same data                                   
-set.seed(.y)
-half <- sample(filter(.x, Age > 1)$Offspring_obs, 
-               length(which(.x$Age > 1))/2)
-set.seed(.y)
-one_year <- filter(.x, Age > 1 &
-                     Year == sample(1:10, 1))$Offspring_obs
-set.seed(.y)
-marker <- sample(1:10, 1)
-set.seed(.y)
-half_one_year <- sample(filter(.x, Age > 1 &
-                                 Year == marker)$Offspring_obs,
-                        length(filter(.x, Age > 1 &
-                                 Year == marker)$Offspring_obs)/2)
-                                   
-mean_adult <- c(mean(filter(.x, Age > 1)$Offspring_obs),
-                mean(half),
-                mean(one_year),
-                mean(half_one_year))
+parameter_matrix <- matrix(data = c(0, 0.5, 0.5, 
+                              0.3, 0, 0,
+                              0, 0.7, 0.7),
+                     nrow = 3, byrow = TRUE)
 
-var_adult <- c(var(filter(.x, Age > 1)$Offspring_obs),
-                var(half),
-                var(one_year),
-                var(half_one_year))
-
-# define datasets for each scenario to ensure mean and var calc on same data                                   
-set.seed(.y)
-half <- sample(filter(.x, Age == 1)$Offspring_obs, 
-               length(which(.x$Age == 1))/2)
-set.seed(.y)
-one_year <- filter(.x, Age == 1 &
-                     Year == sample(1:10, 1))$Offspring_obs
-set.seed(.y)
-half_one_year <- sample(filter(.x, Age == 1 &
-                                 Year == marker)$Offspring_obs,
-                        length(filter(.x, Age == 1 &
-                                 Year == marker)$Offspring_obs)/2)
-
-mean_juvenile <- c(mean(filter(.x, Age == 1)$Offspring_obs),
-                mean(half),
-                mean(one_year),
-                mean(half_one_year))
-
-var_juvenile <- c(var(filter(.x, Age == 1)$Offspring_obs),
-               var(half),
-               var(one_year),
-               var(half_one_year))
-
-return(data.frame(sample = c("all", "50%", 
-                             "1year", "50%1year"),
-                  mean_adult = mean_adult,
-                  mean_juvenile = mean_juvenile,
-                  var_adult = var_adult,
-                  var_juvenile = var_juvenile,
-                  scenario = .y))
+input_data <- map(.x = i, ~{simulation_setup(parameter_matrix = parameter_matrix,
+                                             i = .x,
+                                             stages = c("juvenile",
+                                                        "subadult",
+                                                        "adult"))})
 
 
-})
+# set up recapture probabilities
+
+recapture <- 0.8
+
+# set up IDs
+
+IDs <- 101:200000000
+
+#### TEST 3x3  ####
+
+# run state simulation
+output_data <- run_simulation_state(input_data_old = input_data[[1]], 
+                                    parameters = parameter_matrix, 
+                                    stages = c("juvenile",
+                                               "subadult",
+                                               "adult"),
+                                    inc_trait = FALSE,
+                                    start_i = 2, end_i = 5, IDs = IDs)
+
+# checks
+mean(output_data$Offspring[output_data$Stage == "juvenile"])
+mean(output_data$Offspring[output_data$Stage == "subadult"])
+mean(output_data$Offspring[output_data$Stage == "adult"])
+mean(output_data$Surv[output_data$Stage == "juvenile"])
+mean(output_data$Surv[output_data$Stage == "subadult"])
+mean(output_data$Surv[output_data$Stage == "adult"])
+
+# then observation process
+observation <- run_observation_process(output_data, 
+                                       p = c(1,0.8,0.8),
+                                       phi = c(0.3,0.7,0.7),
+                                       fecundity_error = TRUE,
+                                       seed = 2,
+                                       stages = c("juvenile",
+                                                  "subadult",
+                                                  "adult"))
+
+# number of juveniles = same
+
+length(which(output_data$Stage == "juvenile"))
+
+length(which(observation$Stage == "juvenile"))
+
+# number of adults = reduced to 80%
+
+length(which(observation$Stage == "subadult"))/
+  length(which(output_data$Stage == "subadult"))
+
+length(which(observation$Stage == "adult"))/
+  length(which(output_data$Stage == "adult"))
+
+# check offspring no = different
+observation$Offspring - observation$Offspring_obs
+
+save(observation, file = "./Data files/test.RData")
+
+x <- output_data %>% group_by(Year) %>% summarise(count = n(),
+                                                  repro = sum(Offspring))
+
+#### TEST 5x5  ####
+
+# set up i
+
+i <- as.list(1:100)
+
+parameter_matrix <- matrix(data = c(0, 0.5, 0.5, 0.5, 0.5, 
+                                    0.3, 0, 0, 0, 0,
+                                    0, 0.7, 0, 0, 0,
+                                    0, 0, 0.7, 0, 0,
+                                    0, 0, 0, 0.7, 0.7),
+                           nrow = 5, byrow = TRUE)
+
+input_data <- map(.x = i, ~{simulation_setup(parameter_matrix = parameter_matrix,
+                                             i = .x,
+                                             stages = c("juvenile",
+                                                        "subadult",
+                                                        "adult1",
+                                                        "adult2",
+                                                        "adult3"))})
 
 
-# then combine into the output dataframe
-output_reduced_sample <- inner_join(output_reduced_sample,
-           output_reduced_sample_means, 
-           by = c("scenario", "sample"))
+# set up recapture probabilities
 
+recapture <- 0.8
 
-# save
-save(output_reduced_sample, 
-     file = "./Data files/reduced_sample_no_CI.RData")
+# set up IDs
+
+IDs <- 101:200000000
+
+# run state simulation
+output_data <- run_simulation_state(input_data_old = input_data[[1]], 
+                                    parameters = parameter_matrix, 
+                                    stages = c("juvenile",
+                                               "subadult",
+                                               "adult1",
+                                               "adult2",
+                                               "adult3"),
+                                    inc_trait = FALSE,
+                                    start_i = 2, end_i = 5, IDs = IDs)
+
+# checks
+mean(output_data$Offspring[output_data$Stage == "juvenile"])
+mean(output_data$Offspring[output_data$Stage == "subadult"])
+mean(output_data$Offspring[output_data$Stage == "adult1"])
+mean(output_data$Offspring[output_data$Stage == "adult2"])
+mean(output_data$Surv[output_data$Stage == "juvenile"])
+mean(output_data$Surv[output_data$Stage == "subadult"])
+mean(output_data$Surv[output_data$Stage == "adult1"])
+
+# then observation process
+observation <- run_observation_process(output_data, 
+                                       p = c(1,0.8,0.8,0.8,0.8),
+                                       phi = c(0.3,0.7,0.7,0.7,0.7),
+                                       fecundity_error = TRUE,
+                                       seed = 2,
+                                       stages = c("juvenile",
+                                                  "subadult",
+                                                  "adult1",
+                                                  "adult2",
+                                                  "adult3"))
+
+# number of juveniles = same
+
+length(which(output_data$Stage == "juvenile"))
+
+length(which(observation$Stage == "juvenile"))
+
+# number of adults = reduced to 80%
+
+length(which(observation$Stage == "subadult"))/
+  length(which(output_data$Stage == "subadult"))
+
+length(which(observation$Stage == "adult1"))/
+  length(which(output_data$Stage == "adult1"))
+
+# check offspring no = different
+observation$Offspring - observation$Offspring_obs
 
 
 ################################################################################
 
-# run bootstrap
+#### SIMULATIONS 3x3 ####
 
-#### bootstrap ####
+#### Import matrices ####
 
-filenames <- as.list(list.files("./Data files/Baseline_results/"))
+load("./Data files/3x3/threebythree_matrices.RData")
 
-baseline_summary_results <- map(.x = filenames, ~{
-  load(paste("./Data files/Baseline_results/", .x, sep = ""))
-  summary <- MCMCsummary(model_result, round = 2)
-  return(summary)
-})
+# name each matrix
+
+names(matrices_33) <- c("mat1",
+                            "mat2",
+                            "mat3",
+                            "mat4",
+                            "mat5")
+
+#### Create simulated data ####
+
+create_scenario_data(parameters = matrices_33[["mat1"]],
+                     name = "mat1", recapture = c(1,0.8,0.8),
+                     phi = c(matrices_33[["mat1"]][2,1],
+                             matrices_33[["mat1"]][3,2],
+                             matrices_33[["mat1"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3/") 
+
+create_scenario_data(parameters = matrices_33[["mat2"]],
+                     name = "mat2", recapture = c(1,0.8,0.8),
+                     phi = c(matrices_33[["mat2"]][2,1],
+                             matrices_33[["mat2"]][3,2],
+                             matrices_33[["mat2"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3/")  
+
+create_scenario_data(parameters = matrices_33[["mat3"]],
+                     name = "mat3", recapture = c(1,0.8,0.8),
+                     phi = c(matrices_33[["mat3"]][2,1],
+                             matrices_33[["mat3"]][3,2],
+                             matrices_33[["mat3"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3/") 
+
+create_scenario_data(parameters = matrices_33[["mat4"]],
+                     name = "mat4", recapture = c(1,0.8,0.8),
+                     phi = c(matrices_33[["mat4"]][2,1],
+                             matrices_33[["mat4"]][3,2],
+                             matrices_33[["mat4"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3/") 
+
+create_scenario_data(parameters = matrices_33[["mat5"]],
+                     name = "mat5", recapture = c(1,0.8,0.8),
+                     phi = c(matrices_33[["mat5"]][2,1],
+                             matrices_33[["mat5"]][3,2],
+                             matrices_33[["mat5"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3/") 
 
 
-list_output_reduced_sample <- split(output_reduced_sample,
-                                    seq(nrow(output_reduced_sample)))
 
-##### SOME YEARS THERE ARE NO ADULTS SAMPLED: NEED TO ADD CODE TO BOOTSTRAP TO IGNORE THIS
+################################################################################
 
-results <- map2_df(.x = list_output_reduced_sample[311],
-                  .y = rep(baseline_summary_results,4)[311], ~{
-                    
-  output <- rerun(100, parametric_bootstrap_function(.x, .y)) %>%
-    bind_rows()
-  
-  summary_output <- data.frame(lower_CI_r_juv = sort(output$r_juv)[0.025*100],
-                               upper_CI_r_juv = sort(output$r_juv)[0.975*100],
-                               lower_CI_r_ad = sort(output$r_ad)[0.025*100],
-                               upper_CI_r_ad = sort(output$r_ad)[0.975*100],
-                               lower_CI_s_juv = sort(output$s_juv)[0.025*100],
-                               upper_CI_s_juv = sort(output$s_juv)[0.975*100],
-                               lower_CI_s_ad = sort(output$s_ad)[0.025*100],
-                               upper_CI_s_ad = sort(output$s_ad)[0.975*100],
-                               lower_CI_lambda = sort(output$lambda)[0.025*100],
-                               upper_CI_lambda = sort(output$lambda)[0.975*100])
-                    
-})
+#### SIMULATIONS 5x5 ####
 
-results
+#### Import matrices ####
 
+load("./Data files/5x5/fivebyfive_matrices.RData")
+
+# name each matrix
+
+names(matrices_55) <- c("mat1",
+                        "mat2",
+                        "mat3",
+                        "mat4",
+                        "mat5")
+
+#### Create simulated data ####
+
+create_scenario_data(parameters = matrices_55[["mat1"]],
+                     name = "mat1", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     phi = c(matrices_55[["mat1"]][2,1],
+                             matrices_55[["mat1"]][3,2],
+                             matrices_55[["mat1"]][4,3],
+                             matrices_55[["mat1"]][5,4],
+                             matrices_55[["mat1"]][5,5]),
+                     stages = c("juvenile", "subadult", "adult1",
+                                "adult2", "adult3"),
+                     repro_stages = c("subadult", "adult1",
+                                      "adult2", "adult3"),
+                     location = "./Data files/5x5/") 
+
+create_scenario_data(parameters = matrices_55[["mat2"]],
+                     name = "mat2", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     phi = c(matrices_55[["mat2"]][2,1],
+                             matrices_55[["mat2"]][3,2],
+                             matrices_55[["mat2"]][4,3],
+                             matrices_55[["mat2"]][5,4],
+                             matrices_55[["mat2"]][5,5]),
+                     stages = c("juvenile", "subadult", "adult1",
+                                "adult2", "adult3"),
+                     repro_stages = c("subadult", "adult1",
+                                      "adult2", "adult3"),
+                     location = "./Data files/5x5/") 
+
+create_scenario_data(parameters = matrices_55[["mat3"]],
+                     name = "mat3", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     phi = c(matrices_55[["mat3"]][2,1],
+                             matrices_55[["mat3"]][3,2],
+                             matrices_55[["mat3"]][4,3],
+                             matrices_55[["mat3"]][5,4],
+                             matrices_55[["mat3"]][5,5]),
+                     stages = c("juvenile", "subadult", "adult1",
+                                "adult2", "adult3"),
+                     repro_stages = c("subadult", "adult1",
+                                      "adult2", "adult3"),
+                     location = "./Data files/5x5/") 
+
+create_scenario_data(parameters = matrices_55[["mat4"]],
+                     name = "mat4", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     phi = c(matrices_55[["mat4"]][2,1],
+                             matrices_55[["mat4"]][3,2],
+                             matrices_55[["mat4"]][4,3],
+                             matrices_55[["mat4"]][5,4],
+                             matrices_55[["mat4"]][5,5]),
+                     stages = c("juvenile", "subadult", "adult1",
+                                "adult2", "adult3"),
+                     repro_stages = c("subadult", "adult1",
+                                      "adult2", "adult3"),
+                     location = "./Data files/5x5/") 
+
+create_scenario_data(parameters = matrices_55[["mat5"]],
+                     name = "mat5", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     phi = c(matrices_55[["mat5"]][2,1],
+                             matrices_55[["mat5"]][3,2],
+                             matrices_55[["mat5"]][4,3],
+                             matrices_55[["mat5"]][5,4],
+                             matrices_55[["mat5"]][5,5]),
+                     stages = c("juvenile", "subadult", "adult1",
+                                "adult2", "adult3"),
+                     repro_stages = c("subadult", "adult1",
+                                      "adult2", "adult3"),
+                     location = "./Data files/5x5/") 
+
+
+
+
+
+################################################################################
+
+#### Split simulations for faster programming ####
+
+
+#### source function
+
+source("./Functions/split_simulations_function.R")
+
+# get filenames
+
+filenames <- list.files("./Data files/3x3", 
+                        pattern = "baseline_simulation_observations",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/3x3/")
+
+
+filenames <- list.files("./Data files/3x3", 
+                        pattern = "radnom_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/3x3/")
+
+
+filenames <- list.files("./Data files/3x3", 
+                        pattern = "adult_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/3x3/")
+
+
+filenames <- list.files("./Data files/3x3", 
+                        pattern = "juvenile_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/3x3/")
+
+# get filenames
+
+filenames <- list.files("./Data files/5x5", 
+                        pattern = "baseline_simulation_observations",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/5x5/")
+
+
+filenames <- list.files("./Data files/5x5", 
+                        pattern = "random_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/5x5/")
+
+
+filenames <- list.files("./Data files/5x5", 
+                        pattern = "adult_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/5x5/")
+
+
+filenames <- list.files("./Data files/5x5", 
+                        pattern = "juvenile_missing_simulation",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/5x5/")

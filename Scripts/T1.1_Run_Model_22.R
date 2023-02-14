@@ -30,7 +30,7 @@ library(magrittr)
 source("./Scripts/T1.1_Model_hmm_22.R")
 
 # source functions
-source("./Functions/make_input_data_function.R")
+#source("./Functions/make_input_data_function.R")
 source("./Functions/run_model.R")
 
 # load data
@@ -44,15 +44,6 @@ filenames <- list.files("./Data files/2x2",
 
 #### Edit data ####
 
-# take all of the simulated datasets and edit into model inputs
-model_inputs <- map(.x = filenames, ~{
-  load(.x)
-  map(.x = baseline_observations,
-                    .f = make_input_data, 
-                    n_occasions = 5,
-                    fecundity_error = FALSE,
-                    stages = c("juvenile", "adult"))})
-
 #### Run set up ####
 
 n_iter <- 50000
@@ -62,20 +53,44 @@ n_chains <- 2
 #### run all baseline p_juv = 1 ####
 
 y <- as.list(1:100) # list of individual scenarios
-z <- as.list("mat1", "mat2", "mat3", "mat4", "mat5")
+z <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
-plan(multisession, workers = 4)
+plan(multisession, workers = 8)
+
+# save inputs as a dataframe for pmap and remove any models that have already run
+inputs <- data.frame(filename = unlist(filenames),
+     niter = rep(50000, 500),
+     nburnin = rep(500, 500),
+     scenario = rep(1:100, 5),
+     mat_num = rep(z, each = 100),
+     location = rep("/cluster/work/emilygs/DU/2x2/Baseline/baseline_result_", 500),
+     num_stages = rep(2, 500))
+
+# remove files that have already been run
+filenames2 <- list.files("/cluster/work/emilygs/DU/2x2/Baseline/", 
+                                      pattern = "baseline_result",
+                                      full.names = FALSE)
+
+# make a dataframe of those run
+already_run <- data.frame(scenario = parse_number(str_sub(filenames2, 1, -11)),
+                          matrix_number = str_sub(filenames2, -10, -7))
+
+# now remove them
+marker <- map2(.x = as.list(already_run$matrix_number),
+              .y = as.list(already_run$scenario), ~{
+    marker <- which(inputs$scenario == .y &
+                      inputs$mat_num == .x)
+    return(marker)
+    })
+
+inputs <- inputs[-unlist(marker),]
 
 # run as future_pmap
-future_pmap(list(inputs = unlist(model_inputs, recursive = FALSE)[1:3],
-                 niter = as.list(rep(50000, 3)),
-                 nburnin = as.list(rep(500, 3)),
-                 scenario = as.list(1:3),
-                 mat_num = as.list(rep("mat1", 3)),
-                 location = as.list(rep("./Data files/2x2/Baseline/baseline_result_", 3))), 
-                 run_model, .options = furrr_options(seed = TRUE,
+future_pmap(inputs, 
+            run_model, .options = furrr_options(seed = TRUE,
                                                 packages = c("nimble",
-                                                             "nimbleEcology")))
+                                                             "nimbleEcology",
+                                                             "tidyverse")))
 
 
 ################################################################################

@@ -15,94 +15,87 @@ library(MCMCvis)
 source("./Functions/summarise_summary_function.R")
 source("./Scripts/theme_script.R")
 
-# load results
+# load results and 'true' matrices
 
-## load these ahead of each analysis to save space
+## get filenames for all 2x2
+
+load("./Data files/2x2/twobytwo_matrices.RData")
+names(output_matrices) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
+
+filenames <- data.frame(filename = c(list.files("./Data files/2x2/a_Baseline/", 
+                                  full.names = TRUE),
+               list.files("./Data files/2x2/a_R_error/", 
+                          full.names = TRUE),
+               list.files("./Data files/2x2/a_R_missing/", 
+                          full.names = TRUE),
+               list.files("./Data files/2x2/a_A_missing/", 
+                          full.names = TRUE),
+               list.files("./Data files/2x2/a_J_missing/", 
+                          full.names = TRUE))) %>%
+  mutate(matrix_number = as.numeric(str_sub(filename, -7, -7)))
 
 ################################################################################
 
-true_parameters <- data.frame(parameter = c("reproduction_juvenile",
+true_parameters_22 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                             "reproduction_adult",
                                             "recapture_juvenile",
                                             "recapture_adult",
                                             "survival_juvenile",
                                             "survival_adult",
-                                            "lambda",
-                                            "stable_juvenile",
-                                            "stable_adult"),
-                              value = c(0.6,
-                                        0.8,
-                                        1,
-                                        0.8,
-                                        0.3,
-                                        0.4666,
-                                        1.03,
-                                        0.88,
-                                        0.47))
+                                            "lambda"), 5),
+                              value = c(output_matrices[["mat1"]][1,1],
+                                        output_matrices[["mat1"]][1,2],
+                                        1, 0.8,
+                                        output_matrices[["mat1"]][2,1],
+                                        output_matrices[["mat1"]][2,2],
+                                        as.numeric(eigen(output_matrices[["mat1"]])$values[1]),
+                                        output_matrices[["mat2"]][1,1],
+                                        output_matrices[["mat2"]][1,2],
+                                        1, 0.8,
+                                        output_matrices[["mat2"]][2,1],
+                                        output_matrices[["mat2"]][2,2],
+                                        as.numeric(eigen(output_matrices[["mat2"]])$values[1]),
+                                        output_matrices[["mat3"]][1,1],
+                                        output_matrices[["mat3"]][1,2],
+                                        1, 0.8,
+                                        output_matrices[["mat3"]][2,1],
+                                        output_matrices[["mat3"]][2,2],
+                                        as.numeric(eigen(output_matrices[["mat3"]])$values[1]),
+                                        output_matrices[["mat4"]][1,1],
+                                        output_matrices[["mat4"]][1,2],
+                                        1, 0.8,
+                                        output_matrices[["mat4"]][2,1],
+                                        output_matrices[["mat4"]][2,2],
+                                        as.numeric(eigen(output_matrices[["mat4"]])$values[1]),
+                                        output_matrices[["mat5"]][1,1],
+                                        output_matrices[["mat5"]][1,2],
+                                        1, 0.8,
+                                        output_matrices[["mat5"]][2,1],
+                                        output_matrices[["mat5"]][2,2],
+                                        as.numeric(eigen(output_matrices[["mat5"]])$values[1])),
+                              matrix_number = rep(1:5, each = 7)) %>%
+  pivot_wider(values_from = value, names_from = parameter)
+
+test <- left_join(filenames, true_parameters_22) %>% group_by(filename) %>%
+  group_split()
 
 #### Baseline ####
-
-## import each datafile and get a summary
-
-filenames <- c(as.list(list.files("./Data files/Baseline_results/", 
-                                  full.names = TRUE)[str_detect(list.files("./Data files/Baseline_results/"), 
-                                "SS")]),
-               as.list(list.files("./Data files/Adult_results_20/", 
-                                  full.names = TRUE)[str_detect(list.files("./Data files/Adult_results_20/"), 
-                                                                               "SS")]),
-               as.list(list.files("./Data files/Juvenile_results_20/", 
-                                  full.names = TRUE)[str_detect(list.files("./Data files/Juvenile_results_20/"), 
-                                                                               "SS")]),
-               as.list(list.files("./Data files/Random_error_results/", 
-                                  full.names = TRUE)[str_detect(list.files("./Data files/Random_error_results/"), 
-                                                                               "SS")]))
-
-
-results100 <- map(.x = filenames[1:100], ~{
-  load(.x)
-  summary <- MCMCsummary(model_result, round = 2)
-  return(summary)
-})
-
-results200 <- map(.x = filenames[101:200], ~{
-  load(.x)
-  summary <- MCMCsummary(model_result, round = 2)
-  return(summary)
-})
-
-results300 <- map(.x = filenames[201:300], ~{
-  load(.x)
-  summary <- MCMCsummary(model_result, round = 2)
-  return(summary)
-})
-
-results400 <- map(.x = filenames[301:400], ~{
-  load(.x)
-  summary <- MCMCsummary(model_result, round = 2)
-  return(summary)
-})
-
-results <- c(results100,
-             results200,
-             results300,
-             results400)
-
 
 ## summarise the summaries
 
 i <- as.list(rep(c("baseline",
+                   "random_error",
+                   "random_missing",
                    "adult_missing",
-                   "juvenile_missing",
-                   "random_error"), each = 100))
+                   "juvenile_missing"), each = 500))
 
-summary_results <- map2_df(.x = results,
+summary_results <- map2_df(.x = test,
                            .y = i, ~{
-                                    summary_summary(results = .x,
-                                                    true_parameters = true_parameters,
-                                                    i = .y)  
-                                    })
+                summary_summary(inputs = .x,
+                                scenario = .y,
+                                stages = c("juvenile","adult"))})
 
-save(summary_results, file = "summary_results.RData")
+save(summary_results, file = "./Data files/2x2/summary_results_2x2.RData")
 
 ###############################################################################
 

@@ -62,7 +62,7 @@ if(length(stages)==3){
                 sum(dbinom(1:2, 3, (p[3]*phi[3]))))  
   year3 <- sum(year3, year4)
 }
-if(length(stages)==4){
+if(length(stages)==5){
   # not captured year 1 or 2 but captured year 3
   year3 <- prod(dbinom(0, 1, p[1]),
                 dbinom(0, 1, (p[2]*phi[1])),
