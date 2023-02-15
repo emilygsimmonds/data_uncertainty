@@ -89,7 +89,7 @@ save(baseline_observations,
 
 random_missing_reproduction <- map(.x = baseline_observations, ~{
   set.seed(1)
-  marker <- sample(1:length(.x$Offspring), round(length(.x$Offspring)*0.80))
+  marker <- sample(1:length(.x$Offspring), round(length(.x$Offspring)*0.20))
   .x <- .x %>% mutate(Offspring_obs = Offspring)
   .x$Offspring_obs[marker] <- 0
   return(.x)
@@ -111,7 +111,7 @@ file = paste0(location, length(stages), "random_missing_simulation", name, ".RDa
 juvenile_missing_reproduction <- map(.x = baseline_observations, ~{
   marker1 <- which(.x$Stage == repro_stages[1])
   set.seed(1)
-  marker2 <- sample(marker1, round(length(marker1)*0.8))
+  marker2 <- sample(marker1, round(length(marker1)*0.2))
   .x <- .x %>% mutate(Offspring_obs = Offspring)
   .x$Offspring_obs[marker2] <- 0
   return(.x)
@@ -125,7 +125,7 @@ file = paste0(location, length(stages), "juvenile_missing_simulation", name, ".R
 adult_missing_reproduction <- map(.x = baseline_observations, ~{
   marker1 <- which(.x$Stage %in% repro_stages[-1])
   set.seed(1)
-  marker2 <- sample(marker1, round(length(marker1)*0.8))
+  marker2 <- sample(marker1, round(length(marker1)*0.2))
   .x <- .x %>% mutate(Offspring_obs = Offspring)
   .x$Offspring_obs[marker2] <- 0
   return(.x)

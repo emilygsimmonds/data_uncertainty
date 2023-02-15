@@ -147,7 +147,7 @@ ggplot(data = filter(summary_results, parameter == "lambda"),
   geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
   scale_fill_manual(values = colours) +
   scale_color_manual(values = c(colours[1:2], "white", "white", "white"))+
-  BES_theme() +
+  plain_theme() +
   labs(x = "", y = "CI width") +
   theme(legend.position = "none")
 

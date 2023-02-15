@@ -48,7 +48,8 @@ for(j in stages){
 # need to use left_join to merge the true parameters and results
 # first need to reduce number of columns in results and add parameter names
 results_new <- results[, c("mean", "2.5%", "97.5%")] %>%
-  mutate(parameter = rownames(results)) %>%
+  mutate(parameter = rownames(results),
+         matrix_number = inputs$matrix_number) %>%
   filter(parameter %in% parameter_names)
 
 output <- left_join(true_parameters, results_new)
@@ -57,7 +58,8 @@ colnames(output) <- c("parameter",
                       "true",
                       "estimated",
                       "CI_lower",
-                      "CI_upper")
+                      "CI_upper",
+                      "matrix_number")
   
 # Then calculate error, CI width, and if parameter in CI
   
