@@ -364,7 +364,7 @@ map(.x = filenames,
 
 
 filenames <- list.files("./Data files/3x3", 
-                        pattern = "radnom_missing_simulation",
+                        pattern = "random_missing_simulation",
                         full.names = TRUE)
 
 map(.x = filenames, 

@@ -99,7 +99,7 @@ save(summary_results, file = "./Data files/2x2/summary_results_2x2.RData")
 
 ###############################################################################
 
-colours <- c("#FFFFFF", "#feff54", "#30666B", "#1E2E39")
+colours <- c("#FFFFFF", "#feff54", "#30666B", "#134263", "#1E2E39")
 
 # re-order the factor levels
 summary_results <- summary_results %>%
@@ -108,14 +108,17 @@ summary_results <- summary_results %>%
                                                  c("baseline"="baseline", 
                                                    "adult_missing"="adult \nmissing",
                                                    "juvenile_missing" = "juvenile \nmissing",
-                                                   "random_error" = "random \nerror")),
+                                                   "random_error" = "random \nerror",
+                                                   "random_missing" = 
+                                                     "random \nmissing")),
                 scenario = fct_relevel(scenario, 
                                                "baseline",
                                                "random \nerror",
+                                               "random \nmissing",
                                                "adult \nmissing",
                                                "juvenile \nmissing"))
 
-#### FIGURE 1 BES: impact on accuracy of lambda ####
+#### FIGURE 1: impact on accuracy of lambda ####
 
 # plot error for each scenario
 
@@ -125,15 +128,16 @@ ggplot(data = filter(summary_results, parameter == "lambda"),
            colour = scenario)) +
   geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
   scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white"))+
-  BES_theme() +
+  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
+  plain_theme() +
+  facet_grid()
   labs(x = "", y = "Estimate - True") +
   theme(legend.position = "none")
 
-ggsave("BES_Fig4.png", last_plot(), width = 15, height = 15, units = "cm", 
+ggsave("Figure1.png", last_plot(), width = 15, height = 15, units = "cm", 
        dpi = 300)
 
-#### FIGURE 2 BES: impact on uncertainty of lambda ####
+#### FIGURE 2: impact on uncertainty of lambda ####
 
 # CI width
 
@@ -142,37 +146,19 @@ ggplot(data = filter(summary_results, parameter == "lambda"),
            y = CI_width, fill = scenario, colour = scenario)) +
   geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
   scale_fill_manual(values = colours) +
-  scale_color_manual(values = c(colours[1:2], "white", "white"))+
+  scale_color_manual(values = c(colours[1:2], "white", "white", "white"))+
   BES_theme() +
   labs(x = "", y = "CI width") +
   theme(legend.position = "none")
 
-ggsave("BES_Fig5.png", last_plot(), width = 15, height = 15, units = "cm", 
+ggsave("Figure2.png", last_plot(), width = 15, height = 15, units = "cm", 
        dpi = 300)
 
-#### FIGURE 3 BES: impact on accuracy of uncertainty ####
+#### FIGURE 3: impact on accuracy of uncertainty ####
 
 # True in CI - might just need to be a %
 
-summary_results %>% filter(parameter == "lambda") %>%
-  group_by(scenario, parameter, true_in_CI) %>%
-  summarise(count = n()) %>%
-  mutate(percent = count/sum(count)) %>%
-  filter(true_in_CI == TRUE)
-
-summary_results %>% filter(parameter == "reproduction_juvenile") %>%
-  group_by(scenario, parameter, true_in_CI) %>%
-  summarise(count = n()) %>%
-  mutate(percent = count/sum(count)) %>%
-  filter(true_in_CI == TRUE)
-
-summary_results %>% filter(parameter == "reproduction_adult") %>%
-  group_by(scenario, parameter, true_in_CI) %>%
-  summarise(count = n()) %>%
-  mutate(percent = count/sum(count)) %>%
-  filter(true_in_CI == TRUE)
-
-summary_results %>% filter(parameter == "survival_juvenile") %>%
+summary_results %>%
   group_by(scenario, parameter, true_in_CI) %>%
   summarise(count = n()) %>%
   mutate(percent = count/sum(count)) %>%
