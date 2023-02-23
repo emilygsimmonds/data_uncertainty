@@ -36,7 +36,7 @@ source("./Functions/run_model.R")
 # load data
 
 # get list of all baseline data files
-filenames <- list.files("./Data files/2x2", 
+filenames <- list.files("./Data files/3x3", 
                         pattern = "baseline_simulation_observations",
                         full.names = TRUE)
 
@@ -57,14 +57,25 @@ z <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
 plan(multisession, workers = 8)
 
+filenames <- c("./Data files/3x3/3baseline_simulation_observationsmat48.RDS",
+               "./Data files/3x3/3random_missing_simulationmat438.RDS",
+               "./Data files/3x3/3random_missing_simulationmat243.RDS",
+               "./Data files/3x3/3random_missing_simulationmat485.RDS")
+
 # save inputs as a dataframe for pmap and remove any models that have already run
-inputs <- data.frame(filename = unlist(filenames),
-     niter = rep(50000, 500),
-     nburnin = rep(500, 500),
-     scenario = rep(1:100, 5),
-     mat_num = rep(z, each = 100),
-     location = rep("/cluster/work/emilygs/DU/2x2/Baseline/baseline_result_", 500),
-     num_stages = rep(2, 500))
+inputs <- data.frame(filename = filenames,
+     niter = rep(50000, 4),
+     nburnin = rep(500, 4),
+     scenario = c(8,38,43,85),
+     mat_num = c("mat4", "mat4", "mat2", "mat4"),
+     location = c("./Data files/3x3/a_Baseline/baseline_result_", 
+                  "./Data files/3x3/a_R_missing/r_missing_result_",
+                  "./Data files/3x3/a_R_missing/r_missing_result_",
+                  "./Data files/3x3/a_R_missing/r_missing_result_"),
+     num_stages = rep(3, 4),
+     fecundity_error = c(FALSE,
+                         TRUE, TRUE, TRUE))
+
 
 # remove files that have already been run
 filenames2 <- list.files("/cluster/work/emilygs/DU/2x2/Baseline/", 
@@ -86,7 +97,7 @@ marker <- map2(.x = as.list(already_run$matrix_number),
 inputs <- inputs[-unlist(marker),]
 
 # run as future_pmap
-future_pmap(inputs, 
+future_pmap(inputs[2:4,], 
             run_model, .options = furrr_options(seed = TRUE,
                                                 packages = c("nimble",
                                                              "nimbleEcology",
