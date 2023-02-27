@@ -64,7 +64,14 @@ age <- output_data$Age
 
 if(length(stages) == 3){
 subadult <- which(age == 2) #index of subadults
-adult <- which(age == 3) #index of subadults
+adult <- which(age == 3) #index of adults
+}
+
+if(length(stages) == 5){
+  subadult <- which(age == 2) #index of subadults
+  adult1 <- which(age == 3) #index of adult1
+  adult2 <- which(age == 4) #index of adult2
+  adult3 <- which(age == 5) #index of adult3
 }
 
 # IF fecundity error is present, use offspring_obs column
@@ -84,6 +91,15 @@ data_input <- list(surv_obs = capture_history[,2:(n_occasions+1)],
                    offspring_obs_a = offspring_obs[adult]) 
 }
 
+if(length(stages) == 5){
+  data_input <- list(surv_obs = capture_history[,2:(n_occasions+1)],
+                     age = age,
+                     offspring_obs_sa = offspring_obs[subadult],
+                     offspring_obs_a1 = offspring_obs[adult1],
+                     offspring_obs_a2 = offspring_obs[adult2],
+                     offspring_obs_a3 = offspring_obs[adult3]) 
+}
+
 #### Step 6: create list of constants ####
 
 # number of occasions (occasions) and number of individuals (N) and first 
@@ -99,6 +115,16 @@ constants <- list(N = nrow(data_input$surv_obs),
                   first = first,
                   O_N_sa = length(subadult),
                   O_N_a = length(adult))  
+}
+
+if(length(stages) == 5){
+  constants <- list(N = nrow(data_input$surv_obs), 
+                    occasions = n_occasions,
+                    first = first,
+                    O_N_sa = length(subadult),
+                    O_N_a1 = length(adult1),
+                    O_N_a2 = length(adult2),
+                    O_N_a3 = length(adult3))  
 }
 
 #### Step 7: remove all individuals first seen on final occasion ####
@@ -129,6 +155,18 @@ if(length(stages) == 3){
                 fecundity_rate_a = rep(1, length(offspring_obs[adult])))  
 }
 
+if(length(stages) == 5){
+  inits <- list(mean_phi = runif(length(stages), 0, 1),
+                mean_p = runif(length(stages), 0, 1),
+                alpha = rnorm(1, 0, 0.1),
+                beta_age = c(rnorm(1, 0, 0.1), 
+                             rnorm(1, 0, 0.1)),
+                fecundity_rate_sa = rep(1, length(offspring_obs[subadult])),
+                fecundity_rate_a1 = rep(1, length(offspring_obs[adult1])),
+                fecundity_rate_a2 = rep(1, length(offspring_obs[adult2])),
+                fecundity_rate_a3 = rep(1, length(offspring_obs[adult3])))  
+}
+
 #### Step 9: edit parameters to save
 
 parameters_to_save <- c("mean_phi",
@@ -139,7 +177,8 @@ parameters_to_save <- c("mean_phi",
                         "lambda" 
 )
 
-if(length(stages) == 3){
+if(length(stages) == 3|
+   length(stages) == 5){
   parameters_to_save <- c("mean_phi",
                           "mean_p",
                           "beta_age",

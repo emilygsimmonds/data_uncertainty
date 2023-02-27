@@ -153,31 +153,72 @@ for (i in 1:N){
 ## these are outside loop as constant for all breeding attempts
 
 # vague priors
-alpha ~ dnorm(0, sd = 1.5)  
-beta_age ~ dnorm(0, sd = 1.5) 
+beta_age[1] ~ dnorm(0, sd = 1.5) 
+beta_age[2] ~ dnorm(0, sd = 1.5) 
+beta_age[3] ~ dnorm(0, sd = 1.5)
+beta_age[4] ~ dnorm(0, sd = 1.5)
+beta_age[5] ~ dnorm(0, sd = 1.5)
 
 ## LIKELIHOOD FECUNDITY IN LOOP
 
-for(f in 1:O_N){
+# split fecundity into two
+
+for(f in 1:O_N_sa){
   
   # observed offspring
   #offspring_obs[f] ~ dpois(offspring_state[f])
   
   # process for offspring
-  offspring_obs[f] ~ dpois(fecundity_rate[f])
-  log(fecundity_rate[f]) <- log_fecundity_rate[f]
-  log_fecundity_rate[f] <- alpha + beta_age*(age[f]-1)
+  offspring_obs_sa[f] ~ dpois(fecundity_rate_sa[f])
+  log(fecundity_rate_sa[f]) <- log_fecundity_rate_sa[f]
+  # need to allow different effect for each age
+  log_fecundity_rate_sa[f] <- beta_age[1]
+}
+
+for(j in 1:O_N_a1){
   
+  # observed offspring
+  #offspring_obs[f] ~ dpois(offspring_state[f])
+  
+  # process for offspring
+  offspring_obs_a1[j] ~ dpois(fecundity_rate_a1[j])
+  log(fecundity_rate_a1[j]) <- log_fecundity_rate_a1[j]
+  # need to allow different effect for each age
+  log_fecundity_rate_a1[j] <- beta_age[2]
+}
+
+for(k in 1:O_N_a2){
+  
+  # observed offspring
+  #offspring_obs[f] ~ dpois(offspring_state[f])
+  
+  # process for offspring
+  offspring_obs_a2[k] ~ dpois(fecundity_rate_a2[k])
+  log(fecundity_rate_a2[k]) <- log_fecundity_rate_a2[k]
+  # need to allow different effect for each age
+  log_fecundity_rate_a2[k] <- beta_age[3]
+}
+
+for(l in 1:O_N_a3){
+  
+  # observed offspring
+  #offspring_obs[f] ~ dpois(offspring_state[f])
+  
+  # process for offspring
+  offspring_obs_a3[l] ~ dpois(fecundity_rate_a3[l])
+  log(fecundity_rate_a3[l]) <- log_fecundity_rate_a3[l]
+  # need to allow different effect for each age
+  log_fecundity_rate_a3[l] <- beta_age[4]
 }
 
 #-------------------------------------------------------------------------------
 ## Set up MPM
 
-mean_fecundity_juv <- exp(alpha) # fecundity for juveniles
-mean_fecundity_subadult <- exp(alpha + beta_age*1) # fecundity for sub-adults 
-mean_fecundity_adult1 <- exp(alpha + beta_age*2) # fecundity for adults1
-mean_fecundity_adult2 <- exp(alpha + beta_age*3) # fecundity for adults2 
-mean_fecundity_adult3 <- exp(alpha + beta_age*4) # fecundity for adults3 
+mean_fecundity_juv <- 0 # fecundity for juveniles
+mean_fecundity_subadult <- exp(beta_age[1]) # fecundity for sub-adults 
+mean_fecundity_adult <- exp(beta_age[2]) # fecundity for adults 
+mean_fecundity_adult2 <- exp(beta_age[3]) # fecundity for adults2 
+mean_fecundity_adult3 <- exp(beta_age[4]) # fecundity for adults3 
 
 transition_matrix[1,1] <- mean_fecundity_juv
 transition_matrix[1,2] <- mean_fecundity_subadult # fecundity for adults  
