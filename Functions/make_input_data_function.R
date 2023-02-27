@@ -62,6 +62,11 @@ for(i in 1:nrow(surv_state_init)){
 offspring_obs <- output_data$Offspring
 age <- output_data$Age
 
+if(length(stages) == 3){
+subadult <- which(age == 2) #index of subadults
+adult <- which(age == 3) #index of subadults
+}
+
 # IF fecundity error is present, use offspring_obs column
 if(fecundity_error == TRUE){offspring_obs <- output_data$Offspring_obs}
 
@@ -72,6 +77,13 @@ data_input <- list(surv_obs = capture_history[,2:(n_occasions+1)],
                    age = age,
                    offspring_obs = offspring_obs)
 
+if(length(stages) == 3){
+data_input <- list(surv_obs = capture_history[,2:(n_occasions+1)],
+                   age = age,
+                   offspring_obs_sa = offspring_obs[subadult],
+                   offspring_obs_a = offspring_obs[adult]) 
+}
+
 #### Step 6: create list of constants ####
 
 # number of occasions (occasions) and number of individuals (N) and first 
@@ -80,6 +92,14 @@ constants <- list(N = nrow(data_input$surv_obs),
                   occasions = n_occasions,
                   first = first,
                   O_N = length(offspring_obs))
+
+if(length(stages) == 3){
+constants <- list(N = nrow(data_input$surv_obs), 
+                  occasions = n_occasions,
+                  first = first,
+                  O_N_sa = length(subadult),
+                  O_N_a = length(adult))  
+}
 
 #### Step 7: remove all individuals first seen on final occasion ####
 
@@ -99,6 +119,16 @@ inits <- list(mean_phi = runif(length(stages), 0, 1),
               beta_age = rnorm(1, 0, 0.1),
               fecundity_rate = rep(1, length(offspring_obs)))
 
+if(length(stages) == 3){
+  inits <- list(mean_phi = runif(length(stages), 0, 1),
+                mean_p = runif(length(stages), 0, 1),
+                alpha = rnorm(1, 0, 0.1),
+                beta_age = c(rnorm(1, 0, 0.1), 
+                             rnorm(1, 0, 0.1)),
+                fecundity_rate_sa = rep(1, length(offspring_obs[subadult])),
+                fecundity_rate_a = rep(1, length(offspring_obs[adult])))  
+}
+
 #### Step 9: edit parameters to save
 
 parameters_to_save <- c("mean_phi",
@@ -108,6 +138,15 @@ parameters_to_save <- c("mean_phi",
                         "transition_matrix",
                         "lambda" 
 )
+
+if(length(stages) == 3){
+  parameters_to_save <- c("mean_phi",
+                          "mean_p",
+                          "beta_age",
+                          "transition_matrix",
+                          "lambda" 
+  ) 
+}
 
 for(j in stages){
   parameters_to_save <- c(parameters_to_save,

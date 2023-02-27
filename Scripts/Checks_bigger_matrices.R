@@ -257,6 +257,45 @@ count_error_too3$Offspring - count_error_too3$Offspring_obs
 
 ###############################################################################
 
+#### Check missing scenarios ####
+
+baseline_observations <- readRDS("./Data files/3x3/3baseline_simulation_observationsmat48.RDS")
+.x <- baseline_observations
+repro_stages <- c("subadult", "adult")
+
+# juvenile missing
+marker1 <- which(.x$Stage == repro_stages[1])
+set.seed(1)
+marker2 <- sample(marker1, round(length(marker1)*0.2))
+.x <- .x %>% mutate(Offspring_obs = Offspring)
+.x$Offspring_obs[marker2] <- 0
+
+# compare offspring of lowest repro class
+sum(.x$Offspring_obs[which(.x$Stage == "subadult")])/
+  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "subadult")]) #CORRECT
+
+sum(.x$Offspring_obs[which(.x$Stage == "adult")])/
+  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "adult")])
+
+# adult missing
+.x <- baseline_observations
+marker1 <- which(.x$Stage %in% repro_stages[-1])
+set.seed(1)
+marker2 <- sample(marker1, round(length(marker1)*0.2))
+.x <- .x %>% mutate(Offspring_obs = Offspring)
+.x$Offspring_obs[marker2] <- 0
+
+# compare offspring of higher repro class
+sum(.x$Offspring_obs[which(.x$Stage == "adult")])/
+  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "adult")]) #CORRECT
+
+sum(.x$Offspring_obs[which(.x$Stage == "subadult")])/
+  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "subadult")]) #CORRECT
+
+
+###############################################################################
+
+
 non_perfect_recap5 <- run_observation_process(state_data = output_data5, 
                                               p = c(1, 0.8, 0.8, 
                                                     0.8, 0.8),
@@ -322,6 +361,7 @@ output_results3 <- nimbleMCMC(code = Model_SS_hmm,
                              nchains = 2)
 
 MCMCsummary(output_results3, round = 2)
+parameters3
 
 source("./Scripts/T1.1_Model_hmm_55.R")
 

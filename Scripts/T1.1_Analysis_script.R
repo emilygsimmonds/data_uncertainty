@@ -262,8 +262,8 @@ i <- as.list(rep(c("adult_missing",
                    "random_error",
                    "random_missing"), each = 500))
 
-summary_results <- map2_df(.x = test[2],
-                           .y = i[2], ~{
+summary_results <- map2_df(.x = test,
+                           .y = i, ~{
                              summary_summary(inputs = .x,
                                              scenario = .y,
                                              stages = c("juvenile",
@@ -337,6 +337,10 @@ true_in_ci <- summary_results %>%
   group_by(scenario, matrix_number, parameter, true_in_CI) %>%
   summarise(count = n()) %>%
   mutate(percent = count/sum(count)) %>%
+  ungroup() %>%
+  complete(true_in_CI, nesting(scenario, matrix_number, parameter), # add in rows that are missing
+           fill = list(percent = 0,
+                       count = 0)) %>%
   filter(true_in_CI == TRUE)
 
 write.csv(true_in_ci, "true_in_ci_3x3.csv")

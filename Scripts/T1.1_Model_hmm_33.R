@@ -101,29 +101,43 @@ for (i in 1:N){
 ## these are outside loop as constant for all breeding attempts
 
 # vague priors
-alpha ~ dnorm(0, sd = 1.5)  
-beta_age ~ dnorm(0, sd = 1.5) 
+beta_age[1] ~ dnorm(0, sd = 1.5) 
+beta_age[2] ~ dnorm(0, sd = 1.5) 
 
 ## LIKELIHOOD FECUNDITY IN LOOP
 
-for(f in 1:O_N){
+# split fecundity into two
+
+for(f in 1:O_N_sa){
   
   # observed offspring
   #offspring_obs[f] ~ dpois(offspring_state[f])
   
   # process for offspring
-  offspring_obs[f] ~ dpois(fecundity_rate[f])
-  log(fecundity_rate[f]) <- log_fecundity_rate[f]
-  log_fecundity_rate[f] <- alpha + beta_age*(age[f]-1)
+  offspring_obs_sa[f] ~ dpois(fecundity_rate_sa[f])
+  log(fecundity_rate_sa[f]) <- log_fecundity_rate_sa[f]
+  # need to allow different effect for each age
+  log_fecundity_rate_sa[f] <- beta_age[1]
+}
+
+for(j in 1:O_N_a){
   
+  # observed offspring
+  #offspring_obs[f] ~ dpois(offspring_state[f])
+  
+  # process for offspring
+  offspring_obs_a[j] ~ dpois(fecundity_rate_a[j])
+  log(fecundity_rate_a[j]) <- log_fecundity_rate_a[j]
+  # need to allow different effect for each age
+  log_fecundity_rate_a[j] <- beta_age[2]
 }
 
 #-------------------------------------------------------------------------------
 ## Set up MPM
 
-mean_fecundity_juv <- exp(alpha) # fecundity for juveniles
-mean_fecundity_subadult <- exp(alpha + beta_age*1) # fecundity for sub-adults 
-mean_fecundity_adult <- exp(alpha + beta_age*2) # fecundity for adults 
+mean_fecundity_juv <- 0 # fecundity for juveniles
+mean_fecundity_subadult <- exp(beta_age[1]) # fecundity for sub-adults 
+mean_fecundity_adult <- exp(beta_age[2]) # fecundity for adults 
 
 transition_matrix[1,1] <- mean_fecundity_juv
 transition_matrix[1,2] <- mean_fecundity_subadult # fecundity for adults  
