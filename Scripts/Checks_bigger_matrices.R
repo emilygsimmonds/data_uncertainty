@@ -342,6 +342,9 @@ count_error_too5$Offspring - count_error_too5$Offspring_obs
 
 #### CHECK MODEL IN WRAPPER ####
 
+source("./Functions/make_input_data_function.R")
+library(nimbleEcology)
+
 # check eigenvalues of input parameters
 eigen(parameters3)
 eigen(parameters5)
@@ -377,7 +380,8 @@ output_results5 <- nimbleMCMC(code = Model_SS_hmm,
                               nburnin = 50,
                               nchains = 2)
 
-MCMCsummary(output_results5, round = 2)
+MCMCsummary(output_results5)
+parameters5
 
 #### CHECK DIRECT ESTIMATE MODEL ####
 

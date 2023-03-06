@@ -157,7 +157,6 @@ beta_age[1] ~ dnorm(0, sd = 1.5)
 beta_age[2] ~ dnorm(0, sd = 1.5) 
 beta_age[3] ~ dnorm(0, sd = 1.5)
 beta_age[4] ~ dnorm(0, sd = 1.5)
-beta_age[5] ~ dnorm(0, sd = 1.5)
 
 ## LIKELIHOOD FECUNDITY IN LOOP
 
@@ -216,7 +215,7 @@ for(l in 1:O_N_a3){
 
 mean_fecundity_juv <- 0 # fecundity for juveniles
 mean_fecundity_subadult <- exp(beta_age[1]) # fecundity for sub-adults 
-mean_fecundity_adult <- exp(beta_age[2]) # fecundity for adults 
+mean_fecundity_adult1 <- exp(beta_age[2]) # fecundity for adults 
 mean_fecundity_adult2 <- exp(beta_age[3]) # fecundity for adults2 
 mean_fecundity_adult3 <- exp(beta_age[4]) # fecundity for adults3 
 

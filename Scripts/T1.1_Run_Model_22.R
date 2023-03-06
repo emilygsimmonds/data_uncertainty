@@ -27,7 +27,7 @@ library(magrittr)
 #library(magrittr, lib = "/cluster/home/emilygs/myRpackages/")
 
 # source model
-source("./Scripts/T1.1_Model_hmm_22.R")
+source("./Scripts/T1.1_Model_hmm_33.R")
 
 # source functions
 #source("./Functions/make_input_data_function.R")
@@ -57,24 +57,17 @@ z <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
 plan(multisession, workers = 8)
 
-filenames <- c("./Data files/3x3/3baseline_simulation_observationsmat48.RDS",
-               "./Data files/3x3/3random_missing_simulationmat438.RDS",
-               "./Data files/3x3/3random_missing_simulationmat243.RDS",
-               "./Data files/3x3/3random_missing_simulationmat485.RDS")
+filenames <- c("./Data files/3x3/3juvenile_missing_simulationmat141.RDS")
 
 # save inputs as a dataframe for pmap and remove any models that have already run
 inputs <- data.frame(filename = filenames,
-     niter = rep(50000, 4),
-     nburnin = rep(500, 4),
-     scenario = c(8,38,43,85),
-     mat_num = c("mat4", "mat4", "mat2", "mat4"),
-     location = c("./Data files/3x3/a_Baseline/baseline_result_", 
-                  "./Data files/3x3/a_R_missing/r_missing_result_",
-                  "./Data files/3x3/a_R_missing/r_missing_result_",
-                  "./Data files/3x3/a_R_missing/r_missing_result_"),
-     num_stages = rep(3, 4),
-     fecundity_error = c(FALSE,
-                         TRUE, TRUE, TRUE))
+     niter = rep(50000, 1),
+     nburnin = rep(500, 1),
+     scenario = c(41),
+     mat_num = c("mat1"),
+     location = c("./Data files/3x3/a_J_missing/j_missing_result_"),
+     num_stages = rep(3, 1),
+     fecundity_error = c(TRUE))
 
 
 # remove files that have already been run
@@ -97,7 +90,7 @@ marker <- map2(.x = as.list(already_run$matrix_number),
 inputs <- inputs[-unlist(marker),]
 
 # run as future_pmap
-future_pmap(inputs[2:4,], 
+future_pmap(inputs, 
             run_model, .options = furrr_options(seed = TRUE,
                                                 packages = c("nimble",
                                                              "nimbleEcology",
