@@ -148,7 +148,6 @@ inits <- list(mean_phi = runif(length(stages), 0, 1),
 if(length(stages) == 3){
   inits <- list(mean_phi = runif(length(stages), 0, 1),
                 mean_p = runif(length(stages), 0, 1),
-                alpha = rnorm(1, 0, 0.1),
                 beta_age = c(rnorm(1, 0, 0.1), 
                              rnorm(1, 0, 0.1)),
                 fecundity_rate_sa = rep(1, length(offspring_obs[subadult])),
@@ -158,8 +157,9 @@ if(length(stages) == 3){
 if(length(stages) == 5){
   inits <- list(mean_phi = runif(length(stages), 0, 1),
                 mean_p = runif(length(stages), 0, 1),
-                alpha = rnorm(1, 0, 0.1),
                 beta_age = c(rnorm(1, 0, 0.1), 
+                             rnorm(1, 0, 0.1),
+                             rnorm(1, 0, 0.1),
                              rnorm(1, 0, 0.1)),
                 fecundity_rate_sa = rep(1, length(offspring_obs[subadult])),
                 fecundity_rate_a1 = rep(1, length(offspring_obs[adult1])),
