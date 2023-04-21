@@ -543,3 +543,23 @@ length(which(output_data$Age == 1)) - length(which(non_perfect_recap$Age == 1)) 
 # are fecundity counts different?
 count_error_too$Offspring - count_error_too$Offspring_obs
 
+#### check missing scenarios ####
+
+reference <- output_data %>%
+  mutate(check = case_when(Offspring == 0 ~ FALSE,
+                           Offspring > 0 ~ TRUE)) %>%
+  group_by(Year) %>%
+  summarise(count = sum(check))
+
+set.seed(1)
+marker <- sample(1:length(output_data$Offspring), round(length(output_data$Offspring)*0.20))
+output_data <- output_data %>% mutate(Offspring_obs = Offspring)
+output_data$Offspring_obs[marker] <- 0
+
+new <- output_data %>%
+  mutate(check = case_when(Offspring_obs == 0 ~ FALSE,
+                           Offspring_obs > 0 ~ TRUE)) %>%
+  group_by(Year) %>%
+  summarise(count = sum(check))
+
+mean(new$count/reference$count) # average yearly decline = 20%

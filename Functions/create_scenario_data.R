@@ -84,16 +84,24 @@ baseline_observations <- map2(.x = baseline_state,
 save(baseline_observations, 
      file = paste0(location, length(stages), "baseline_simulation_observations", name, ".RData"))
 
-# randomly add 0s to the offspring column 20%
-# apply it to observations file as need recapture to be < 1
+# randomly remove 40% individuals
+# apply it to state file
 
-random_missing_reproduction <- map(.x = baseline_observations, ~{
-  set.seed(1)
-  marker <- sample(1:length(.x$Offspring), round(length(.x$Offspring)*0.20))
-  .x <- .x %>% mutate(Offspring_obs = Offspring)
-  .x$Offspring_obs[marker] <- 0
-  return(.x)
-})
+random_missing_reproduction <- map2(.x = baseline_state,
+                                    .y = seeds, ~{run_observation_process(.x,
+                                                  p = recapture*0.6,
+                                                  fecundity_error = TRUE,
+                                                  phi = phi,
+                                                  seed = .y,
+                                                  stages = stages)
+                                    })
+#map(.x = baseline_observations, ~{
+#  set.seed(1)
+#  marker <- sample(1:length(.x$Offspring), round(length(.x$Offspring)*0.20))
+#  .x <- .x %>% mutate(Offspring_obs = Offspring)
+#  .x$Offspring_obs[marker] <- 0
+#  return(.x)
+#})
 
 # check that random missing is different to baseline
 length(which(baseline_observations[[1]]$Offspring - 

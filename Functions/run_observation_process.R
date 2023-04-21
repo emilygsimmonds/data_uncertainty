@@ -72,7 +72,7 @@ if(length(stages)==5){
                 dbinom(0, 1, (p[2]*phi[1])),
                 dbinom(0, 1, (p[3]*phi[2])),
                 dbinom(1, 1, (p[4]*phi[3])))  
-  # not captured year 1,2,3 but captured year 4 or 5
+  # not captured year 1,2,3 but captured year 5
   year5 <- prod(dbinom(0, 1, p[1]),
                 dbinom(0, 1, (p[2]*phi[1])),
                 dbinom(0, 1, (p[3]*phi[2])),

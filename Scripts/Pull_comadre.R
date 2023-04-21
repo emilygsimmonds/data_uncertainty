@@ -14,6 +14,8 @@ library(popdemo)
 library(popbio)
 library(maps)     # for plotting world map
 
+comadre <- cdb_fetch("comadre")
+
 #### CHOOSE DATA SIMULATION MATRICES ####
 
 load("./Data files/working_comadre.RData")
