@@ -70,19 +70,17 @@ mean(output_data$Surv[output_data$Stage == "adult"])
 
 # then observation process
 observation <- run_observation_process(output_data, 
-                                       p_adult = 1,
-                                       p_juvenile = 1,
-                                       phi_juvenile = 0.3,
-                                       phi_adult = 0.5,
-                                       missing = c(0.7,0.7),
+                                       p = c(1*0.7, 1*0.7),
+                                       phi = c(0.3, 0.7),
                                        fecundity_error = FALSE,
-                                       seed = 2)
+                                       seed = 2,
+                                       stages = c("juvenile",
+                                                  "adult"))
 
-# number of juveniles = same
+# number of juveniles = 0.7
 
-length(which(output_data$Stage == "juvenile"))
-
-length(which(observation$Stage == "juvenile"))
+length(which(observation$Stage == "juvenile"))/
+  length(which(output_data$Stage == "juvenile"))
 
 # number of adults = reduced to 80%
 

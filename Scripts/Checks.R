@@ -516,20 +516,20 @@ summary(duplicates$count)
 source("./Functions/run_observation_process.R")
 
 non_perfect_recap <- run_observation_process(output_data, 
-                                             p_adult = recapture,
-                                             p_juvenile = 1,
-                                             phi_juvenile = 0.3,
-                                             phi_adult = 0.5,
+                                             p = c(1, recapture),
+                                             phi = c(0.3, 0.5),
                                              fecundity_error = FALSE,
-                                             seed = 2)
+                                             seed = 2,
+                                             stages = c("juvenile",
+                                                        "adult"))
 
 count_error_too <- run_observation_process(output_data, 
-                                           p_adult = recapture,
-                                           p_juvenile = 1,
-                                           phi_juvenile = 0.3,
-                                           phi_adult = 0.5,
+                                           p = c(1, recapture),
+                                           phi = c(0.3, 0.5),
                                            fecundity_error = TRUE,
-                                           seed = 2)
+                                           seed = 2,
+                                           stages = c("juvenile",
+                                                      "adult"))
 
 # number of individuals is reduced do they all have recap = 1
 summary(non_perfect_recap) # YES
@@ -543,23 +543,3 @@ length(which(output_data$Age == 1)) - length(which(non_perfect_recap$Age == 1)) 
 # are fecundity counts different?
 count_error_too$Offspring - count_error_too$Offspring_obs
 
-#### check missing scenarios ####
-
-reference <- output_data %>%
-  mutate(check = case_when(Offspring == 0 ~ FALSE,
-                           Offspring > 0 ~ TRUE)) %>%
-  group_by(Year) %>%
-  summarise(count = sum(check))
-
-set.seed(1)
-marker <- sample(1:length(output_data$Offspring), round(length(output_data$Offspring)*0.20))
-output_data <- output_data %>% mutate(Offspring_obs = Offspring)
-output_data$Offspring_obs[marker] <- 0
-
-new <- output_data %>%
-  mutate(check = case_when(Offspring_obs == 0 ~ FALSE,
-                           Offspring_obs > 0 ~ TRUE)) %>%
-  group_by(Year) %>%
-  summarise(count = sum(check))
-
-mean(new$count/reference$count) # average yearly decline = 20%
