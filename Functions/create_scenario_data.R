@@ -8,6 +8,7 @@
 # - vector of stages
 # - vector of recapture rates
 # - vector of survival rates
+# - proportion missing
 # - vector of reproductive stages
 
 ## OUTPUT = saves out simulated datasets
@@ -23,6 +24,7 @@ create_scenario_data <- function(parameters,
                                  name,
                                  recapture,
                                  phi,
+                                 missing,
                                  repro_stages,
                                  location){
   
@@ -89,8 +91,8 @@ save(baseline_observations,
 
 random_missing_reproduction <- map2(.x = baseline_state,
                                     .y = seeds, ~{run_observation_process(.x,
-                                                  p = recapture*0.6,
-                                                  fecundity_error = TRUE,
+                                                  p = recapture*missing,
+                                                  fecundity_error = FALSE,
                                                   phi = phi,
                                                   seed = .y,
                                                   stages = stages)
@@ -115,29 +117,49 @@ file = paste0(location, length(stages), "random_missing_simulation", name, ".RDa
 #### Simulation 2: missing reproductive events (not at random - bias) ####
 # miss lowest breeding class
 
-# add 0s to juveniles in the offspring column 20%
-juvenile_missing_reproduction <- map(.x = baseline_observations, ~{
-  marker1 <- which(.x$Stage == repro_stages[1])
-  set.seed(1)
-  marker2 <- sample(marker1, round(length(marker1)*0.2))
-  .x <- .x %>% mutate(Offspring_obs = Offspring)
-  .x$Offspring_obs[marker2] <- 0
-  return(.x)
-})
+# reduce juvenile recapture to 0.6
+juvenile_missing_reproduction <- map2(.x = baseline_state,
+                                    .y = seeds, ~{run_observation_process(.x,
+                                                  p = c(recapture[1]*missing,
+                                                        recapture[2:length(recapture)]),
+                                                  fecundity_error = FALSE,
+                                                  phi = phi,
+                                                  seed = .y,
+                                                  stages = stages)
+                                    })
+  
+#  map(.x = baseline_observations, ~{
+#  marker1 <- which(.x$Stage == repro_stages[1])
+#  set.seed(1)
+#  marker2 <- sample(marker1, round(length(marker1)*0.2))
+#  .x <- .x %>% mutate(Offspring_obs = Offspring)
+#  .x$Offspring_obs[marker2] <- 0
+#  return(.x)
+#})
 
 # save
 save(juvenile_missing_reproduction, 
 file = paste0(location, length(stages), "juvenile_missing_simulation", name, ".RData"))
 
 # miss adults
-adult_missing_reproduction <- map(.x = baseline_observations, ~{
-  marker1 <- which(.x$Stage %in% repro_stages[-1])
-  set.seed(1)
-  marker2 <- sample(marker1, round(length(marker1)*0.2))
-  .x <- .x %>% mutate(Offspring_obs = Offspring)
-  .x$Offspring_obs[marker2] <- 0
-  return(.x)
-})
+adult_missing_reproduction <- map2(.x = baseline_state,
+                                   .y = seeds, ~{run_observation_process(.x,
+                                                 p = c(recapture[1],
+                                                       recapture[2:length(recapture)]*missing),
+                                                 fecundity_error = FALSE,
+                                                 phi = phi,
+                                                 seed = .y,
+                                                 stages = stages)
+                                   })
+  
+#  map(.x = baseline_observations, ~{
+#  marker1 <- which(.x$Stage %in% repro_stages[-1])
+#  set.seed(1)
+#  marker2 <- sample(marker1, round(length(marker1)*0.2))
+#  .x <- .x %>% mutate(Offspring_obs = Offspring)
+#  .x$Offspring_obs[marker2] <- 0
+#  return(.x)
+#})
 
 
 # save

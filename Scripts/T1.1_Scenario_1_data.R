@@ -48,11 +48,6 @@ input_data <- map(.x = i, ~{simulation_setup(parameter_matrix = parameters,
                                              stages = c("juvenile",
                                                         "adult"))})
 
-
-# set up recapture probabilities
-
-recapture <- 0.8
-
 # set up IDs
 
 IDs <- 101:200000000
@@ -75,10 +70,11 @@ mean(output_data$Surv[output_data$Stage == "adult"])
 
 # then observation process
 observation <- run_observation_process(output_data, 
-                                       p_adult = recapture,
+                                       p_adult = 1,
                                        p_juvenile = 1,
                                        phi_juvenile = 0.3,
                                        phi_adult = 0.5,
+                                       missing = c(0.7,0.7),
                                        fecundity_error = FALSE,
                                        seed = 2)
 
@@ -117,35 +113,40 @@ names(output_matrices) <- c("mat1",
 #### Create simulated data ####
 
 create_scenario_data(parameters = output_matrices[["mat1"]],
-                     name = "mat1", recapture = c(1,0.8),
+                     name = "mat1", recapture = c(1,1),
+                     missing = c(0.7,0.7),
                      phi = c(output_matrices[["mat1"]][2,]),
                     stages = c("juvenile", "adult"),
                     repro_stages = c("juvenile", "adult"),
                     location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat2"]],
-                     name = "mat2", recapture = c(1,0.8),
+                     name = "mat2", recapture = c(1,1),
+                     missing = c(0.7,0.7),
                      phi = c(output_matrices[["mat2"]][2,]),
                      stages = c("juvenile", "adult"),
                      repro_stages = c("juvenile", "adult"),
                      location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat3"]],
-                     name = "mat3", recapture = c(1,0.8),
+                     name = "mat3", recapture = c(1,1),
+                     missing = c(0.7,0.7),
                      phi = c(output_matrices[["mat3"]][2,]),
                      stages = c("juvenile", "adult"),
                      repro_stages = c("juvenile", "adult"),
                      location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat4"]],
-                     name = "mat4", recapture = c(1,0.8),
+                     name = "mat4", recapture = c(1,1),
+                     missing = c(0.7,0.7),
                      phi = c(output_matrices[["mat4"]][2,]),
                      stages = c("juvenile", "adult"),
                      repro_stages = c("juvenile", "adult"),
                      location = "./Data files/2x2/") 
 
 create_scenario_data(parameters = output_matrices[["mat5"]],
-                     name = "mat5", recapture = c(1,0.8),
+                     name = "mat5", recapture = c(1,1),
+                     missing = c(0.7,0.7),
                      phi = c(output_matrices[["mat5"]][2,]),
                      stages = c("juvenile", "adult"),
                      repro_stages = c("juvenile", "adult"),
