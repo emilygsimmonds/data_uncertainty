@@ -6,9 +6,16 @@
 
 # load packages
 
-#library(tidyverse)
 #library(nimble)
+#library(tidyverse)
 #library(MCMCvis)
+
+#library(tidyverse, lib = "/cluster/home/emilygs/myRpackages/")
+#library(nimble, lib = "/cluster/home/emilygs/myRpackages/")
+#library(nimbleEcology, lib = "/cluster/home/emilygs/myRpackages/")
+#library(future, lib = "/cluster/home/emilygs/myRpackages/")
+#library(furrr, lib = "/cluster/home/emilygs/myRpackages/")
+#library(magrittr, lib = "/cluster/home/emilygs/myRpackages/")
 
 ################################################################################
 
@@ -22,8 +29,8 @@ Model_SS_hmm <- nimbleCode({
 # but within a stage-size loop
 
 for(j in 1:stage_length){
-mean_phi[j] ~ dunif(0, 1) # uninformative prior
-mean_p[j] ~ dunif(0, 1) 
+mean_phi[j] ~ dunif(0, 1)
+mean_p[j] ~ dunif(0, 1)
 
 }
   

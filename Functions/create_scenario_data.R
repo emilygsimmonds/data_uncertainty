@@ -120,7 +120,7 @@ file = paste0(location, length(stages), "random_missing_simulation", name, ".RDa
 # reduce juvenile recapture to 0.6
 juvenile_missing_reproduction <- map2(.x = baseline_state,
                                     .y = seeds, ~{run_observation_process(.x,
-                                                  p = c(recapture[1]*missing,
+                                                  p = c(recapture[1]*missing[1],
                                                         recapture[2:length(recapture)]),
                                                   fecundity_error = FALSE,
                                                   phi = phi,
@@ -145,7 +145,7 @@ file = paste0(location, length(stages), "juvenile_missing_simulation", name, ".R
 adult_missing_reproduction <- map2(.x = baseline_state,
                                    .y = seeds, ~{run_observation_process(.x,
                                                  p = c(recapture[1],
-                                                       recapture[2:length(recapture)]*missing),
+                                                       recapture[2:length(recapture)]*missing[2:length(recapture)]),
                                                  fecundity_error = FALSE,
                                                  phi = phi,
                                                  seed = .y,

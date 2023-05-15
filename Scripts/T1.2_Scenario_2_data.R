@@ -81,7 +81,7 @@ mean(output_data$Surv[output_data$Stage == "adult"])
 
 # then observation process
 observation <- run_observation_process(output_data, 
-                                       p = c(1,0.8,0.8),
+                                       p = c(0.7,0.8,0.8),
                                        phi = c(0.3,0.7,0.7),
                                        fecundity_error = TRUE,
                                        seed = 2,
@@ -91,9 +91,8 @@ observation <- run_observation_process(output_data,
 
 # number of juveniles = same
 
-length(which(output_data$Stage == "juvenile"))
-
-length(which(observation$Stage == "juvenile"))
+length(which(observation$Stage == "juvenile"))/
+  length(which(output_data$Stage == "juvenile"))
 
 # number of adults = reduced to 80%
 
@@ -210,7 +209,8 @@ names(matrices_33) <- c("mat1",
 #### Create simulated data ####
 
 create_scenario_data(parameters = matrices_33[["mat1"]],
-                     name = "mat1", recapture = c(1,0.8,0.8),
+                     name = "mat1", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
                      phi = c(matrices_33[["mat1"]][2,1],
                              matrices_33[["mat1"]][3,2],
                              matrices_33[["mat1"]][3,3]),
@@ -219,7 +219,8 @@ create_scenario_data(parameters = matrices_33[["mat1"]],
                      location = "./Data files/3x3/") 
 
 create_scenario_data(parameters = matrices_33[["mat2"]],
-                     name = "mat2", recapture = c(1,0.8,0.8),
+                     name = "mat2", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
                      phi = c(matrices_33[["mat2"]][2,1],
                              matrices_33[["mat2"]][3,2],
                              matrices_33[["mat2"]][3,3]),
@@ -228,7 +229,8 @@ create_scenario_data(parameters = matrices_33[["mat2"]],
                      location = "./Data files/3x3/")  
 
 create_scenario_data(parameters = matrices_33[["mat3"]],
-                     name = "mat3", recapture = c(1,0.8,0.8),
+                     name = "mat3", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
                      phi = c(matrices_33[["mat3"]][2,1],
                              matrices_33[["mat3"]][3,2],
                              matrices_33[["mat3"]][3,3]),
@@ -237,7 +239,8 @@ create_scenario_data(parameters = matrices_33[["mat3"]],
                      location = "./Data files/3x3/") 
 
 create_scenario_data(parameters = matrices_33[["mat4"]],
-                     name = "mat4", recapture = c(1,0.8,0.8),
+                     name = "mat4", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
                      phi = c(matrices_33[["mat4"]][2,1],
                              matrices_33[["mat4"]][3,2],
                              matrices_33[["mat4"]][3,3]),
@@ -246,7 +249,8 @@ create_scenario_data(parameters = matrices_33[["mat4"]],
                      location = "./Data files/3x3/") 
 
 create_scenario_data(parameters = matrices_33[["mat5"]],
-                     name = "mat5", recapture = c(1,0.8,0.8),
+                     name = "mat5", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
                      phi = c(matrices_33[["mat5"]][2,1],
                              matrices_33[["mat5"]][3,2],
                              matrices_33[["mat5"]][3,3]),
@@ -275,7 +279,8 @@ names(matrices_55) <- c("mat1",
 #### Create simulated data ####
 
 create_scenario_data(parameters = matrices_55[["mat1"]],
-                     name = "mat1", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     name = "mat1", recapture = c(1,1,1,1,1),
+                     missing = c(0.7,0.7,0.7,0.7,0.7),
                      phi = c(matrices_55[["mat1"]][2,1],
                              matrices_55[["mat1"]][3,2],
                              matrices_55[["mat1"]][4,3],
@@ -288,7 +293,8 @@ create_scenario_data(parameters = matrices_55[["mat1"]],
                      location = "./Data files/5x5/") 
 
 create_scenario_data(parameters = matrices_55[["mat2"]],
-                     name = "mat2", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     name = "mat2", recapture = c(1,1,1,1,1),
+                     missing = c(0.7,0.7,0.7,0.7,0.7),
                      phi = c(matrices_55[["mat2"]][2,1],
                              matrices_55[["mat2"]][3,2],
                              matrices_55[["mat2"]][4,3],
@@ -301,7 +307,8 @@ create_scenario_data(parameters = matrices_55[["mat2"]],
                      location = "./Data files/5x5/") 
 
 create_scenario_data(parameters = matrices_55[["mat3"]],
-                     name = "mat3", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     name = "mat3", recapture = c(1,1,1,1,1),
+                     missing = c(0.7,0.7,0.7,0.7,0.7),
                      phi = c(matrices_55[["mat3"]][2,1],
                              matrices_55[["mat3"]][3,2],
                              matrices_55[["mat3"]][4,3],
@@ -314,7 +321,8 @@ create_scenario_data(parameters = matrices_55[["mat3"]],
                      location = "./Data files/5x5/") 
 
 create_scenario_data(parameters = matrices_55[["mat4"]],
-                     name = "mat4", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     name = "mat4", recapture = c(1,1,1,1,1),
+                     missing = c(0.7,0.7,0.7,0.7,0.7),
                      phi = c(matrices_55[["mat4"]][2,1],
                              matrices_55[["mat4"]][3,2],
                              matrices_55[["mat4"]][4,3],
@@ -327,7 +335,8 @@ create_scenario_data(parameters = matrices_55[["mat4"]],
                      location = "./Data files/5x5/") 
 
 create_scenario_data(parameters = matrices_55[["mat5"]],
-                     name = "mat5", recapture = c(1, 0.8, 0.8, 0.8, 0.8),
+                     name = "mat5", recapture = c(1,1,1,1,1),
+                     missing = c(0.7,0.7,0.7,0.7,0.7),
                      phi = c(matrices_55[["mat5"]][2,1],
                              matrices_55[["mat5"]][3,2],
                              matrices_55[["mat5"]][4,3],

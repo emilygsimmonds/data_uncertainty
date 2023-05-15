@@ -21,20 +21,20 @@ library(HMMpa)
 parametric_bootstrap_function <- function(reproduction_data,
                                           baseline_model_results){
   
-  r_juv <- lnorms(1, reproduction_data$mean_juvenile, reproduction_data$var_juvenile)
-  r_ad <- lnorms(1, reproduction_data$mean_adult, 
-                 reproduction_data$var_adult)
+  reproduction_juvile <- lnorms(1, reproduction_data$mean_juvenile, reproduction_data$var_juvenile)
+  reproduction_adult <- lnorms(1, reproduction_data$mean_adult, 
+                               reproduction_data$var_adult)
   
-  s_juv <- betaval(baseline_model_results["mean_phi_juv", "mean"],
-                   baseline_model_results["mean_phi_juv", "sd"])
-  s_ad <- betaval(baseline_model_results["mean_phi_adult", "mean"],
-                   baseline_model_results["mean_phi_adult", "sd"])
+  survival_juvenile <- betaval(baseline_model_results["mean_phi_juv", "mean"],
+                               baseline_model_results["mean_phi_juv", "sd"])
+  survival_adult <- betaval(baseline_model_results["mean_phi_adult", "mean"],
+                            baseline_model_results["mean_phi_adult", "sd"])
   
   transition_matrix <- matrix(c(r_juv, r_ad, s_juv, s_ad),
                               nrow = 2,
                               ncol = 2,
                               byrow = TRUE)
-
+  
   lambda <- eigen(transition_matrix)$values[1]
   
   return(data.frame(r_juv = r_juv, 

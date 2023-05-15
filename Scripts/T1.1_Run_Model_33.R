@@ -27,20 +27,21 @@ library(magrittr)
 #library(magrittr, lib = "/cluster/home/emilygs/myRpackages/")
 
 # source model
-source("./Scripts/T1.1_Model_hmm_22.R")
+source("./Scripts/T1.1_Model_hmm_33.R")
 
 # source functions
 #source("./Functions/make_input_data_function.R")
-source("./Functions/run_model_22.R")
+source("./Functions/run_model_33.R")
 
 # load data
 
 # get list of all baseline data files
-filenames <- list.files("./Data files/2x2", 
+filenames <- list.files("./Data files/3x3", 
                         pattern = "baseline_simulation_observations",
                         full.names = TRUE)
 
 
+filenames <- c("./Data files/3x3/3juvenile_missing_simulationmat322.RDS")
 
 ################################################################################
 
@@ -65,12 +66,12 @@ inputs <- data.frame(filename = unlist(filenames),
                      nburnin = rep(500, 500),
                      scenario = rep(1:100, 5),
                      mat_num = rep(z, each = 100),
-                     location = rep("/cluster/work/emilygs/DU/2x2/Baseline/baseline_result_", 500),
-                     num_stages = rep(2, 500),
+                     location = rep("/cluster/work/emilygs/DU/3x3/Baseline/baseline_result_", 500),
+                     num_stages = rep(3, 500),
                      fecundity_error = rep(FALSE,500))
 
 # remove files that have already been run
-filenames2 <- list.files("/cluster/work/emilygs/DU/2x2/Baseline/", 
+filenames2 <- list.files("/cluster/work/emilygs/DU/3x3/Baseline/", 
                          pattern = "baseline_result",
                          full.names = FALSE)
 
@@ -88,6 +89,18 @@ marker <- map2(.x = as.list(already_run$matrix_number),
                })
 
 inputs <- inputs[-unlist(marker),]}
+
+# IF RERUNNING INDIVIDUAL RUNS 
+
+# save inputs as a dataframe for pmap and remove any models that have already run
+inputs <- data.frame(filename = filenames,
+                     niter = rep(50000, 1),
+                     nburnin = rep(500, 1),
+                     scenario = c(22),
+                     mat_num = c("mat3"),
+                     location = c("./Data files/3x3/a_J_missing/j_missing_result_"),
+                     num_stages = rep(3, 1),
+                     fecundity_error = c(FALSE))
 
 # run as future_pmap
 future_pmap(inputs, 

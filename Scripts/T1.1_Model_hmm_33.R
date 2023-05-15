@@ -6,9 +6,9 @@
 
 # load packages
 
-library(tidyverse)
-library(nimble)
-library(MCMCvis)
+#library(tidyverse)
+#library(nimble)
+#library(MCMCvis)
 
 ################################################################################
 

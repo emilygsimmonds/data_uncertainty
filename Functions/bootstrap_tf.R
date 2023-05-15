@@ -25,20 +25,20 @@ bootstrap_tf <- function(frequency_table,
   # first - bootstrap the data
   new_frequency_table <- frequency_table[sample(1:nrow(frequency_table), 
                                                 nrow(frequency_table),
-                                                      replace = TRUE),]
+                                                replace = TRUE),]
   # use it to create matrix
   boot_matrix <- make_matrix(new_frequency_table,
                              stages = stages)
   
   # calculate parameters and lambda
-
+  
   output <- data.frame(lambda = as.numeric(eigen(boot_matrix)$values[1]))
   
   fates <- c(stages[-1], stages[length(stages)])
   
   for(i in stages){
-    names <- c(paste0("s_", i),
-               paste0("f_", i))
+    names <- c(paste0("survival_", i),
+               paste0("reproduction_", i))
     output$s <- boot_matrix[fates[which(stages == i)],i]
     output$f <- boot_matrix[1,i]
     
@@ -64,7 +64,7 @@ bootstrap_summary <- function(frequency_table,
     bind_rows()
   
   boot_summary <- boot_results %>% pivot_longer(everything(), names_to = "parameter",
-                                values_to = "value") %>%
+                                                values_to = "value") %>%
     group_by(parameter) %>%
     summarise(estimate = mean(value),
               lower_ci = quantile(value, probs = 0.025),
