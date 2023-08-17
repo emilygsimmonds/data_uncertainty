@@ -1,4 +1,4 @@
-# FUNCTION to create all scenario data #
+# FUNCTION to create all scenario data for missing at random #
 
 ## Function cleans previous output data to become new input data
 
@@ -86,7 +86,7 @@ baseline_observations <- map2(.x = baseline_state,
 save(baseline_observations, 
      file = paste0(location, length(stages), "baseline_simulation_observations", name, ".RData"))
 
-# randomly remove 40% individuals
+# randomly remove 30% individuals
 # apply it to state file
 
 random_missing_reproduction <- map2(.x = baseline_state,
@@ -97,13 +97,6 @@ random_missing_reproduction <- map2(.x = baseline_state,
                                                   seed = .y,
                                                   stages = stages)
                                     })
-#map(.x = baseline_observations, ~{
-#  set.seed(1)
-#  marker <- sample(1:length(.x$Offspring), round(length(.x$Offspring)*0.20))
-#  .x <- .x %>% mutate(Offspring_obs = Offspring)
-#  .x$Offspring_obs[marker] <- 0
-#  return(.x)
-#})
 
 # check that random missing is different to baseline
 length(which(baseline_observations[[1]]$Offspring - 
@@ -117,7 +110,7 @@ file = paste0(location, length(stages), "random_missing_simulation", name, ".RDa
 #### Simulation 2: missing reproductive events (not at random - bias) ####
 # miss lowest breeding class
 
-# reduce juvenile recapture to 0.6
+# reduce juvenile recapture to 0.7
 juvenile_missing_reproduction <- map2(.x = baseline_state,
                                     .y = seeds, ~{run_observation_process(.x,
                                                   p = c(recapture[1]*missing[1],
@@ -127,15 +120,6 @@ juvenile_missing_reproduction <- map2(.x = baseline_state,
                                                   seed = .y,
                                                   stages = stages)
                                     })
-  
-#  map(.x = baseline_observations, ~{
-#  marker1 <- which(.x$Stage == repro_stages[1])
-#  set.seed(1)
-#  marker2 <- sample(marker1, round(length(marker1)*0.2))
-#  .x <- .x %>% mutate(Offspring_obs = Offspring)
-#  .x$Offspring_obs[marker2] <- 0
-#  return(.x)
-#})
 
 # save
 save(juvenile_missing_reproduction, 
@@ -151,19 +135,11 @@ adult_missing_reproduction <- map2(.x = baseline_state,
                                                  seed = .y,
                                                  stages = stages)
                                    })
-  
-#  map(.x = baseline_observations, ~{
-#  marker1 <- which(.x$Stage %in% repro_stages[-1])
-#  set.seed(1)
-#  marker2 <- sample(marker1, round(length(marker1)*0.2))
-#  .x <- .x %>% mutate(Offspring_obs = Offspring)
-#  .x$Offspring_obs[marker2] <- 0
-#  return(.x)
-#})
-
 
 # save
 save(adult_missing_reproduction, 
      file = paste0(location, length(stages), "adult_missing_simulation", name, ".RData"))
 
 }
+
+

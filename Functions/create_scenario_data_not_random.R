@@ -1,0 +1,57 @@
+# FUNCTION to create all scenario data for missing not at random #
+
+## Function cleans previous output data to become new input data
+
+## INPUT :
+#
+# - a baseline to alter
+# - parameter matrix and name of scenario
+# - vector of stages
+# - vector of recapture rates
+# - vector of survival rates
+# - vector of reproductive stages
+
+## OUTPUT = saves out simulated datasets
+
+# source necessary functions
+source("./Functions/run_simulation.R")
+source("./Functions/run_observation_process.R")
+
+#### FUNCTION ####
+
+create_scenario_data_zeros <- function(baseline, parameters,
+                                       stages, 
+                                       name,
+                                       recapture,
+                                       phi,
+                                       repro_stages,
+                                       location){
+  
+#### Create simulated data ####
+
+#### Simulation 3: missing not at random across whole dataset ####
+  
+# randomly remove 60% individuals from 50% of population (lower breeders)
+# apply it to state file
+
+not_random_missing_reproduction <- map2(.x = baseline,
+                                    .y = seeds, ~{run_observation_process(.x,
+                                        p = recapture,
+                                        fecundity_error = FALSE,
+                                        phi = phi,
+                                        seed = .y,
+                                        stages = stages,
+                                        random = FALSE)
+                                    })
+
+# check that random missing is different to baseline
+length(which(baseline[[1]]$Offspring - 
+               not_random_missing_reproduction[[1]]$Offspring_obs != 0))
+# YES are different
+
+# save
+save(not_random_missing_reproduction, 
+     file = paste0(location, length(stages), "not_random_missing_simulation",
+                   name, ".RData"))
+
+}

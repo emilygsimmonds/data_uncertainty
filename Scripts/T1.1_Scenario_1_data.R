@@ -77,6 +77,14 @@ observation <- run_observation_process(output_data,
                                        stages = c("juvenile",
                                                   "adult"))
 
+observation2 <- run_observation_process(output_data, 
+                                       p = c(1*0.7, 1),
+                                       phi = c(0.3, 0.7),
+                                       fecundity_error = FALSE,
+                                       seed = 2,
+                                       stages = c("juvenile",
+                                                  "adult"))
+
 # number of juveniles = 0.7
 
 length(which(observation$Stage == "juvenile"))/

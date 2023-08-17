@@ -96,7 +96,7 @@ plan(multisession, workers = 4)
 
 r_missing_2x2_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "adult"))},
@@ -129,7 +129,7 @@ plan(multisession, workers = 4)
 
 j_missing_2x2_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "adult"))},
@@ -162,7 +162,7 @@ plan(multisession, workers = 4)
 
 a_missing_2x2_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "adult"))},
@@ -256,7 +256,7 @@ plan(multisession, workers = 4)
 
 r_missing_3x3_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "subadult", "adult"))},
@@ -289,7 +289,7 @@ plan(multisession, workers = 4)
 
 j_missing_3x3_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "subadult", "adult"))},
@@ -322,7 +322,7 @@ plan(multisession, workers = 4)
 
 a_missing_3x3_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "subadult", "adult"))},
@@ -428,7 +428,7 @@ plan(multisession, workers = 4)
 
 r_missing_5x5_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "subadult", 
@@ -467,7 +467,7 @@ plan(multisession, workers = 4)
 
 j_missing_5x5_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "subadult", 
@@ -506,7 +506,7 @@ plan(multisession, workers = 4)
 
 a_missing_5x5_tf_tables <- future_map(.x = filenames, ~{
   simulation <- readRDS(.x)
-  simulation$Offspring <- simulation$Offspring_obs
+  simulation$Offspring <- simulation$Offspring
   create_transition_frequency_table(simulation,
                                     max_year = max(simulation$Year),
                                     stages = c("juvenile", "subadult", 

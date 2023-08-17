@@ -83,6 +83,9 @@ return(output)
 
 true_in_CI <- function(input){
   
-  between(input[2], input[4], input[5])
+  input <- round(as.numeric(input),2)
   
+  between(input[2], 
+          input[4], 
+          input[5])
 }

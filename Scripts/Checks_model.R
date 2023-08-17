@@ -239,6 +239,20 @@ make_matrix(tf_table_state)
 boot_results <- bootstrap_summary(tf_table_state, 
                                    iterations = 2000)
 
+################################################################################
+
+#### Testing why matrix 4 model output has low coverage but high accuracy ####
+
+# load matrix 4 summary outputs
+
+load("./Data files/2x2/summary_results_2x2.RData")
+
+# restrict to matrix 4, lambda and baseline
+
+working_summary <- filter(summary_results, 
+                          matrix_number == 4,
+                          parameter == "lambda",
+                          scenario == "baseline")
 
 
 

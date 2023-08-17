@@ -88,6 +88,22 @@ marker <- map2(.x = as.list(already_run$matrix_number),
                })
 
 inputs <- inputs[-unlist(marker),]}
+
+# IF RERUNNING INDIVIDUAL RUNS 
+
+filenames <- c("./Data files/5x5/5random_missing_simulationmat5100.RDS",
+               "./Data files/5x5/5random_missing_simulationmat460.RDS")
+
+# save inputs as a dataframe for pmap and remove any models that have already run
+inputs <- data.frame(filename = filenames,
+                     niter = rep(50000, 1),
+                     nburnin = rep(500, 1),
+                     scenario = c(100,60),
+                     mat_num = c("mat5", "mat4"),
+                     location = c("./Data files/5x5/a_R_missing/r_missing_result_"),
+                     num_stages = rep(5, 1),
+                     fecundity_error = c(FALSE))
+
 # run as future_pmap
 future_pmap(inputs, 
             run_model, .options = furrr_options(seed = TRUE,

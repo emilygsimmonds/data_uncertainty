@@ -1,4 +1,5 @@
-#### T1.1: Analysis script ####
+#### T1.1: Script to join results files and make summaries
+# both Bayesian model results and stage-fate estimates
 
 ################################################################################
 
@@ -24,15 +25,15 @@ source("./Scripts/theme_script.R")
 load("./Data files/2x2/twobytwo_matrices.RData")
 names(output_matrices) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
-filenames <- data.frame(filename = c(list.files("./Data files/2x2/a_Baseline/", 
+filenames <- data.frame(filename = c(list.files("./Data files/2x2/a_A_missing/", 
+                                                full.names = TRUE),
+                                     list.files("./Data files/2x2/a_Baseline/", 
                                   full.names = TRUE),
+                                  list.files("./Data files/2x2/a_J_missing/", 
+                                             full.names = TRUE),
                list.files("./Data files/2x2/a_R_error/", 
                           full.names = TRUE),
                list.files("./Data files/2x2/a_R_missing/", 
-                          full.names = TRUE),
-               list.files("./Data files/2x2/a_A_missing/", 
-                          full.names = TRUE),
-               list.files("./Data files/2x2/a_J_missing/", 
                           full.names = TRUE))) %>%
   mutate(matrix_number = as.numeric(str_sub(filename, -7, -7)))
 
@@ -45,40 +46,65 @@ true_parameters_22 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                             "survival_juvenile",
                                             "survival_adult",
                                             "lambda"), 5),
-                              value = c(output_matrices[["mat1"]][1,1],
+                              value = rep(c(output_matrices[["mat1"]][1,1],
                                         output_matrices[["mat1"]][1,2],
-                                        1, 0.8,
+                                        1, 0.7, 
                                         output_matrices[["mat1"]][2,1],
                                         output_matrices[["mat1"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat1"]])$values[1]),
                                         output_matrices[["mat2"]][1,1],
                                         output_matrices[["mat2"]][1,2],
-                                        1, 0.8,
+                                        1, 0.7,
                                         output_matrices[["mat2"]][2,1],
                                         output_matrices[["mat2"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat2"]])$values[1]),
                                         output_matrices[["mat3"]][1,1],
                                         output_matrices[["mat3"]][1,2],
-                                        1, 0.8,
+                                        1, 0.7,
                                         output_matrices[["mat3"]][2,1],
                                         output_matrices[["mat3"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat3"]])$values[1]),
                                         output_matrices[["mat4"]][1,1],
                                         output_matrices[["mat4"]][1,2],
-                                        1, 0.8,
+                                        1, 0.7,
                                         output_matrices[["mat4"]][2,1],
                                         output_matrices[["mat4"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat4"]])$values[1]),
                                         output_matrices[["mat5"]][1,1],
                                         output_matrices[["mat5"]][1,2],
-                                        1, 0.8,
+                                        1, 0.7,
                                         output_matrices[["mat5"]][2,1],
                                         output_matrices[["mat5"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat5"]])$values[1])),
-                              matrix_number = rep(1:5, each = 7)) %>%
-  pivot_wider(values_from = value, names_from = parameter)
+                                        5),
+                              matrix_number = rep(rep(1:5, each = 7),5),
+                              scenario = rep(c("adult_missing",
+                                               "baseline",
+                                               "juvenile_missing",
+                                               "random_error",
+                                               "random_missing"), each = 7*5)) %>%
+  pivot_wider(values_from = value, names_from = parameter) %>%
+  mutate(recapture_juvenile = rep(c(1,1,0.7,1,0.7), each = 5),
+         recapture_adult = rep(c(0.7,1,1,1,0.7), each = 5)) %>% 
+  group_by(scenario) %>% # split true parameters by scenario
+  group_split()
 
-test <- left_join(filenames, true_parameters_22) %>% 
+# now join all of the true data to a filename using map
+
+# set up index list for filenames 
+filenames_index <- list(c(1:500),
+                          c(501:1000),
+                          c(1001:1500),
+                          c(1501:2000),
+                          c(2001:2500))
+
+test <- map2_df(.x = true_parameters_22,
+               .y = filenames_index, ~{
+  
+  # join together the filenames and the true parameters by matrix number
+  left_join(filenames[.y,], .x)[,-3] # remove scenario column
+  
+}) %>%
   arrange(filenames) %>%
   group_by(filename) %>%
   group_split()
@@ -101,94 +127,21 @@ summary_results <- map2_df(.x = test,
 
 save(summary_results, file = "./Data files/2x2/summary_results_2x2.RData")
 
-###############################################################################
-
-colours <- c("#FFFFFF", "#feff54", "#30666B", "#134263", "#1E2E39")
-
-# re-order the factor levels
-summary_results <- summary_results %>%
-  dplyr::mutate(scenario = as.factor(scenario),
-                scenario = plyr::revalue(scenario, 
-                                                 c("baseline"="baseline", 
-                                                   "adult_missing"="adult \nmissing",
-                                                   "juvenile_missing" = "juvenile \nmissing",
-                                                   "random_error" = "random \nerror",
-                                                   "random_missing" = 
-                                                     "random \nmissing")),
-                scenario = fct_relevel(scenario, 
-                                               "baseline",
-                                               "random \nerror",
-                                               "random \nmissing",
-                                               "adult \nmissing",
-                                               "juvenile \nmissing"))
-
-#### FIGURE 1: impact on accuracy of lambda ####
-
-# plot error for each scenario
-
-ggplot(data = filter(summary_results, parameter == "lambda"),
-       aes(x = scenario,
-           y = error, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "Estimate - True") +
-  theme(legend.position = "none")
-
-ggsave("Figure1.png", last_plot(), width = 15, height = 15, units = "cm", 
-       dpi = 300)
-
-#### FIGURE 2: impact on uncertainty of lambda ####
-
-# CI width
-
-ggplot(data = filter(summary_results, parameter == "lambda"),
-       aes(x = scenario,
-           y = CI_width, fill = scenario, colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", colours[2], "grey", "grey", "grey"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none")
-
-ggsave("Figure2.png", last_plot(), width = 15, height = 15, units = "cm", 
-       dpi = 300)
-
-#### FIGURE 3: impact on accuracy of uncertainty ####
-
-# True in CI - might just need to be a %
-
-true_in_ci <- summary_results %>%
-  group_by(scenario, matrix_number, parameter, true_in_CI) %>%
-  summarise(count = n()) %>%
-  mutate(percent = count/sum(count)) %>%
-  filter(true_in_CI == TRUE)
-
-write.csv(true_in_ci, "true_in_ci_2x2.csv")
-
-
-###############################################################################
-
 #### 3x3 ####
 ## get filenames for all 3x3
 
 load("./Data files/3x3/threebythree_matrices.RData")
 names(matrices_33) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
-filenames <- data.frame(filename = c(list.files("./Data files/3x3/a_Baseline/", 
+filenames <- data.frame(filename = c(list.files("./Data files/3x3/a_A_missing/", 
+                                                full.names = TRUE),
+                                     list.files("./Data files/3x3/a_Baseline/", 
+                                                full.names = TRUE),
+                                     list.files("./Data files/3x3/a_J_missing/", 
                                                 full.names = TRUE),
                                      list.files("./Data files/3x3/a_R_error/", 
                                                 full.names = TRUE),
                                      list.files("./Data files/3x3/a_R_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/3x3/a_A_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/3x3/a_J_missing/", 
                                                 full.names = TRUE))) %>%
   mutate(matrix_number = as.numeric(str_sub(filename, -7, -7)))
 
@@ -204,7 +157,7 @@ true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                                    "survival_subadult",
                                                    "survival_adult",
                                                    "lambda"), 5),
-                                 value = c(matrices_33[["mat1"]][1,1],
+                                 value = rep(c(matrices_33[["mat1"]][1,1],
                                            matrices_33[["mat1"]][1,2],
                                            matrices_33[["mat1"]][1,3],
                                            1, 0.8, 0.8,
@@ -243,16 +196,39 @@ true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                            matrices_33[["mat5"]][2,1],
                                            matrices_33[["mat5"]][3,2],
                                            matrices_33[["mat5"]][3,3],
-                                           as.numeric(eigen(matrices_33[["mat5"]])$values[1])),
-                                 matrix_number = rep(1:5, each = 10)) %>%
-  pivot_wider(values_from = value, names_from = parameter)
+                                           as.numeric(eigen(matrices_33[["mat5"]])$values[1])),5),
+                                 matrix_number = rep(rep(1:5, each = 10),5),
+                                 scenario = rep(c("adult_missing",
+                                                  "baseline",
+                                                  "juvenile_missing",
+                                                  "random_error",
+                                                  "random_missing"), each = 10*5)) %>%
+  pivot_wider(values_from = value, names_from = parameter) %>%
+  mutate(recapture_juvenile = rep(c(1,1,0.7,1,0.7), each = 5),
+         recapture_subadult = rep(c(0.7,1,1,1,0.7), each = 5),
+         recapture_adult = rep(c(0.7,1,1,1,0.7), each = 5)) %>% 
+  group_by(scenario) %>% # split true parameters by scenario
+  group_split()
 
-test <- left_join(filenames, true_parameters_33) %>% 
+# now join all of the true data to a filename using map
+
+# set up index list for filenames 
+filenames_index <- list(c(1:500),
+                        c(501:1000),
+                        c(1001:1500),
+                        c(1501:2000),
+                        c(2001:2500))
+
+test <- map2_df(.x = true_parameters_33,
+                .y = filenames_index, ~{
+                  # join together the filenames and the true parameters by matrix number
+                  left_join(filenames[.y,], .x)[,-3] # remove scenario column
+                }) %>%
   arrange(filenames) %>%
   group_by(filename) %>%
   group_split()
 
-#### Baseline ####
+#### Summary ####
 
 ## summarise the summaries
 
@@ -271,97 +247,21 @@ summary_results <- map2_df(.x = test,
 
 save(summary_results, file = "./Data files/3x3/summary_results_3x3.RData")
 
-###############################################################################
-
-colours <- c("#FFFFFF", "#feff54", "#30666B", "#134263", "#1E2E39")
-
-# re-order the factor levels
-summary_results <- summary_results %>%
-  dplyr::mutate(scenario = as.factor(scenario),
-                scenario = plyr::revalue(scenario, 
-                                         c("baseline"="baseline", 
-                                           "adult_missing"="adult \nmissing",
-                                           "juvenile_missing" = "juvenile \nmissing",
-                                           "random_error" = "random \nerror",
-                                           "random_missing" = 
-                                             "random \nmissing")),
-                scenario = fct_relevel(scenario, 
-                                       "baseline",
-                                       "random \nerror",
-                                       "random \nmissing",
-                                       "adult \nmissing",
-                                       "juvenile \nmissing"))
-
-#### FIGURE 1: impact on accuracy of lambda ####
-
-# plot error for each scenario
-
-ggplot(data = filter(summary_results, parameter == "lambda"),
-       aes(x = scenario,
-           y = error, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "Estimate - True") +
-  theme(legend.position = "none")
-
-ggsave("Figure1_3x3.png", last_plot(), width = 15, height = 15, units = "cm", 
-       dpi = 300)
-
-#### FIGURE 2: impact on uncertainty of lambda ####
-
-# CI width
-
-ggplot(data = filter(summary_results, parameter == "lambda"),
-       aes(x = scenario,
-           y = CI_width, fill = scenario, colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", colours[2], "grey", "grey", "grey"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none")
-
-ggsave("Figure2_3x3.png", last_plot(), width = 15, height = 15, units = "cm", 
-       dpi = 300)
-
-#### FIGURE 3: impact on accuracy of uncertainty ####
-
-# True in CI - might just need to be a %
-
-true_in_ci <- summary_results %>%
-  group_by(scenario, matrix_number, parameter, true_in_CI) %>%
-  summarise(count = n()) %>%
-  mutate(percent = count/sum(count)) %>%
-  ungroup() %>%
-  complete(true_in_CI, nesting(scenario, matrix_number, parameter), # add in rows that are missing
-           fill = list(percent = 0,
-                       count = 0)) %>%
-  filter(true_in_CI == TRUE)
-
-write.csv(true_in_ci, "true_in_ci_3x3.csv")
-
-###############################################################################
-
 #### 5x5 ####
 ## get filenames for all 5x5
 
 load("./Data files/5x5/fivebyfive_matrices.RData")
 names(matrices_55) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
-filenames <- data.frame(filename = c(list.files("./Data files/5x5/a_Baseline/", 
+filenames <- data.frame(filename = c(list.files("./Data files/5x5/a_A_missing/", 
+                                                full.names = TRUE),
+                                     list.files("./Data files/5x5/a_Baseline/", 
+                                                full.names = TRUE),
+                                     list.files("./Data files/5x5/a_J_missing/", 
                                                 full.names = TRUE),
                                      list.files("./Data files/5x5/a_R_error/", 
                                                 full.names = TRUE),
                                      list.files("./Data files/5x5/a_R_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/5x5/a_A_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/5x5/a_J_missing/", 
                                                 full.names = TRUE))) %>%
   mutate(matrix_number = as.numeric(str_sub(filename, -7, -7)))
 
@@ -383,7 +283,7 @@ true_parameters_55 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                                    "survival_adult2",
                                                    "survival_adult3",
                                                    "lambda"), 5),
-                                 value = c(matrices_55[["mat1"]][1,1],
+                                 value = rep(c(matrices_55[["mat1"]][1,1],
                                            matrices_55[["mat1"]][1,2],
                                            matrices_55[["mat1"]][1,3],
                                            matrices_55[["mat1"]][1,4],
@@ -442,16 +342,39 @@ true_parameters_55 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                            matrices_55[["mat5"]][4,3],
                                            matrices_55[["mat5"]][5,4],
                                            matrices_55[["mat5"]][5,5],
-                                           as.numeric(eigen(matrices_55[["mat5"]])$values[1])),
-                                 matrix_number = rep(1:5, each = 16)) %>%
-  pivot_wider(values_from = value, names_from = parameter)
+                                           as.numeric(eigen(matrices_55[["mat5"]])$values[1])),5),
+                                 matrix_number = rep(rep(1:5, each = 16),5),
+                                 scenario = rep(c("adult_missing",
+                                                  "baseline",
+                                                  "juvenile_missing",
+                                                  "random_error",
+                                                  "random_missing"), each = 16*5)) %>%
+  pivot_wider(values_from = value, names_from = parameter) %>%
+  mutate(recapture_juvenile = rep(c(1,1,0.7,1,0.7), each = 5),
+         recapture_subadult = rep(c(0.7,1,1,1,0.7), each = 5),
+         recapture_adult1 = rep(c(0.7,1,1,1,0.7), each = 5),
+         recapture_adult2 = rep(c(0.7,1,1,1,0.7), each = 5),
+         recapture_adult3 = rep(c(0.7,1,1,1,0.7), each = 5)) %>% 
+  group_by(scenario) %>% # split true parameters by scenario
+  group_split()
 
-test <- left_join(filenames, true_parameters_55) %>% 
+# set up index list for filenames 
+filenames_index <- list(c(1:500),
+                        c(501:1000),
+                        c(1001:1500),
+                        c(1501:2000),
+                        c(2001:2500))
+
+test <- map2_df(.x = true_parameters_55,
+                .y = filenames_index, ~{
+                  # join together the filenames and the true parameters by matrix number
+                  left_join(filenames[.y,], .x)[,-3] # remove scenario column
+                }) %>%
   arrange(filenames) %>%
   group_by(filename) %>%
   group_split()
 
-#### Baseline ####
+#### Summary ####
 
 ## summarise the summaries
 
@@ -471,83 +394,8 @@ summary_results <- map2_df(.x = test,
 
 save(summary_results, file = "./Data files/5x5/summary_results_5x5.RData")
 
-###############################################################################
-
-colours <- c("#FFFFFF", "#feff54", "#30666B", "#134263", "#1E2E39")
-
-# re-order the factor levels
-summary_results <- summary_results %>%
-  dplyr::mutate(scenario = as.factor(scenario),
-                scenario = plyr::revalue(scenario, 
-                                         c("baseline"="baseline", 
-                                           "adult_missing"="adult \nmissing",
-                                           "juvenile_missing" = "juvenile \nmissing",
-                                           "random_error" = "random \nerror",
-                                           "random_missing" = 
-                                             "random \nmissing")),
-                scenario = fct_relevel(scenario, 
-                                       "baseline",
-                                       "random \nerror",
-                                       "random \nmissing",
-                                       "adult \nmissing",
-                                       "juvenile \nmissing"))
-
-#### FIGURE 1: impact on accuracy of lambda ####
-
-# plot error for each scenario
-
-ggplot(data = filter(summary_results, parameter == "lambda"),
-       aes(x = scenario,
-           y = error, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "Estimate - True") +
-  theme(legend.position = "none")
-
-ggsave("Figure1_5x5.png", last_plot(), width = 15, height = 15, units = "cm", 
-       dpi = 300)
-
-#### FIGURE 2: impact on uncertainty of lambda ####
-
-# CI width
-
-ggplot(data = filter(summary_results, parameter == "lambda"),
-       aes(x = scenario,
-           y = CI_width, fill = scenario, colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", colours[2], "grey", "grey", "grey"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none")
-
-ggsave("Figure2_5x5.png", last_plot(), width = 15, height = 15, units = "cm", 
-       dpi = 300)
-
-#### FIGURE 3: impact on accuracy of uncertainty ####
-
-# True in CI - might just need to be a %
-
-true_in_ci <- summary_results %>%
-  group_by(scenario, matrix_number, parameter, true_in_CI) %>%
-  summarise(count = n()) %>%
-  mutate(percent = count/sum(count)) %>%
-  ungroup() %>%
-  complete(true_in_CI, nesting(scenario, matrix_number, parameter), # add in rows that are missing
-           fill = list(percent = 0,
-                       count = 0)) %>%
-  filter(true_in_CI == TRUE)
-
-write.csv(true_in_ci, "true_in_ci_5x5.csv")
-
-
 ################################################################################
-#### DIRECT ESTIMATION RESULTS ####
+#### STAGE-FATE RESULTS ####
 ################################################################################
 #### Set up: 2x2####
 
@@ -559,8 +407,6 @@ library(tidyverse)
 
 source("./Functions/summarise_summary_function.R")
 source("./Scripts/theme_script.R")
-
-colours <- c("#FFFFFF", "#feff54", "#30666B", "#134263", "#1E2E39")
 
 # load results and 'true' matrices
 
@@ -715,55 +561,6 @@ full_data <- left_join(results_all, true_parameters_22) %>%
 # save out full data
 
 write.csv(full_data, "./Data files/2x2/full_direct_est_results_2x2.csv")
-
-
-################################################################################
-
-#### Figure 1: Plot error ####
-
-ggplot(data = filter(full_data, parameter == "lambda"), 
-       aes(x = scenario, y = error, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "Estimate - True") +
-  theme(legend.position = "none")
-
-#### Figure 2: CI width ####
-
-ggplot(data = filter(full_data, parameter == "lambda"), 
-       aes(x = scenario, y = CI_width, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none")
-
-#### Figure 3: coverage ####
-
-coverage_summary <- full_data %>%
-  group_by(scenario, matrix_number, parameter) %>%
-  summarise(percentage = sum(true_in_ci))
-
-# save out the coverage 
-write.csv(coverage_summary, "./Data files/2x2/direct_est_coverage_2x2.csv")
-
-ggplot(data = coverage_summary, 
-       aes(x = parameter, y = percentage, colour = parameter)) +
-  geom_point() +
-  scale_color_manual(values = c("blue", colours[2:5])) +
-  geom_hline(yintercept = 50) +
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number), cols = vars(scenario))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 90))
 
 ################################################################################
 
@@ -931,58 +728,10 @@ write.csv(full_data, "./Data files/3x3/full_direct_est_results_3x3.csv")
 
 ################################################################################
 
-#### Figure 1: Plot error ####
-
-ggplot(data = filter(full_data, parameter == "lambda"), 
-       aes(x = scenario, y = error, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "Estimate - True") +
-  theme(legend.position = "none")
-
-#### Figure 2: CI width ####
-
-ggplot(data = filter(full_data, parameter == "lambda"), 
-       aes(x = scenario, y = CI_width, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none")
-
-#### Figure 3: coverage ####
-
-coverage_summary <- full_data %>%
-  group_by(scenario, matrix_number, parameter) %>%
-  summarise(percentage = sum(true_in_ci))
-
-# save out the coverage 
-write.csv(coverage_summary, "./Data files/3x3/direct_est_coverage_3x3.csv")
-
-ggplot(data = coverage_summary, 
-       aes(x = parameter, y = percentage, colour = parameter)) +
-  geom_point() +
-  scale_color_manual(values = c("blue", colours[2:5], "black", "orange")) +
-  geom_hline(yintercept = 50) +
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number), cols = vars(scenario))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 90))
-
-################################################################################
-
 load("./Data files/5x5/fivebyfive_matrices.RData")
 names(output_matrices) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
-#### Set up: 3x3 ####
+#### Set up: 5x5 ####
 
 # load packages
 
@@ -1171,49 +920,3 @@ full_data <- left_join(results_all, true_parameters_55) %>%
 write.csv(full_data, "./Data files/5x5/full_direct_est_results_5x5.csv")
 
 ################################################################################
-
-#### Figure 1: Plot error ####
-
-ggplot(data = filter(full_data, parameter == "lambda"), 
-       aes(x = scenario, y = error, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "Estimate - True") +
-  theme(legend.position = "none")
-
-#### Figure 2: CI width ####
-
-ggplot(data = filter(full_data, parameter == "lambda"), 
-       aes(x = scenario, y = CI_width, fill = scenario,
-           colour = scenario)) +
-  geom_violin(scale = "width", draw_quantiles = c(0.025, 0.5, 0.975)) +
-  scale_fill_manual(values = colours) +
-  scale_color_manual(values = c("black", "grey50", "white", "white", "white"))+
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none")
-
-#### Figure 3: coverage ####
-
-coverage_summary <- full_data %>%
-  group_by(scenario, matrix_number, parameter) %>%
-  summarise(percentage = sum(true_in_ci))
-
-# save out the coverage 
-write.csv(coverage_summary, "./Data files/5x5/direct_est_coverage_5x5.csv")
-
-ggplot(data = coverage_summary, 
-       aes(x = parameter, y = percentage, colour = parameter)) +
-  geom_point() +
-  scale_color_manual(values = c("blue", colours[2:5], "black", "orange")) +
-  geom_hline(yintercept = 50) +
-  plain_theme() +
-  facet_grid(rows = vars(matrix_number), cols = vars(scenario))+
-  labs(x = "", y = "CI width") +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 90))
