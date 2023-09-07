@@ -543,3 +543,52 @@ length(which(output_data$Age == 1)) - length(which(non_perfect_recap$Age == 1)) 
 # are fecundity counts different?
 count_error_too$Offspring - count_error_too$Offspring_obs
 
+
+
+#### TEST: missing not at random ####
+
+source("./Functions/run_simulation.R")
+source("./Functions/create_scenario_data_not_random.R")
+
+## Set up inputs
+
+phi = c(0.7, 0.9)
+names(phi) <- c("juvenile", "adult")
+recapture <- c(1,1)
+missing <- c(0.7,0.7)
+
+# set up parameters
+
+parameters <- matrix(c(rep(1, 2),
+                       0.7, 0.9), 
+                     byrow = TRUE, 
+                     ncol = 2)
+
+stages <- c("juvenile", "adult")
+
+# set up IDs
+
+output_random <- run_observation_process(output_data,
+                                             p = recapture*missing,
+                                             fecundity_error = FALSE,
+                                             phi = phi,
+                                             stages = stages,
+                                             random = TRUE)
+
+output_not_random <- run_observation_process(output_data,
+                                             p = recapture*missing,
+                                             fecundity_error = FALSE,
+                                             phi = phi,
+                                             stages = stages,
+                                             random = FALSE)
+
+# number of individuals is reduced do they all have recap = 1
+summary(output_not_random) # YES
+
+# how many individuals removed?
+length(output_not_random[,1])/length(output_data[,1]) # 68 % remain, seems good
+length(output_random[,1])/length(output_data[,1]) # 70% remain, seems good
+
+# check that number of offspring differs between the two
+summary(output_not_random$Offspring) #(median = 1, mean = 1.147)
+summary(output_random$Offspring) #(median = 1, mean = 0.8606) # small difference

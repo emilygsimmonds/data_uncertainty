@@ -35,6 +35,7 @@ run_observation_process <- function(state_data,
                                     p, phi,
                                     fecundity_error = TRUE,
                                     stages,
+                                    repo_stages = c("juvenile", "adult"),
                                     seed = 1,
                                     random = TRUE){
   
@@ -49,7 +50,7 @@ year2 <- prod(dbinom(0, 1, p[1]),
 # probability of surviving to year 2 and capture
 
 # not captured year 1 or 2 but captured year 3-5
-if(length(stages)==2){
+if(length(stages)>2){
   year3 <- prod(dbinom(0, 1, p[1]),
               dbinom(0, 1, (p[2]*phi[1])),
               sum(dbinom(1:3, 3, (p[2]*phi[2]))))
@@ -59,7 +60,7 @@ if(length(stages)==2){
 total_prob <- sum(year1, year2, year3)   
 
 # combine the recapture probabilities into a vector
-recapture <- p
+recapture <- p # half the recapture rate as only applied to half population
 names(recapture) <- stages
   
 # fill in recapture probabilities
@@ -73,19 +74,43 @@ observed_data <- state_data %>%
     mutate(Recapture = rbinom(length(state_data$Stage), 1, 
                               recapture[state_data$Stage]))
 
-if(random == FALSE){ # then want to select just part of population to be missing
-  # select top 50% of population and apply 40% recapture (same tot pop % as other
-  #scenario)
+if(random == FALSE){ 
+  recapture <- p/2 # half the recapture rate as only applied to half population
+  names(recapture) <- stages
+  # then want to select just part of population to be missing
+  # higher probability of selecting top 50% of breeding population based on offspring number
+  # and apply half recapture rate of whole pop (so same tot pop % as other scenario)
+  
+  # need to make this apply only to the breeding population
+  if(length(stages)>2){
+  # get markers of all reproducing individuals
+    repo_marker <- which(state_data$Stage %in% repo_stages)
+    marker <- sample(repo_marker, 
+                     length(repo_marker)/(2*(length(repo_stages)
+                                               /length(stages))), 
+                     # scaling 2 number by proportion of stages that are reproductive
+                     replace = FALSE,
+                     # scaling by max gives some probs of 0 - don't want this
+                     # add 1 to all offspring numbers when doing calc
+                     prob = ((state_data$Offspring[repo_marker]+1)/
+                               (max(state_data$Offspring[repo_marker]+1)-0.001)))  
+  }
+  
+  if(length(stages)==2){
   marker <- sample(1:length(state_data$Offspring), 
                    length(state_data$Offspring)/2,
                    replace = FALSE,
-                   prob = (state_data$Offspring/max(state_data$Offspring)-0.001)) 
+                   # scaling by max gives some probs of 0 - don't want this
+                   # add 1 to all offspring numbers when doing calc
+                   prob = ((state_data$Offspring+1)/
+                             (max(state_data$Offspring+1)-0.001))) 
+  }
   # scaled by max value and subtract 0.001 to make them all between 0 and 1
   observed_data <- state_data %>% 
     mutate(Recapture = rbinom(length(state_data$Stage), 1, 
                               recapture[state_data$Stage]))
   # then overwrite those not 'chosen' by marker to have been recaptured
-  # chooses those with lower breeding success
+  # higher probability of choosing those with higher breeding success
   observed_data$Recapture[marker] <- 1
 }
 

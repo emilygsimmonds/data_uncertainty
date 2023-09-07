@@ -19,24 +19,25 @@ source("./Functions/run_observation_process.R")
 
 #### FUNCTION ####
 
-create_scenario_data_zeros <- function(baseline, parameters,
-                                       stages, 
-                                       name,
-                                       recapture,
-                                       phi,
-                                       repro_stages,
-                                       location){
+create_scenario_data_not_random <- function(baseline, parameters,
+                                            stages, 
+                                            name,
+                                            recapture,
+                                            phi,
+                                            missing,
+                                            repro_stages,
+                                            location){
   
 #### Create simulated data ####
 
 #### Simulation 3: missing not at random across whole dataset ####
   
-# randomly remove 60% individuals from 50% of population (lower breeders)
+# randomly remove 60% individuals from 50% of population (higher breeders)
 # apply it to state file
 
 not_random_missing_reproduction <- map2(.x = baseline,
                                     .y = seeds, ~{run_observation_process(.x,
-                                        p = recapture,
+                                        p = recapture*missing,
                                         fecundity_error = FALSE,
                                         phi = phi,
                                         seed = .y,

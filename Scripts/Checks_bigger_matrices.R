@@ -1,4 +1,4 @@
-# Script to run checks for 3x3 and 5x5 matrices #
+# Script to run checks for 3x3 #
 
 ################################################################################
 
@@ -178,6 +178,8 @@ library(nimbleEcology)
 ## Source functions to test ####
 
 source("./Functions/make_input_data_function.R")
+source("./Functions/run_simulation.R")
+source("./Functions/create_scenario_data_not_random.R")
 
 ## Source model code ####
 
@@ -292,6 +294,43 @@ sum(.x$Offspring_obs[which(.x$Stage == "adult")])/
 sum(.x$Offspring_obs[which(.x$Stage == "subadult")])/
   sum(baseline_observations$Offspring[which(baseline_observations$Stage == "subadult")]) #CORRECT
 
+
+#### TEST: missing not at random ####
+
+## Set up inputs
+
+phi = c(0.3, 0.4, 0.7)
+names(phi) <- c("juvenile","subadult", "adult")
+recapture <- c(1,1,1)
+missing <- c(0.7,0.7,0.7)
+
+# set up IDs
+
+output_random <- run_observation_process(output_data3,
+                                         p = recapture*missing,
+                                         fecundity_error = FALSE,
+                                         phi = phi,
+                                         stages = stages3,
+                                         random = TRUE)
+
+output_not_random <- run_observation_process(output_data3,
+                                             p = recapture*missing,
+                                             fecundity_error = FALSE,
+                                             phi = phi,
+                                             stages = stages3,
+                                             repo_stages = c("subadult", "adult"),
+                                             random = FALSE)
+
+# number of individuals is reduced do they all have recap = 1
+summary(output_not_random) # YES
+
+# how many individuals removed?
+length(output_not_random[,1])/length(output_data[,1]) # 64 % remain, seems ok
+length(output_random[,1])/length(output_data[,1]) # 78% remain, bit high
+
+# check that number of offspring differs between the two
+summary(output_not_random$Offspring) #(median = 0, mean = 0.6565)
+summary(output_random$Offspring) #(median = 0, mean = 0.3224) # small difference
 
 ###############################################################################
 
