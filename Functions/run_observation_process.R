@@ -36,7 +36,6 @@ run_observation_process <- function(state_data,
                                     fecundity_error = TRUE,
                                     stages,
                                     seed = 1,
-                                    type = "missing",
                                     random = TRUE){
   
 ## Calculate probability of EVER being recaptured alive in study
@@ -108,7 +107,7 @@ if(fecundity_error == TRUE){
 # clean up the data to remove individuals not recaptured - for missing scenarios
 # but leave in for random zeros scenario - will filter survival at stage of adding
 # data to model
-if(type == missing){observed_data <- filter(observed_data, Recapture == 1)}
+observed_data <- filter(observed_data, Recapture == 1)
 
 return(observed_data)  
 
