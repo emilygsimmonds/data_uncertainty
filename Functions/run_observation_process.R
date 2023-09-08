@@ -50,11 +50,25 @@ year2 <- prod(dbinom(0, 1, p[1]),
 # probability of surviving to year 2 and capture
 
 # not captured year 1 or 2 but captured year 3-5
-if(length(stages)>2){
+if(length(stages)==2){
   year3 <- prod(dbinom(0, 1, p[1]),
               dbinom(0, 1, (p[2]*phi[1])),
               sum(dbinom(1:3, 3, (p[2]*phi[2]))))
 # probability of surviving beyond year 2 and capture
+}
+
+# not captured year 1 or 2 but captured year 3-5
+if(length(stages)>2){
+  # not captured year 1 or 2 but captured year 3
+  year3 <- prod(dbinom(0, 1, p[1]),
+                dbinom(0, 1, (p[2]*phi[1])),
+                dbinom(1, 1, (p[3]*phi[2])))
+  # not captured year 1,2,3 but captured year 4 or 5
+  year4 <- prod(dbinom(0, 1, p[1]),
+                dbinom(0, 1, (p[2]*phi[1])),
+                dbinom(0, 1, (p[3]*phi[2])),
+                sum(dbinom(1:2, 3, (p[3]*phi[3]))))  
+  year3 <- sum(year3, year4)
 }
 
 total_prob <- sum(year1, year2, year3)   

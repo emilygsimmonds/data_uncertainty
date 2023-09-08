@@ -19,7 +19,8 @@ source("./Functions/run_observation_process.R")
 
 #### FUNCTION ####
 
-create_scenario_data_not_random <- function(baseline, parameters,
+create_scenario_data_not_random <- function(baseline, 
+                                            parameters,
                                             stages, 
                                             name,
                                             recapture,
@@ -35,20 +36,18 @@ create_scenario_data_not_random <- function(baseline, parameters,
 # randomly remove 60% individuals from 50% of population (higher breeders)
 # apply it to state file
 
-not_random_missing_reproduction <- map2(.x = baseline,
-                                    .y = seeds, ~{run_observation_process(.x,
+not_random_missing_reproduction <- map(.x = baseline,
+                                        ~{
+                                        # read in baseline 
+                                        baseline <- readRDS(.x)  
+                                        run_observation_process(baseline,
                                         p = recapture*missing,
                                         fecundity_error = FALSE,
                                         phi = phi,
-                                        seed = .y,
+                                        seed = 1, # just want a single realisation per baseline
                                         stages = stages,
                                         random = FALSE)
                                     })
-
-# check that random missing is different to baseline
-length(which(baseline[[1]]$Offspring - 
-               not_random_missing_reproduction[[1]]$Offspring_obs != 0))
-# YES are different
 
 # save
 save(not_random_missing_reproduction, 

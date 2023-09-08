@@ -33,6 +33,7 @@ source("./Functions/run_simulation.R")
 source("./Functions/run_observation_process.R")
 source("./Functions/simulation_setup.R")
 source("./Functions/create_scenario_data.R")
+source("./Functions/create_scenario_data_not_random.R")
 
 #### Set up simulation parameters TEST ####
 
@@ -434,3 +435,159 @@ filenames <- list.files("./Data files/5x5",
 map(.x = filenames, 
     split_simulations,
     location = "./Data files/5x5/")
+
+################################################################################
+
+#### SIMULATIONS 2x2 NOT RANDOM! ####
+
+#### Import matrices ####
+
+load("./Data files/2x2_results_not_random/twobytwo_matrices.RData")
+# get list of all baseline data files
+filenames <- list.files("./Data files/2x2_results_random_missing/", 
+                        pattern = "baseline_simulation_observations",
+                        full.names = TRUE)[-c(1,102,203,304,405)]
+
+# name each matrix
+matrices_22 <- output_matrices
+
+names(matrices_22) <- c("mat1",
+                        "mat2",
+                        "mat3",
+                        "mat4",
+                        "mat5")
+
+#### Create simulated data ####
+create_scenario_data_not_random(
+  baseline = as.list(filenames[1:100]),
+  parameters = matrices_22[["mat1"]],
+  name = "mat1", recapture = c(1,1),
+  missing = c(0.7,0.7),
+  phi = c(matrices_22[["mat1"]][2,1],
+          matrices_22[["mat1"]][2,2]),
+  stages = c("juvenile", "adult"),
+  repro_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_results_not_random/")
+
+create_scenario_data_not_random(
+  baseline = as.list(filenames[101:200]),
+  parameters = matrices_22[["mat2"]],
+  name = "mat2", recapture = c(1,1),
+  missing = c(0.7,0.7),
+  phi = c(matrices_22[["mat2"]][2,1],
+          matrices_22[["mat2"]][2,2]),
+  stages = c("juvenile", "adult"),
+  repro_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_results_not_random/")  
+
+create_scenario_data_not_random(
+  baseline = as.list(filenames[201:300]),
+  parameters = matrices_22[["mat3"]],
+  name = "mat3", recapture = c(1,1),
+  missing = c(0.7,0.7),
+  phi = c(matrices_22[["mat3"]][2,1],
+          matrices_22[["mat3"]][2,2]),
+  stages = c("juvenile", "adult"),
+  repro_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_results_not_random/") 
+
+create_scenario_data_not_random(
+  baseline = as.list(filenames[301:400]),
+  parameters = matrices_22[["mat4"]],
+  name = "mat4", recapture = c(1,1),
+  missing = c(0.7,0.7),
+  phi = c(matrices_22[["mat4"]][2,1],
+          matrices_22[["mat4"]][2,2]),
+  stages = c("juvenile", "adult"),
+  repro_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_results_not_random/") 
+
+create_scenario_data_not_random(
+  baseline = as.list(filenames[401:500]),
+  parameters = matrices_22[["mat5"]],
+  name = "mat5", recapture = c(1,1),
+  missing = c(0.7,0.7),
+  phi = c(matrices_22[["mat5"]][2,1],
+          matrices_22[["mat5"]][2,2]),
+  stages = c("juvenile", "adult"),
+  repro_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_results_not_random/")
+
+#### SIMULATIONS 3x3 NOT RANDOM! ####
+
+#### Import matrices ####
+
+load("./Data files/3x3_results_not_random/threebythree_matrices.RData")
+# get list of all baseline data files
+filenames <- list.files("./Data files/3x3_results_random_missing/", 
+                        pattern = "baseline_simulation_observations",
+                        full.names = TRUE)[-c(1,102,203,304,405)]
+
+# name each matrix
+
+names(matrices_33) <- c("mat1",
+                        "mat2",
+                        "mat3",
+                        "mat4",
+                        "mat5")
+
+#### Create simulated data ####
+create_scenario_data_not_random(
+                     baseline = as.list(filenames[1:100]),
+                     parameters = matrices_33[["mat1"]],
+                     name = "mat1", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
+                     phi = c(matrices_33[["mat1"]][2,1],
+                             matrices_33[["mat1"]][3,2],
+                             matrices_33[["mat1"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3_results_not_random/")
+
+create_scenario_data_not_random(
+                     baseline = as.list(filenames[101:200]),
+                     parameters = matrices_33[["mat2"]],
+                     name = "mat2", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
+                     phi = c(matrices_33[["mat2"]][2,1],
+                             matrices_33[["mat2"]][3,2],
+                             matrices_33[["mat2"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3_results_not_random/")  
+
+create_scenario_data_not_random(
+                     baseline = as.list(filenames[201:300]),
+                     parameters = matrices_33[["mat3"]],
+                     name = "mat3", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
+                     phi = c(matrices_33[["mat3"]][2,1],
+                             matrices_33[["mat3"]][3,2],
+                             matrices_33[["mat3"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3_results_not_random/") 
+
+create_scenario_data_not_random(
+                     baseline = as.list(filenames[301:400]),
+                     parameters = matrices_33[["mat4"]],
+                     name = "mat4", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
+                     phi = c(matrices_33[["mat4"]][2,1],
+                             matrices_33[["mat4"]][3,2],
+                             matrices_33[["mat4"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3_results_not_random/") 
+
+create_scenario_data_not_random(
+                     baseline = as.list(filenames[401:500]),
+                     parameters = matrices_33[["mat5"]],
+                     name = "mat5", recapture = c(1,1,1),
+                     missing = c(0.7,0.7,0.7),
+                     phi = c(matrices_33[["mat5"]][2,1],
+                             matrices_33[["mat5"]][3,2],
+                             matrices_33[["mat5"]][3,3]),
+                     stages = c("juvenile", "subadult", "adult"),
+                     repro_stages = c("subadult", "adult"),
+                     location = "./Data files/3x3_results_not_random/")
