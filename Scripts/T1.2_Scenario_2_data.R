@@ -541,7 +541,7 @@ create_scenario_data_not_random(
                              matrices_33[["mat1"]][3,2],
                              matrices_33[["mat1"]][3,3]),
                      stages = c("juvenile", "subadult", "adult"),
-                     repro_stages = c("subadult", "adult"),
+                     repo_stages = c("subadult", "adult"),
                      location = "./Data files/3x3_results_not_random/")
 
 create_scenario_data_not_random(
@@ -553,7 +553,7 @@ create_scenario_data_not_random(
                              matrices_33[["mat2"]][3,2],
                              matrices_33[["mat2"]][3,3]),
                      stages = c("juvenile", "subadult", "adult"),
-                     repro_stages = c("subadult", "adult"),
+                     repo_stages = c("subadult", "adult"),
                      location = "./Data files/3x3_results_not_random/")  
 
 create_scenario_data_not_random(
@@ -565,7 +565,7 @@ create_scenario_data_not_random(
                              matrices_33[["mat3"]][3,2],
                              matrices_33[["mat3"]][3,3]),
                      stages = c("juvenile", "subadult", "adult"),
-                     repro_stages = c("subadult", "adult"),
+                     repo_stages = c("subadult", "adult"),
                      location = "./Data files/3x3_results_not_random/") 
 
 create_scenario_data_not_random(
@@ -577,7 +577,7 @@ create_scenario_data_not_random(
                              matrices_33[["mat4"]][3,2],
                              matrices_33[["mat4"]][3,3]),
                      stages = c("juvenile", "subadult", "adult"),
-                     repro_stages = c("subadult", "adult"),
+                     repo_stages = c("subadult", "adult"),
                      location = "./Data files/3x3_results_not_random/") 
 
 create_scenario_data_not_random(
@@ -589,5 +589,33 @@ create_scenario_data_not_random(
                              matrices_33[["mat5"]][3,2],
                              matrices_33[["mat5"]][3,3]),
                      stages = c("juvenile", "subadult", "adult"),
-                     repro_stages = c("subadult", "adult"),
+                     repo_stages = c("subadult", "adult"),
                      location = "./Data files/3x3_results_not_random/")
+
+#### Split simulations for faster programming ####
+
+
+#### source function
+
+source("./Functions/split_simulations_function.R")
+
+# get filenames
+
+filenames <- list.files("./Data files/3x3_results_not_random", 
+                        pattern = "not_random_missing",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/3x3_results_not_random/")
+
+# get filenames
+
+filenames <- list.files("./Data files/2x2_results_not_random", 
+                        pattern = "not_random_missing",
+                        full.names = TRUE)
+
+map(.x = filenames, 
+    split_simulations,
+    location = "./Data files/2x2_results_not_random/")
+

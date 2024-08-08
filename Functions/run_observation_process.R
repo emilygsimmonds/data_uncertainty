@@ -119,12 +119,12 @@ if(random == FALSE){
                    prob = ((state_data$Offspring+1)/
                              (max(state_data$Offspring+1)-0.001))) 
   }
-  # scaled by max value and subtract 0.001 to make them all between 0 and 1
+  # scaled by max value minus 0.001 to make them all between 0 and 1
   observed_data <- state_data %>% 
     mutate(Recapture = rbinom(length(state_data$Stage), 1, 
                               recapture[state_data$Stage]))
   # then overwrite those not 'chosen' by marker to have been recaptured
-  # higher probability of choosing those with higher breeding success
+  # higher probability of being recaptured with higher breeding success
   observed_data$Recapture[marker] <- 1
 }
 

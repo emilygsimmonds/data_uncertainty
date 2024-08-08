@@ -26,7 +26,7 @@ create_scenario_data_not_random <- function(baseline,
                                             recapture,
                                             phi,
                                             missing,
-                                            repro_stages,
+                                            repo_stages,
                                             location){
   
 #### Create simulated data ####
@@ -46,6 +46,7 @@ not_random_missing_reproduction <- map(.x = baseline,
                                         phi = phi,
                                         seed = 1, # just want a single realisation per baseline
                                         stages = stages,
+                                        repo_stages = repo_stages,
                                         random = FALSE)
                                     })
 
