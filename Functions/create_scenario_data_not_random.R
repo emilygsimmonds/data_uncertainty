@@ -10,6 +10,10 @@
 # - vector of recapture rates
 # - vector of survival rates
 # - vector of reproductive stages
+# - split = proportion of population in 'high capture' group
+# - offset = how much 'high capture' will differ from baseline 
+# - bias = either 'high' (biased to more high breeders so missing low) or 
+# 'low' (biased to low breeders so missing high)
 
 ## OUTPUT = saves out simulated datasets
 
@@ -27,14 +31,13 @@ create_scenario_data_not_random <- function(baseline,
                                             phi,
                                             missing,
                                             repo_stages,
-                                            location){
+                                            location,
+                                            split, 
+                                            offset, bias){
   
 #### Create simulated data ####
 
-#### Simulation 3: missing not at random across whole dataset ####
-  
-# randomly remove 60% individuals from 50% of population (higher breeders)
-# apply it to state file
+#### Simulation 3: missing not at random ####
 
 not_random_missing_reproduction <- map(.x = baseline,
                                         ~{
@@ -47,12 +50,14 @@ not_random_missing_reproduction <- map(.x = baseline,
                                         seed = 1, # just want a single realisation per baseline
                                         stages = stages,
                                         repo_stages = repo_stages,
-                                        random = FALSE)
+                                        random = FALSE, split, offset,
+                                        bias)
                                     })
 
 # save
 save(not_random_missing_reproduction, 
-     file = paste0(location, length(stages), "not_random_missing_simulation",
-                   name, ".RData"))
+     file = paste0(location, length(stages), "not_random_missing_simulation_",
+                  bias, name, ".RData"))
 
 }
+

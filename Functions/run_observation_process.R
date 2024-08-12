@@ -24,7 +24,10 @@ library(tidyverse)
 # - type = c("missing", "zero") indicates type of data errors
 #
 # - random = TRUE/FALSE, if the process is at random or not
-
+# - split = proportion of population in 'high capture' group
+# - offset = how much 'high capture' will differ from baseline 
+# - bias = either 'high' (biased to more high breeders so missing low) or 
+# 'low' (biased to low breeders so missing high)
 
 ## OUTPUT = dataframe of observed data
 
@@ -37,7 +40,10 @@ run_observation_process <- function(state_data,
                                     stages,
                                     repo_stages = c("juvenile", "adult"),
                                     seed = 1,
-                                    random = TRUE){
+                                    random = TRUE,
+                                    split = NA, 
+                                    offset = NA, 
+                                    bias = "high"){
   
 ## Calculate probability of EVER being recaptured alive in study
   
@@ -89,17 +95,30 @@ observed_data <- state_data %>%
                               recapture[state_data$Stage]))
 
 if(random == FALSE){ 
-  recapture <- p/2 # half the recapture rate as only applied to half population
+
+  # calculate the recapture rates for the two groups
+  
+  recapture_higher <- p+offset # split does not matter for the higher group
+  
+  # then calculate higher recapture rate at population level
+  relative_recapture <- recapture_higher * split 
+  # then calculate the recapture for lower group so that at pop level it = p
+  # do this by scaling by the proportion of population in the lower group
+  recapture_lower <- (p - relative_recapture) / (1-split)
+  
   names(recapture) <- stages
   # then want to select just part of population to be missing
-  # higher probability of selecting top 50% of breeding population based on offspring number
-  # and apply half recapture rate of whole pop (so same tot pop % as other scenario)
+  # higher probability observing top breeders based on offspring number
+  # split into two equally sized groups of 'lower recapture' and 
+  # 'higher recapture' probability of being in either group determined by 
+  # offspring number
   
   # need to make this apply only to the breeding population
   if(length(stages)>2){
   # get markers of all reproducing individuals
     repo_marker <- which(state_data$Stage %in% repo_stages)
-    marker <- sample(repo_marker, 
+  # then get markers for those in 'higher recapture' group
+    group_higher_marker <- sample(repo_marker, 
                      length(repo_marker)/(2*(length(repo_stages)
                                                /length(stages))), 
                      # scaling 2 number by proportion of stages that are reproductive
@@ -107,25 +126,27 @@ if(random == FALSE){
                      # scaling by max gives some probs of 0 - don't want this
                      # add 1 to all offspring numbers when doing calc
                      prob = ((state_data$Offspring[repo_marker]+1)/
-                               (max(state_data$Offspring[repo_marker]+1)-0.001)))  
+                               (max(state_data$Offspring[repo_marker]+1)+0.001)))  
   }
   
   if(length(stages)==2){
-  marker <- sample(1:length(state_data$Offspring), 
+  # then get markers for those in 'higher recapture' group
+  group_higher_marker <- sample(1:length(state_data$Offspring), 
                    length(state_data$Offspring)/2,
                    replace = FALSE,
                    # scaling by max gives some probs of 0 - don't want this
                    # add 1 to all offspring numbers when doing calc
                    prob = ((state_data$Offspring+1)/
-                             (max(state_data$Offspring+1)-0.001))) 
+                             (max(state_data$Offspring+1)+0.001))) 
   }
-  # scaled by max value minus 0.001 to make them all between 0 and 1
+  # apply the lower recapture rate to the whole population
   observed_data <- state_data %>% 
     mutate(Recapture = rbinom(length(state_data$Stage), 1, 
-                              recapture[state_data$Stage]))
-  # then overwrite those not 'chosen' by marker to have been recaptured
-  # higher probability of being recaptured with higher breeding success
-  observed_data$Recapture[marker] <- 1
+                              recapture_lower[state_data$Stage]))
+  # then overwrite recapture for 'higher' group with higher rate
+  observed_data$Recapture[group_higher_marker] <- 
+    rbinom(length(state_data$Stage), 1, 
+           recapture_higher[state_data$Stage])
 }
 
 # scale fecundity by chance of ever being observed
