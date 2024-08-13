@@ -246,9 +246,9 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat1"]][2,1],
           matrices_22[["mat1"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_files/simulations",
-  split = 0.5, offset = 0.2, bias = "low")
+  repo_stages = c("juvenile", "adult"),
+  split = 0.5, offset = 0.2, bias = "low",
+  location = "./Data files/2x2_files/simulations/")
 
 create_scenario_data_not_random(
   baseline = as.list(filenames[101:200]),
@@ -258,8 +258,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat2"]][2,1],
           matrices_22[["mat2"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "low")  
 
 create_scenario_data_not_random(
@@ -270,8 +270,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat3"]][2,1],
           matrices_22[["mat3"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "low") 
 
 create_scenario_data_not_random(
@@ -282,8 +282,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat4"]][2,1],
           matrices_22[["mat4"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "low") 
 
 create_scenario_data_not_random(
@@ -294,8 +294,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat5"]][2,1],
           matrices_22[["mat5"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "low")
 
 #### Create simulated data: HIGH NON RANDOM ####
@@ -307,8 +307,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat1"]][2,1],
           matrices_22[["mat1"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_files/simulations",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "high")
 
 create_scenario_data_not_random(
@@ -319,8 +319,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat2"]][2,1],
           matrices_22[["mat2"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "high")  
 
 create_scenario_data_not_random(
@@ -331,8 +331,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat3"]][2,1],
           matrices_22[["mat3"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "high") 
 
 create_scenario_data_not_random(
@@ -343,8 +343,8 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat4"]][2,1],
           matrices_22[["mat4"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "high") 
 
 create_scenario_data_not_random(
@@ -355,10 +355,11 @@ create_scenario_data_not_random(
   phi = c(matrices_22[["mat5"]][2,1],
           matrices_22[["mat5"]][2,2]),
   stages = c("juvenile", "adult"),
-  repro_stages = c("juvenile", "adult"),
-  location = "./Data files/2x2_results_not_random/",
+  repo_stages = c("juvenile", "adult"),
+  location = "./Data files/2x2_files/simulations/",
   split = 0.5, offset = 0.2, bias = "high")
 
+################################################################################
 #### ALL NON-RANDOM SIMULATIONS 3x3: low non random, high non random ####
 
 #### Import matrices ####
@@ -509,6 +510,7 @@ create_scenario_data_not_random(
   location = "./Data files/3x3_files/simulations/",
   split = 0.5, offset = 0.2, bias = "low")
 
+################################################################################
 #### Split simulations for faster programming ####
 
 

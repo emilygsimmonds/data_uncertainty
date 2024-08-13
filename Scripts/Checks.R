@@ -51,7 +51,7 @@ map(.x = column_names, safely(~{
                            parameters = parameters,
                            inc_trait = FALSE,
                            defined_seed = NULL, 
-                           i = 2)})) # CORRECT 29.06.22 + 09.22
+                           i = 2)})) # CORRECT 29.06.22 + 09.22 + 08.24
 
 map(.x = column_names, safely(~{
   # change format of focal column
@@ -61,7 +61,7 @@ map(.x = column_names, safely(~{
                     parameters = parameters,
                     inc_trait = FALSE,
                     defined_seed = NULL, 
-                    i = 2)})) # CORRECT 29.06.22+ 09.22
+                    i = 2)})) # CORRECT 29.06.22+ 09.22 + 08.24
 
 ## Test input data = missing columns ####
 
@@ -74,7 +74,7 @@ map(.x = column_names, safely(~{
                     parameters = parameters,
                     inc_trait = FALSE,
                     defined_seed = NULL, 
-                    i = 2)})) # CORRECT 29.06.22 + 09.22
+                    i = 2)})) # CORRECT 29.06.22 + 09.22 + 08.24
 
 map(.x = column_names, safely(~{
   # remove focal column
@@ -84,7 +84,7 @@ map(.x = column_names, safely(~{
                         parameters = parameters,
                         inc_trait = FALSE,
                         defined_seed = NULL, 
-                        i = 2)})) # CORRECT 29.06.22 + 09.22
+                        i = 2)})) # CORRECT 29.06.22 + 09.22 + 08.24
 
 ## Test input data = input parameters wrong format ####
 
@@ -97,38 +97,42 @@ parameters_test1 <- matrix(c(rep(1, 4),
                      byrow = TRUE, 
                      ncol = 4)
 
-# test matrix = too big
+# test matrix = too big - ERROR SHOULD BE RELATED TO DIM
 survival_function(input_data = input_data, 
                   parameters = parameters_test1,
                   stages = stages, 
-                  i = 2) # CORRECT 29.06.22 + 09.22
+                  i = 2) # CORRECT 29.06.22 + 09.22 + 08.24
 
 reproduction_function(input_data = input_data,
                       parameters = parameters_test1,
                       inc_trait = inc_trait,
-                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
+                      defined_seed = defined_seed, 
+                      stages = stages,
+                      i = 2) # CORRECT 29.06.22 + 09.22 + 08.24
 
-# test if not a matrix
+# test if not a matrix: ERROR = MUST BE MATRIX
 survival_function(input_data = input_data, 
                   parameters = as.numeric(parameters),
-                  i = 2)  # CORRECT 29.06.22 + 09.22
+                  i = 2)  # CORRECT 29.06.22 + 09.22 + 08.24
 
 reproduction_function(input_data = input_data,
                       parameters = as.numeric(parameters),
                       inc_trait = inc_trait,
-                      defined_seed = defined_seed, i = 2) # CORRECT 29.06.22 + 09.22
+                      defined_seed = defined_seed, 
+                      stages = stages,
+                      i = 2) # CORRECT 29.06.22 + 09.22 + 08.24
 
-# input seed wrong
-
+# input seed wrong: WILL ASK TO BE A NUMBER
 survival_function(input_data = input_data, 
                   parameters = parameters,
                   defined_seed = "l",
-                  i = 2)  # CORRECT 29.06.22
+                  i = 2)  # CORRECT 29.06.22 + 08.24
 
 reproduction_function(input_data = input_data,
                       parameters = parameters,
                       inc_trait = inc_trait,
-                      defined_seed = "l", i = 2) # CORRECT 29.06.22
+                      stages = stages,
+                      defined_seed = "l", i = 2) # CORRECT 29.06.22 + 08.24
 
 ################################################################################
 
@@ -178,7 +182,7 @@ test <- survival_function(input_data = input_data,
 
 summary(test$Surv)
 
-# CORRECT 05.07.22 + 09.22
+# CORRECT 05.07.22 + 09.22 + 08.24
 
 ## TEST: surv parameters all set to 0 survival column = all 0s ####
 
@@ -194,7 +198,7 @@ test <- survival_function(input_data = input_data,
 
 summary(test$Surv)
 
-# CORRECT 05.07.22 + 09.22
+# CORRECT 05.07.22 + 09.22 + 08.24
 
 ## TEST: surv parameters all set to 0.5 survival column = get 50% 0s ####
 
@@ -209,7 +213,8 @@ test <- survival_function(input_data = input_data,
                           defined_seed = NULL, 
                           i = 1)
 
-summary(test$Surv) # CORRECT 23.01.23
+summary(test$Surv) # CORRECT 23.01.23 + 08.24 
+# (may need to try a few times as stochastic)
 
 ## TEST: if reproduction set to 0, makes no difference ####
 
@@ -231,8 +236,10 @@ parameters3 <- matrix(c(rep(1, 2), 0.2, 0.3),
                       byrow = TRUE, 
                       ncol = 2)
 
-rownames(parameters1) <- rownames(parameters2) <- rownames(parameters3) <-  stages
-colnames(parameters1) <- colnames(parameters2) <- colnames(parameters3) <- stages
+rownames(parameters1) <- rownames(parameters2) <- 
+  rownames(parameters3) <-  stages
+colnames(parameters1) <- colnames(parameters2) <- 
+  colnames(parameters3) <- stages
 
 # set up test vectors
 # MUST scale recap by survival
@@ -245,12 +252,14 @@ test_surv1 <- as.numeric(rbinom(n = length(input_data$Surv),
 set.seed(2)
 test_surv2 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
-                                prob = as.numeric(parameters2[-1,][input_data[,"Stage"]])))
+                                prob = as.numeric(parameters2[-1,]
+                                                  [input_data[,"Stage"]])))
 # 3
 set.seed(3)
 test_surv3 <- as.numeric(rbinom(n = length(input_data$Surv), 
                                 size = 1, 
-                                prob = as.numeric(parameters3[-1,][input_data[,"Stage"]])))
+                                prob = as.numeric(parameters3[-1,]
+                                                  [input_data[,"Stage"]])))
 
 # run survival function
 test1 <- survival_function(input_data = input_data,
@@ -273,17 +282,31 @@ test3 <- survival_function(input_data = input_data,
 
 test1$Surv - test_surv1
 test2$Surv - test_surv2
-test3$Surv - test_surv3 # ALL CORRECT 05.07.22 + 09.22 + 01.23
+test3$Surv - test_surv3 # ALL CORRECT 05.07.22 + 09.22 + 01.23 + 08.24
 
-# now check that is right survival rate
+# now check that is right survival rate: 
 
-sum(test_surv1[which(input_data$Stage == "juvenile")])/length(which(input_data$Stage == "juvenile"))
-sum(test_surv2[which(input_data$Stage == "juvenile")])/length(which(input_data$Stage == "juvenile"))
-sum(test_surv3[which(input_data$Stage == "juvenile")])/length(which(input_data$Stage == "juvenile"))
+# 0.4
+sum(test_surv1[which(input_data$Stage == "juvenile")])/
+  length(which(input_data$Stage == "juvenile"))
+# 0.65
+sum(test_surv2[which(input_data$Stage == "juvenile")])/
+  length(which(input_data$Stage == "juvenile"))
+# 0.2
+sum(test_surv3[which(input_data$Stage == "juvenile")])/
+  length(which(input_data$Stage == "juvenile"))
 
-sum(test_surv1[which(input_data$Stage == "adult")])/length(which(input_data$Stage == "adult"))
-sum(test_surv2[which(input_data$Stage == "adult")])/length(which(input_data$Stage == "adult"))
-sum(test_surv3[which(input_data$Stage == "adult")])/length(which(input_data$Stage == "adult"))
+# 0.5
+sum(test_surv1[which(input_data$Stage == "adult")])/
+  length(which(input_data$Stage == "adult"))
+# 0.75
+sum(test_surv2[which(input_data$Stage == "adult")])/
+  length(which(input_data$Stage == "adult"))
+# 0.3
+sum(test_surv3[which(input_data$Stage == "adult")])/
+  length(which(input_data$Stage == "adult"))
+
+# CORRECT 08.24
 
 ################################################################################
 
@@ -301,16 +324,19 @@ parameters_test <- matrix(c(rep(1, 2),
                           byrow = TRUE, 
                           ncol = 2)
 
+# Should output all 0
 reproduction_function(input_data = input_data,
                       parameters = parameters,
                       inc_trait = FALSE,
                       defined_seed = 1, 
+                      stages = stages,
                       i = 1)$Offspring - 
   reproduction_function(input_data = input_data,
                       parameters = parameters_test,
                       inc_trait = FALSE,
-                      defined_seed = 1, 
-                      i = 1)$Offspring # CORRECT 05.07.22 + 09.22
+                      defined_seed = 1,
+                      stages = stages,
+                      i = 1)$Offspring # CORRECT 05.07.22 + 09.22 + 08.24
 
 ## TEST: set seed and make sure output matches test ####
 # (try a few different parameter matrices)
@@ -329,8 +355,10 @@ parameters3 <- matrix(c(2, 2, 0.5,
                       byrow = TRUE, 
                       ncol = 2)
 
-rownames(parameters1) <- rownames(parameters2) <- rownames(parameters3) <-  stages
-colnames(parameters1) <- colnames(parameters2) <- colnames(parameters3) <- stages
+rownames(parameters1) <- rownames(parameters2) <- 
+  rownames(parameters3) <-  stages
+colnames(parameters1) <- colnames(parameters2) <- 
+  colnames(parameters3) <- stages
 
 # run test vectors
 set.seed(1)
@@ -348,23 +376,26 @@ test1 <- reproduction_function(input_data = input_data,
                       parameters = parameters1,
                       inc_trait = FALSE,
                       defined_seed = 1, 
+                      stages = stages,
                       i = 1)$Offspring - test_repro1
 test2 <- reproduction_function(input_data = input_data,
                                parameters = parameters2,
                                inc_trait = FALSE,
                                defined_seed = 2, 
+                               stages = stages,
                                i = 1)$Offspring - test_repro2
 test3 <- reproduction_function(input_data = input_data,
                                parameters = parameters3,
                                inc_trait = FALSE,
                                defined_seed = 3, 
+                               stages = stages,
                                i = 1)$Offspring - test_repro3
 
-# CHECK
+# CHECK : SHOULD ALL = 0
 
 test1
 test2
-test3 # ALL CORRECT 05.07.22 + 09.22
+test3 # ALL CORRECT 05.07.22 + 09.22 + 08.24
 
 
 ################################################################################
@@ -407,26 +438,27 @@ removals <- input_data$ID[which(input_data$Surv == 0)]
 survivors <- input_data$ID[which(input_data$Surv == 1)]
 
 # run function
-output <- process_input_data(input_data, i=2, IDs=1:1000)
+output <- process_input_data(input_data, i=2, IDs=1:1000,
+                             stages = stages)
 
 # check IDs in Year 2
 output <- output %>% filter(Year == 2)
-output$ID %in% removals
-output$ID[output$Stage=="adult"] %in% survivors
+output$ID %in% removals # SHOULD ALL BE FALSE
+output$ID[output$Stage=="adult"] %in% survivors # SHOULD ALL BE TRUE
 
-# CORRECT 06.07.22 + 09.22
+# CORRECT 06.07.22 + 09.22 + 08.24
 
 ## CHECK: number of new offspring is correct ##
 # calculate expected number of offspring
 expected_offspring <- sum(input_data$Offspring)
 
 # then run function and add up new individuals
-output <- process_input_data(input_data, i = 2, IDs = 1:1000)
+output <- process_input_data(input_data, i = 2, IDs = 1:1000, stages = stages)
 output <- output %>% filter(Year == 2)
 output_offspring <- output$ID[!output$ID %in% input_data$ID]
 
 # should be 0 if same
-length(output_offspring)-expected_offspring # CORRECT 06.07.22 + 09.22
+length(output_offspring)-expected_offspring # CORRECT 06.07.22 + 09.22 + 08.24
 
 ################################################################################
 
@@ -469,13 +501,16 @@ IDs <- 101:10000000
 output_data <- run_simulation_state(input_data_old = input_data, 
                               parameters = parameters, 
                               inc_trait = FALSE,
-                              start_i = 2, end_i = 5, IDs = IDs) 
+                              start_i = 2, end_i = 5, IDs = IDs,
+                              stages = stages) 
 
 output_data %>% group_by(Year, Stage) %>% summarise(count = n(),
                                              repro = sum(Offspring),
                                              surv = sum(Surv)/count)
 
-# check that each year has the survival level expected 0.7 for juv 0.9 adults
+# check that each year has the survival level expected 
+# approx 0.7 for juv 0.9 adults
+# CORRECT 08.24
 
 # and then try some different parameters and make sure it changes
 parameters <- matrix(c(rep(1, 2),
@@ -497,23 +532,27 @@ input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
 output_data <- run_simulation_state(input_data_old = input_data, 
                                     parameters = parameters, 
                                     inc_trait = FALSE,
-                                    start_i = 2, end_i = 5, IDs = IDs) 
+                                    start_i = 2, end_i = 5, IDs = IDs,
+                                    stages = stages) 
 
 output_data %>% group_by(Year, Stage) %>% summarise(count = n(),
                                                     repro = sum(Offspring),
                                                     surv = sum(Surv)/count)
 
-# SEEMS CORRECT 24.01.23
+# SEEMS CORRECT 24.01.23 + 08.24
 
 #### Check if getting duplicated individuals ####
 
 duplicates <- output_data %>% group_by(ID,Year) %>% summarise(count = n())
 
-summary(duplicates$count)
+summary(duplicates$count) # WANT ALL TO BE 1 CORRECT 08.24
 
 #### TEST: observation process ####
 
 source("./Functions/run_observation_process.R")
+
+# set recapture rates
+recapture <- 0.7
 
 non_perfect_recap <- run_observation_process(output_data, 
                                              p = c(1, recapture),
@@ -532,17 +571,17 @@ count_error_too <- run_observation_process(output_data,
                                                       "adult"))
 
 # number of individuals is reduced do they all have recap = 1
-summary(non_perfect_recap) # YES
+summary(non_perfect_recap) # YES CORRECT: 08.24
 
-# are all juveniles still there
-length(which(output_data$Age == 1)) - length(which(non_perfect_recap$Age == 1)) # YES
+# are all juveniles still there: SHOULD = 0
+length(which(output_data$Age == 1)) - 
+  length(which(non_perfect_recap$Age == 1)) # YES CORRECT 08.24
 
 # how many individuals removed?
-3019/3254 # 92 % remain
+length(non_perfect_recap$ID)/length(output_data$ID) # 92 % remain
 
-# are fecundity counts different?
-count_error_too$Offspring - count_error_too$Offspring_obs
-
+# are fecundity counts different? SHOULD NOT = 0
+count_error_too$Offspring - count_error_too$Offspring_obs # CORRECT 08.24
 
 
 #### TEST: missing not at random ####
@@ -556,6 +595,9 @@ phi = c(0.7, 0.9)
 names(phi) <- c("juvenile", "adult")
 recapture <- c(1,1)
 missing <- c(0.7,0.7)
+split <- 0.5
+bias <- "high"
+offset <- 0.2
 
 # set up parameters
 
@@ -575,20 +617,50 @@ output_random <- run_observation_process(output_data,
                                              stages = stages,
                                              random = TRUE)
 
-output_not_random <- run_observation_process(output_data,
+# RUNNING WITH CHECK ON SO CAN SEE RECAPTURE RATES
+output_not_random_high <- run_observation_process(output_data,
                                              p = recapture*missing,
                                              fecundity_error = FALSE,
                                              phi = phi,
                                              stages = stages,
-                                             random = FALSE)
+                                             split = split,
+                                             bias = "high",
+                                             offset = offset,
+                                             random = FALSE,
+                                             do_checks = TRUE)
+
+output_not_random_low <- run_observation_process(output_data,
+                                                  p = recapture*missing,
+                                                  fecundity_error = FALSE,
+                                                  phi = phi,
+                                                  stages = stages,
+                                                  split = split,
+                                                  bias = "low",
+                                                  offset = offset,
+                                                  random = FALSE,
+                                                  do_checks = TRUE)
 
 # number of individuals is reduced do they all have recap = 1
-summary(output_not_random) # YES
+summary(output_not_random_high) # YES
+summary(output_not_random_low) # YES
+summary(output_random) # YES
+# ALL CORRECT 08.24
 
-# how many individuals removed?
-length(output_not_random[,1])/length(output_data[,1]) # 68 % remain, seems good
-length(output_random[,1])/length(output_data[,1]) # 70% remain, seems good
+# how many individuals removed? WANT APPROX 70%
+length(output_not_random_high[,1])/length(output_data[,1]) # 62.8 % remain 08.24
+length(output_not_random_low[,1])/length(output_data[,1]) # 62.6 % remain 08.24
+length(output_random[,1])/length(output_data[,1]) # 69.8% remain 08.24
 
-# check that number of offspring differs between the two
-summary(output_not_random$Offspring) #(median = 1, mean = 1.147)
-summary(output_random$Offspring) #(median = 1, mean = 0.8606) # small difference
+# check that number of offspring differs 
+# HIGH should be higher, LOW should be lower than randoms
+summary(output_not_random_high$Offspring) 
+summary(output_random$Offspring) 
+summary(output_not_random_low$Offspring)
+# WORKS FOR MEAN BUT NOT MAX OR MEDIAN 08.24
+
+# EXTRA CHECK are there more individuals missing from correct groups
+
+# hard to check this as individuals appear in multiple years and can belong
+# to different groups in different years so doing by ID is not exact mapping
+# INSTEAD - PUT CHECKING INTO THE FUNCTION ITSELF - SEE ABOVE
+# THAT IS CORRECT AS OF 08.24

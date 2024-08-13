@@ -26,39 +26,26 @@ input_data3 <- data.frame(ID = sample(1:100, 100, replace = FALSE),
                                         replace = TRUE),
                          Trait = rnorm(100, 20, 5))
 
-input_data5 <- data.frame(ID = sample(1:100, 100, replace = FALSE),
-                          Year = 1,
-                          Surv = 1,
-                          Offspring = rpois(100, 2),
-                          Stage = sample(c("juvenile", "subadult", "adult1",
-                                           "adult2", "adult3"), 100, 
-                                         replace = TRUE),
-                          Trait = rnorm(100, 20, 5))
-
 # set up parameters
 
 parameters3 <- matrix(c(0,0.5,1,
                         0.3,0,0,
                         0,0.4,0.7), nrow = 3, byrow = TRUE)
 
-parameters5 <- matrix(c(0,0,0.5,0.7,1,
-                        0.3,0,0,0,0,
-                        0,0.4,0,0,0,
-                        0,0,0.5,0,0,
-                        0,0,0,0.6,0.7), nrow = 5, byrow = TRUE)
-
-
 stages3 <- c("juvenile", "subadult", "adult")
-stages5 <-c("juvenile", "subadult", "adult1", "adult2", "adult3")
 
 
 ################################################################################
 
 #### Survival function ####
 
+# check if the survival function matches manual calculation of survival provs
 set.seed(10)
-test3 <- rbinom(100, 1, prob = c(0.3,0.4,0.7)[match(input_data3$Stage, stages3)])
+# manual test
+test3 <- rbinom(100, 1, prob = c(0.3,0.4,0.7)[match(input_data3$Stage, 
+                                                    stages3)])
 
+# function
 survival3 <- survival_function(input_data = input_data3,
                           parameters = parameters3,
                           inc_trait = FALSE,
@@ -66,39 +53,25 @@ survival3 <- survival_function(input_data = input_data3,
                           stages = stages3,
                           i = 1) 
 
-survival3$Surv - test3
+# SHOULD = 0 
+survival3$Surv - test3 # CORRECT 08.24
 
+# STAGES SHOULD = APPROX: adult 0.7, subadult 0.4, juvenile 0.3
 survival3 %>%
-  group_by(Stage) %>% summarise(surv_count = sum(Surv)/n()) # seems ok 26.01.23
-
-set.seed(10)
-test5 <- rbinom(100, 1, 
-                prob = c(0.3,0.4,0.5,0.6,0.7)[match(input_data5$Stage, stages5)])
-
-survival5 <- survival_function(input_data = input_data5,
-                               parameters = parameters5,
-                               inc_trait = 10,
-                               defined_seed = NULL, 
-                               stages = stages5,
-                               i = 1) 
-
-survival5$Surv - test5
-
-survival5 %>%
-  group_by(Stage) %>% summarise(surv_count = sum(Surv)/n()) # seems ok 26.01.23
+  group_by(Stage) %>% summarise(surv_count = sum(Surv)/n()) 
+# CORRECT 26.01.23 + 08.24
 
 ################################################################################
 
 #### Reproduction function ####
 
+# check if reproduction function matches manual offspring number assignment
 set.seed(10)
+# manual
 test3 <- rpois(n = length(input_data3$Offspring), 
                      lambda = parameters3[1, match(input_data3$Stage, stages3)])
-set.seed(10)
-test5 <- rpois(n = length(input_data5$Offspring), 
-                     lambda = parameters5[1, match(input_data5$Stage, stages5)])
 
-# then run function and subtract test vector from Offspring column
+# then run function
 reproduction3 <- reproduction_function(input_data = input_data3,
                                parameters = parameters3,
                                inc_trait = FALSE,
@@ -106,67 +79,50 @@ reproduction3 <- reproduction_function(input_data = input_data3,
                                stages = stages3,
                                i = 1)
 
+# SHOULD = 0
 reproduction3$Offspring - test3
+# CORRECT 08.24
 
+# STAGES SHOULD BE APPROX: juv = 0, subadult = 0.5, adult  =1
 reproduction3 %>%
-  group_by(Stage) %>% summarise(repro_count = sum(Offspring)/n()) # seems ok 26.01.23
-
-reproduction5 <- reproduction_function(input_data = input_data5,
-                               parameters = parameters5,
-                               inc_trait = FALSE,
-                               defined_seed = 10, 
-                               stages = stages5,
-                               i = 1)
-
-reproduction5$Offspring - test5
-
-reproduction5 %>%
-  group_by(Stage) %>% summarise(repro_count = sum(Offspring)/n()) # seems ok 26.01.23
+  group_by(Stage) %>% summarise(repro_count = sum(Offspring)/n()) 
+# CORRECT 26.01.23 + 08.24
 
 ################################################################################
 
 #### Process input data function ####
+
+# aim of function is to take formatted data for all years
+# reduce to focal year, update by removing dead individuals ready for the next
+# year and adding in new individuals
+
+## TEST: all individuals with Surv = 0 get removed + Surv = 1 remain ####
+# check which individuals should be removed
 
 input_data3$Surv <- survival3$Surv
 
 removals3 <- input_data3$ID[which(input_data3$Surv == 0)]
 survivors3 <- input_data3$ID[which(input_data3$Surv == 1)]
 
-input_data5$Surv <- survival5$Surv
-
-removals5 <- input_data5$ID[which(input_data5$Surv == 0)]
-survivors5 <- input_data5$ID[which(input_data5$Surv == 1)]
-
 # run function
 output3 <- process_input_data(input_data3, i=2, IDs=1:1000,
                               stages = stages3)
-
-output5 <- process_input_data(input_data5, i=2, IDs=1:1000,
-                              stages = stages5)
-
 # check IDs in Year 2
 output3 <- output3 %>% filter(Year == 2)
-output3$ID %in% removals3
-output3$ID[output3$Stage != "juvenile"] %in% survivors3
+output3$ID %in% removals3 # CHECK ALL REMOVED
+output3$ID[output3$Stage != "juvenile"] %in% survivors3 # CHECK JUVENILES REMAIN
 
-output5 <- output5 %>% filter(Year == 2)
-output5$ID %in% removals5
-output5$ID[output5$Stage != "juvenile"] %in% survivors5
-
-# CORRECT 06.07.22 + 09.22
+# CORRECT 06.07.22 + 09.22 + 08.24
 
 ## CHECK: number of new offspring is correct ##
 # calculate expected number of offspring
 expected_offspring3 <- sum(input_data3$Offspring)
-expected_offspring5 <- sum(input_data5$Offspring)
 
 # then run function and add up new individuals
 output_offspring3 <- output3$ID[!output3$ID %in% input_data3$ID]
-output_offspring5 <- output5$ID[!output5$ID %in% input_data5$ID]
 
 # should be 0 if same
-length(output_offspring3)-expected_offspring3 # CORRECT 06.07.22 + 09.22
-length(output_offspring5)-expected_offspring5
+length(output_offspring3)-expected_offspring3 # CORRECT 06.07.22 + 09.22 + 08.24
 
 ################################################################################
 
@@ -202,16 +158,29 @@ output_data3 %>% group_by(Year, Stage) %>% summarise(count = n(),
                                                     repro = sum(Offspring)/count,
                                                     surv = sum(Surv)/count)
 
-output_data5 <- run_simulation_state(input_data_old = input_data5, 
-                                     parameters = parameters5, 
-                                     inc_trait = FALSE,
-                                     stages = stages5,
-                                     start_i = 2, end_i = 6, IDs = IDs) %>%
-  filter(Year > 1)
+# check that each year has the survival level expected 
+# approx 0.3 for juv, 0.4 sub adults, 0.7 adults
+# check reproduction ok too 0 juv, 0.5 subadult, 1 adult
+# CORRECT 08.24
 
-summary5 <- output_data5 %>% group_by(Year, Stage) %>% summarise(count = n(),
+# THEN try different parameters
+
+parameters3b <- matrix(c(0,1,0.5,
+                        0.7,0,0,
+                        0,0.9,0.5), nrow = 3, byrow = TRUE)
+
+output_data3b <- run_simulation_state(input_data_old = input_data3, 
+                                     parameters = parameters3b, 
+                                     inc_trait = FALSE,
+                                     stages = stages3,
+                                     start_i = 2, end_i = 6, IDs = IDs) %>%
+  filter(Year > 1) # remove first year as parameters slightly different
+
+output_data3b %>% group_by(Year, Stage) %>% summarise(count = n(),
                                                      repro = sum(Offspring)/count,
                                                      surv = sum(Surv)/count)
+
+# CORRECT 08.24
 
 ################################################################################
 
@@ -220,80 +189,43 @@ summary5 <- output_data5 %>% group_by(Year, Stage) %>% summarise(count = n(),
 source("./Functions/run_observation_process.R")
 
 non_perfect_recap3 <- run_observation_process(state_data = output_data3, 
-                                             p = c(1, 0.8, 0.8),
+                                             p = c(1, 0.7, 0.7),
                                              phi = c(0.3, 0.4, 0.7),
                                              fecundity_error = FALSE,
                                              seed = 2,
                                              stages = stages3)
 
 count_error_too3 <- run_observation_process(output_data, 
-                                           p = c(1, 0.8, 0.8),
+                                           p = c(1, 0.7, 0.7),
                                            phi = c(0.3, 0.4, 0.7),
                                            fecundity_error = TRUE,
                                            seed = 2,
                                            stages = stages3)
 
 # number of individuals is reduced do they all have recap = 1
-summary(non_perfect_recap3) # YES
+summary(non_perfect_recap3) # YES CORRECT 08.24
 
-# are all juveniles still there
-length(which(output_data3$Age == 1)) - length(which(non_perfect_recap3$Age == 1)) # YES
+# are all juveniles still there SHOULD BE 0
+length(which(output_data3$Age == 1)) - 
+  length(which(non_perfect_recap3$Age == 1)) # YES CORRECT 08.24
 
 # how many individuals removed?
 length(unique(non_perfect_recap3$ID))/
   length(unique(output_data3$ID))
    # 98 % remain
 
-# check individuals by stage - 70-77% BUT GOES > 80 when using diff seed
+# check individuals by stage SHOULD BE 70% 
 length(non_perfect_recap3$ID[which(non_perfect_recap3$Stage == "subadult")])/
   length(output_data3$ID[which(output_data3$Stage == "subadult")])
 length(non_perfect_recap3$ID[which(non_perfect_recap3$Stage == "adult")])/
   length(output_data3$ID[which(output_data3$Stage == "adult")])
 
-length(unique(count_error_too3$ID))/
-  length(unique(output_data3$ID))
-# 98 % remain
+# CORRECT 08.24
 
-# are fecundity counts different?
-count_error_too3$Offspring - count_error_too3$Offspring_obs
+# are fecundity counts different? NOT 0
+count_error_too3$Offspring - count_error_too3$Offspring_obs # CORRECT 08.24
 
 ###############################################################################
-
-#### Check missing scenarios ####
-
-baseline_observations <- readRDS("./Data files/3x3/3baseline_simulation_observationsmat48.RDS")
-.x <- baseline_observations
-repro_stages <- c("subadult", "adult")
-
-# juvenile missing
-marker1 <- which(.x$Stage == repro_stages[1])
-set.seed(1)
-marker2 <- sample(marker1, round(length(marker1)*0.2))
-.x <- .x %>% mutate(Offspring_obs = Offspring)
-.x$Offspring_obs[marker2] <- 0
-
-# compare offspring of lowest repro class
-sum(.x$Offspring_obs[which(.x$Stage == "subadult")])/
-  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "subadult")]) #CORRECT
-
-sum(.x$Offspring_obs[which(.x$Stage == "adult")])/
-  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "adult")])
-
-# adult missing
-.x <- baseline_observations
-marker1 <- which(.x$Stage %in% repro_stages[-1])
-set.seed(1)
-marker2 <- sample(marker1, round(length(marker1)*0.2))
-.x <- .x %>% mutate(Offspring_obs = Offspring)
-.x$Offspring_obs[marker2] <- 0
-
-# compare offspring of higher repro class
-sum(.x$Offspring_obs[which(.x$Stage == "adult")])/
-  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "adult")]) #CORRECT
-
-sum(.x$Offspring_obs[which(.x$Stage == "subadult")])/
-  sum(baseline_observations$Offspring[which(baseline_observations$Stage == "subadult")]) #CORRECT
-
 
 #### TEST: missing not at random ####
 
@@ -313,69 +245,57 @@ output_random <- run_observation_process(output_data3,
                                          stages = stages3,
                                          random = TRUE)
 
-output_not_random <- run_observation_process(output_data3,
-                                             p = recapture*missing,
-                                             fecundity_error = FALSE,
-                                             phi = phi,
-                                             stages = stages3,
-                                             repo_stages = c("subadult", "adult"),
-                                             random = FALSE)
+# RUNNING WITH CHECK ON SO CAN SEE RECAPTURE RATES
+output_not_random_high <- run_observation_process(output_data3,
+                                                  p = recapture*missing,
+                                                  fecundity_error = FALSE,
+                                                  phi = phi,
+                                                  stages = stages3,
+                                                  repo_stages = c("subadult", 
+                                                                  "adult"),
+                                                  split = split,
+                                                  bias = "high",
+                                                  offset = offset,
+                                                  random = FALSE,
+                                                  do_checks = TRUE)
+
+output_not_random_low <- run_observation_process(output_data3,
+                                                 p = recapture*missing,
+                                                 fecundity_error = FALSE,
+                                                 phi = phi,
+                                                 stages = stages3,
+                                                 repo_stages = c("subadult", 
+                                                                 "adult"),
+                                                 split = split,
+                                                 bias = "low",
+                                                 offset = offset,
+                                                 random = FALSE,
+                                                 do_checks = TRUE)
 
 # number of individuals is reduced do they all have recap = 1
-summary(output_not_random) # YES
+summary(output_not_random_high) # YES
+summary(output_not_random_low) # YES
+summary(output_random) # YES
+# ALL CORRECT 08.24
 
-# how many individuals removed?
-length(output_not_random[,1])/length(output_data[,1]) # 64 % remain, seems ok
-length(output_random[,1])/length(output_data[,1]) # 78% remain, bit high
+# how many individuals removed? WANT APPROX 70%
+length(output_not_random_high[,1])/length(output_data3[,1]) # 69.3 % remain 08.24
+length(output_not_random_low[,1])/length(output_data3[,1]) # 69.3 % remain 08.24
+length(output_random[,1])/length(output_data3[,1]) # 70% remain 08.24
 
-# check that number of offspring differs between the two
-summary(output_not_random$Offspring) #(median = 0, mean = 0.6565)
-summary(output_random$Offspring) #(median = 0, mean = 0.3224) # small difference
+# check that number of offspring differs 
+# HIGH should be higher, LOW should be lower than randoms
+summary(output_not_random_high$Offspring) 
+summary(output_random$Offspring) 
+summary(output_not_random_low$Offspring)
+# WORKS FOR MEAN BUT NOT MAX OR MEDIAN 08.24
 
-###############################################################################
+# EXTRA CHECK are there more individuals missing from correct groups
 
-
-non_perfect_recap5 <- run_observation_process(state_data = output_data5, 
-                                              p = c(1, 0.8, 0.8, 
-                                                    0.8, 0.8),
-                                              phi = c(0.3, 0.4, 0.5, 0.6,
-                                                      0.7),
-                                              fecundity_error = FALSE,
-                                              seed = 2,
-                                              stages = stages5)
-
-count_error_too5 <- run_observation_process(state_data = output_data5, 
-                                            p = c(1, 0.8, 0.8, 
-                                                  0.8, 0.8),
-                                            phi = c(0.3, 0.4, 0.5, 0.6,
-                                                    0.7),
-                                            fecundity_error = TRUE,
-                                            seed = 2,
-                                            stages = stages5)
-
-# number of individuals is reduced do they all have recap = 1
-summary(non_perfect_recap5) # YES
-
-# are all juveniles still there
-length(which(output_data5$Age == 1)) - length(which(non_perfect_recap5$Age == 1)) # YES
-
-# how many individuals removed?
-length(unique(non_perfect_recap5$ID))/
-  length(unique(output_data5$ID))
-# 98 % remain
-
-# check individuals by stage - 70-77%
-length(non_perfect_recap5$ID[which(non_perfect_recap5$Stage == "subadult")])/
-  length(output_data5$ID[which(output_data5$Stage == "subadult")])
-length(non_perfect_recap5$ID[which(non_perfect_recap5$Stage == "adult3")])/
-  length(output_data5$ID[which(output_data5$Stage == "adult3")])
-
-length(unique(count_error_too5$ID))/
-  length(unique(output_data5$ID))
-# 98 % remain
-
-# are fecundity counts different?
-count_error_too5$Offspring - count_error_too5$Offspring_obs
+# hard to check this as individuals appear in multiple years and can belong
+# to different groups in different years so doing by ID is not exact mapping
+# INSTEAD - PUT CHECKING INTO THE FUNCTION ITSELF - SEE ABOVE
+# THAT IS CORRECT AS OF 08.24
 
 ################################################################################
 
@@ -383,10 +303,10 @@ count_error_too5$Offspring - count_error_too5$Offspring_obs
 
 source("./Functions/make_input_data_function.R")
 library(nimbleEcology)
+library(MCMCvis)
 
 # check eigenvalues of input parameters
 eigen(parameters3)
-eigen(parameters5)
 
 source("./Scripts/T1.1_Model_hmm_33.R")
 
@@ -398,29 +318,14 @@ output_results3 <- nimbleMCMC(code = Model_SS_hmm,
                              constants = model_inputs3$constants,
                              inits = model_inputs3$inits,
                              monitors = model_inputs3$parameters_to_save,
-                             niter = 500,
-                             nburnin = 50,
+                             niter = 5000,
+                             nburnin = 500,
                              nchains = 2)
 
 MCMCsummary(output_results3, round = 2)
 parameters3
 
-source("./Scripts/T1.1_Model_hmm_55.R")
-
-model_inputs5 <- make_input_data(output_data5, n_occasions = 5,
-                                 stages = stages5)
-
-output_results5 <- nimbleMCMC(code = Model_SS_hmm, 
-                              data = model_inputs5$data_input,
-                              constants = model_inputs5$constants,
-                              inits = model_inputs5$inits,
-                              monitors = model_inputs5$parameters_to_save,
-                              niter = 500,
-                              nburnin = 50,
-                              nchains = 2)
-
-MCMCsummary(output_results5)
-parameters5
+# MODEL WORKING AND ESTIMATING CORRECT PARAMETERS 08.24
 
 #### CHECK DIRECT ESTIMATE MODEL ####
 
