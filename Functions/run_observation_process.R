@@ -80,7 +80,7 @@ if(length(stages)>2){
 total_prob <- sum(year1, year2, year3)   
 
 # combine the recapture probabilities into a vector
-recapture <- p # half the recapture rate as only applied to half population
+recapture <- p
 names(recapture) <- stages
   
 # fill in recapture probabilities
@@ -106,7 +106,8 @@ if(random == FALSE){
   # do this by scaling by the proportion of population in the lower group
   recapture_lower <- (p - relative_recapture) / (1-split)
   
-  names(recapture) <- stages
+  names(recapture_lower) <- stages
+  names(recapture_higher) <- stages
   # then want to select just part of population to be missing
   # higher probability observing top breeders based on offspring number
   # split into two equally sized groups of 'lower recapture' and 
@@ -118,15 +119,22 @@ if(random == FALSE){
   # get markers of all reproducing individuals
     repo_marker <- which(state_data$Stage %in% repo_stages)
   # then get markers for those in 'higher recapture' group
+  # do this by sampling IDs with a probability related to reproductive output
+  # number of IDs selected is controlled by the 'split'  
     group_higher_marker <- sample(repo_marker, 
-                     length(repo_marker)/(2*(length(repo_stages)
+                     length(repo_marker)*(split*(length(repo_stages)
                                                /length(stages))), 
-                     # scaling 2 number by proportion of stages that are reproductive
+                     # scaling split by proportion of stages that are reproductive
                      replace = FALSE,
                      # scaling by max gives some probs of 0 - don't want this
                      # add 1 to all offspring numbers when doing calc
-                     prob = ((state_data$Offspring[repo_marker]+1)/
-                               (max(state_data$Offspring[repo_marker]+1)+0.001)))  
+                     # also add 0.001 to denominator so that all probs >0<1
+                     if(bias == "high"){prob = ((state_data$Offspring[repo_marker]+1)/
+                     (max(state_data$Offspring[repo_marker]+1)+0.001))}else{
+                      # take opposite of probabilities
+                     prob = 1-((state_data$Offspring[repo_marker]+1)/
+                     (max(state_data$Offspring[repo_marker]+1)+0.001))  
+                     })
   }
   
   if(length(stages)==2){
@@ -136,8 +144,13 @@ if(random == FALSE){
                    replace = FALSE,
                    # scaling by max gives some probs of 0 - don't want this
                    # add 1 to all offspring numbers when doing calc
-                   prob = ((state_data$Offspring+1)/
-                             (max(state_data$Offspring+1)+0.001))) 
+                   # also add 0.001 to denominator so that all probs >0<1
+                   if(bias == "high"){prob = ((state_data$Offspring[repo_marker]+1)/
+                   (max(state_data$Offspring[repo_marker]+1)+0.001))}else{
+                   # take opposite of probabilities
+                   prob = 1-((state_data$Offspring[repo_marker]+1)/
+                   (max(state_data$Offspring[repo_marker]+1)+0.001))  
+                   })
   }
   # apply the lower recapture rate to the whole population
   observed_data <- state_data %>% 
