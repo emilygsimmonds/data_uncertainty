@@ -107,38 +107,6 @@ length(which(baseline_observations[[1]]$Offspring -
 save(random_missing_reproduction, 
 file = paste0(location, length(stages), "random_missing_simulation", name, ".RData"))
 
-#### Simulation 2: missing reproductive events (not at random - bias) ####
-# miss lowest breeding class
-
-# reduce juvenile recapture to 0.7
-juvenile_missing_reproduction <- map2(.x = baseline_state,
-                                    .y = seeds, ~{run_observation_process(.x,
-                                                  p = c(recapture[1]*missing[1],
-                                                        recapture[2:length(recapture)]),
-                                                  fecundity_error = FALSE,
-                                                  phi = phi,
-                                                  seed = .y,
-                                                  stages = stages)
-                                    })
-
-# save
-save(juvenile_missing_reproduction, 
-file = paste0(location, length(stages), "juvenile_missing_simulation", name, ".RData"))
-
-# miss adults
-adult_missing_reproduction <- map2(.x = baseline_state,
-                                   .y = seeds, ~{run_observation_process(.x,
-                                                 p = c(recapture[1],
-                                                       recapture[2:length(recapture)]*missing[2:length(recapture)]),
-                                                 fecundity_error = FALSE,
-                                                 phi = phi,
-                                                 seed = .y,
-                                                 stages = stages)
-                                   })
-
-# save
-save(adult_missing_reproduction, 
-     file = paste0(location, length(stages), "adult_missing_simulation", name, ".RData"))
 
 }
 
