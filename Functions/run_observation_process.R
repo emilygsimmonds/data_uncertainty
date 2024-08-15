@@ -29,6 +29,7 @@ library(tidyverse)
 # - bias = either 'high' (biased to more high breeders so missing low) or 
 # 'low' (biased to low breeders so missing high)
 
+
 ## OUTPUT = dataframe of observed data
 
 #### FUNCTION ####

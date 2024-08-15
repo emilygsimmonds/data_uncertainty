@@ -13,7 +13,8 @@
 make_input_data <- function(simulations,
                             n_occasions,
                             fecundity_error = FALSE,
-                            stages){
+                            stages,
+                            reproduction_data = NULL){
   
 #### Step 1: recode age - should all be as stage now ####
    
@@ -58,9 +59,14 @@ for(i in 1:nrow(surv_state_init)){
 
 #### Step 4: assign offspring and age vectors ####
 
+# if independent reproduction data is supplied then use that for offspring model
+if(is.null(reproduction_data)){
 # need to make a capture history and save out age and offspring columns
 offspring_obs <- output_data$Offspring
-age <- output_data$Age
+age <- output_data$Age}else{
+  offspring_obs <- reproduction_data$Offspring
+  age <- reproduction_data$Age 
+}
 
 if(length(stages) == 3){
 subadult <- which(age == 2) #index of subadults
