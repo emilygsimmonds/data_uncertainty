@@ -16,6 +16,9 @@ library(maps)     # for plotting world map
 
 comadre <- cdb_fetch("comadre")
 
+# source functions
+source("./Functions/expand_matrix.R")
+
 #### CHOOSE DATA SIMULATION MATRICES ####
 
 load("./Data files/working_comadre.RData")
@@ -64,10 +67,7 @@ save(output_matrices, file = "./Data files/2x2/twobytwo_matrices.RData")
 
 ################################################################################
 
-#### make 3x3 and 5x5 matrices ####
-
-# source functions
-source("./Functions/expand_matrix.R")
+#### make 3x3 ####
 
 # load 2x2 matrices
 load("./Data files/2x2/twobytwo_matrices.RData")
@@ -79,9 +79,3 @@ matrices_33 <- map(.x = output_matrices,
 
 save(matrices_33, file = "./Data files/3x3/threebythree_matrices.RData")
 
-# make 5x5 matrices
-matrices_55 <- map(.x = output_matrices, 
-                   .f = expand_matrix,
-                   size = 5)
-
-save(matrices_55, file = "./Data files/5x5/fivebyfive_matrices.RData")
