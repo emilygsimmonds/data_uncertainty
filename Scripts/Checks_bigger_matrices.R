@@ -343,6 +343,8 @@ library(popbio)
 source("./Functions/make_matrix.R")
 source("./Functions/transition_frequency.R")
 source("./Functions/bootstrap_tf.R")
+source("./Functions/bootstrap_summary.R")
+
 
 #### construct a transition frequency table
 

@@ -15,6 +15,8 @@ library(MCMCvis)
 
 source("./Functions/summarise_summary_function.R")
 source("./Scripts/theme_script.R")
+source("./Functions/bootstrap_summary.R")
+
 
 # load results and 'true' matrices
 

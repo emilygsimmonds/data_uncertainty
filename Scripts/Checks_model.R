@@ -221,6 +221,7 @@ library(popbio)
 # source functions
 source("./Functions/make_input_data_function.R")
 source("./Functions/transition_frequency.R")
+source("./Functions/bootstrap_summary.R")
 
 # load data - test on the state
 load("./Data files/baseline_simulation_statemat1.RData")

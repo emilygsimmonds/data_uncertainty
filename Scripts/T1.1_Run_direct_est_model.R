@@ -20,6 +20,7 @@ library(magrittr)
 source("./Functions/transition_frequency.R")
 source("./Functions/make_matrix.R")
 source("./Functions/bootstrap_tf.R")
+source("./Functions/bootstrap_summary.R")
 
 
 ################################################################################
