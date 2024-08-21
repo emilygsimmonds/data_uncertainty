@@ -8,7 +8,7 @@ source("./Functions/make_input_data_function.R")
 
 ## Source model code ####
 
-source("./Scripts/T1.1_Model_SS_hmm.R")
+source("./Scripts/T1.1_Model_hmm_22.R")
 
 ## Source required packages ####
 

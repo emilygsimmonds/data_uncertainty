@@ -195,7 +195,7 @@ non_perfect_recap3 <- run_observation_process(state_data = output_data3,
                                              seed = 2,
                                              stages = stages3)
 
-count_error_too3 <- run_observation_process(output_data, 
+count_error_too3 <- run_observation_process(output_data3, 
                                            p = c(1, 0.7, 0.7),
                                            phi = c(0.3, 0.4, 0.7),
                                            fecundity_error = TRUE,
@@ -235,6 +235,8 @@ phi = c(0.3, 0.4, 0.7)
 names(phi) <- c("juvenile","subadult", "adult")
 recapture <- c(1,1,1)
 missing <- c(0.7,0.7,0.7)
+offset <- 0.2
+split <- 0.5
 
 # set up IDs
 
@@ -311,7 +313,13 @@ eigen(parameters3)
 source("./Scripts/T1.1_Model_hmm_33.R")
 
 model_inputs3 <- make_input_data(output_data3, n_occasions = 5,
-                                 stages = stages3)
+                                 stages = stages3,
+                                 reproduction_data = output_not_random_high)
+
+# double check that reproduction_data is different
+model_inputs3$data_input$offspring_obs_a - 
+  filter(output_data3, Stage == "adult")$Offspring 
+# CORRECT AS NOT EVEN SAME LENGTH - 08.24
 
 output_results3 <- nimbleMCMC(code = Model_SS_hmm, 
                              data = model_inputs3$data_input,

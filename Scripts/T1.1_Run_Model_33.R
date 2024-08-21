@@ -35,13 +35,16 @@ source("./Functions/run_model_33.R")
 
 # load data
 
-# get list of all baseline data files
+# get list of all survival data file - random missing scenario
 filenames <- list.files("./Data files/3x3", 
-                        pattern = "baseline_simulation_observations",
+                        pattern = "random_missing",
                         full.names = TRUE)
 
+# get list of all reproduction process data (not_random)
+filenames0 <- list.files("./Data files/3x3_not_random", 
+                         pattern = "not_random",
+                         full.names = TRUE)
 
-filenames <- c("./Data files/3x3/3juvenile_missing_simulationmat322.RDS")
 
 ################################################################################
 
@@ -62,22 +65,27 @@ plan(multisession, workers = 8)
 
 # save inputs as a dataframe for pmap and remove any models that have already run
 inputs <- data.frame(filename = unlist(filenames),
-                     niter = rep(50000, 500),
-                     nburnin = rep(500, 500),
-                     scenario = rep(1:100, 5),
-                     mat_num = rep(z, each = 100),
-                     location = rep("/cluster/work/emilygs/DU/3x3/Baseline/baseline_result_", 500),
-                     num_stages = rep(3, 500),
-                     fecundity_error = rep(FALSE,500))
+                     niter = rep(50000, 1000),
+                     nburnin = rep(500, 1000),
+                     scenario = c(paste0(rep(1:100, 5),"high"),
+                                  paste0(rep(1:100,5), "low")),
+                     mat_num = rep(rep(z, each = 100),2),
+                     location = rep("/cluster/work/emilygs/DU/3x3_not_random/not_random_result_", 1000),
+                     num_stages = rep(3, 1000),
+                     fecundity_error = rep(FALSE,1000),
+                     reproduction_data = unlist(filenames0))
 
 # remove files that have already been run
-filenames2 <- list.files("/cluster/work/emilygs/DU/3x3/Baseline/", 
-                         pattern = "baseline_result",
+filenames2 <- list.files("/cluster/work/emilygs/DU/3x3_not_random/", 
+                         pattern = "not_random_result",
                          full.names = FALSE)
 
 # make a dataframe of those run
 if(length(filenames2 > 0)){
-already_run <- data.frame(scenario = parse_number(str_sub(filenames2, 1, -11)),
+#already_run <- data.frame(scenario = parse_number(str_sub(filenames2, 1, -11)),
+#                          matrix_number = str_sub(filenames2, -10, -7))
+# changed due to not random file names
+already_run <- data.frame(scenario = str_sub(filenames2, 19, -11),
                           matrix_number = str_sub(filenames2, -10, -7))
 
 # now remove them
@@ -89,19 +97,6 @@ marker <- map2(.x = as.list(already_run$matrix_number),
                })
 
 inputs <- inputs[-unlist(marker),]}
-
-# IF RERUNNING INDIVIDUAL RUNS 
-
-# save inputs as a dataframe for pmap and remove any models that have already run
-inputs <- data.frame(filename = filenames,
-                     niter = rep(50000, 1),
-                     nburnin = rep(500, 1),
-                     scenario = c(22),
-                     mat_num = c("mat3"),
-                     location = c("./Data files/3x3/a_J_missing/j_missing_result_"),
-                     num_stages = rep(3, 1),
-                     fecundity_error = c(FALSE))
-
 # run as future_pmap
 future_pmap(inputs, 
             run_model, .options = furrr_options(seed = TRUE,

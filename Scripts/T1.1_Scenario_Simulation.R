@@ -53,6 +53,12 @@ names(output_matrices) <- c("mat1",
 
 #### Create simulated data ####
 
+# BASELINE = No observation processes
+# RANDOM ERROR = ONLY Poisson error to reproduction
+# RANDOM MISSING = 30% missing randomly across whole population (does impact 
+# survival too) - still structured by stage
+# NOT RANDOM MISSING = 30% missing but not random - has own reproduction dataset
+
 create_scenario_data(parameters = output_matrices[["mat1"]],
                      name = "mat1", recapture = c(1,1),
                      missing = c(0.7,0.7),

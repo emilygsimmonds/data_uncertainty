@@ -24,6 +24,14 @@ output_data <- simulations %>%
                       level = stages)) %>% # make sure it is factor in order of stages
   mutate(Age = as.numeric(Age))
 
+if(!is.null(reproduction_data)){
+  # re-code raw data so that all stages are numbers
+  reproduction_data <- reproduction_data %>%
+    mutate(Age = factor(as.factor(Stage),
+                        level = stages)) %>% # make sure it is factor in order of stages
+    mutate(Age = as.numeric(Age))
+}
+
 #### Step 2: make a capture history ####
 
 # capture history

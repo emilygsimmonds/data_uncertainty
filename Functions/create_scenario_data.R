@@ -55,6 +55,7 @@ IDs <- 101:200000000
 seeds <- as.list(c(1:100))
 
 # run normal set of simulations then edit
+# BASELINE IS THE SYSTEM STATE WITH NO OBSERVATION PROCESSES
 baseline_state <- map2(.x = seeds,
                        .y = input_data, ~{
   state <- run_simulation_state(defined_seed = .x,
