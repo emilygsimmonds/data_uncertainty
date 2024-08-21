@@ -17,7 +17,7 @@ source("./Functions/make_matrix.R")
 
 ################################################################################
 
-#### FUNCTION 1 : the actual resampling and calculation ####
+#### FUNCTION: the actual resampling and calculation ####
 
 bootstrap_tf <- function(frequency_table,
                          stages){
@@ -51,25 +51,3 @@ bootstrap_tf <- function(frequency_table,
   
 }
 
-####################
-
-#### FUNCTION 2 : summary of bootstrap ####
-
-bootstrap_summary <- function(frequency_table,
-                              iterations,
-                              stages){
-  
-  boot_results <- map(1:iterations, ~bootstrap_tf(frequency_table,
-                                                  stages = stages)) %>%
-    bind_rows()
-  
-  boot_summary <- boot_results %>% pivot_longer(everything(), names_to = "parameter",
-                                                values_to = "value") %>%
-    group_by(parameter) %>%
-    summarise(estimate = mean(value),
-              lower_ci = quantile(value, probs = 0.025),
-              upper_ci = quantile(value, probs = 0.975))
-  
-  return(boot_summary)
-  
-}
