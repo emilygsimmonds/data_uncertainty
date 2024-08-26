@@ -5,28 +5,62 @@
 ## Source functions to test ####
 
 source("./Functions/make_input_data_function.R")
-
-## Source model code ####
-
-source("./Scripts/T1.1_Model_hmm_22.R")
+source("./Functions/run_simulation.R")
 
 ## Source required packages ####
 
 library(tidyverse)
 library(nimble)
 library(nimbleEcology)
+library(MCMCvis)
 
-## Load test dataset ##
+## Source model code ####
 
-load('./Data files/test.RData')
+source("./Scripts/T1.1_Model_hmm_22.R")
+
+## Make test dataset ####
+
+## Set up inputs
+
+input_data <- data.frame(ID = sample(1:100, 100, replace = FALSE),
+                         Year = 1,
+                         Surv = 1,
+                         Offspring = rpois(100, 2),
+                         Stage = sample(c("juvenile", "adult"), 100, 
+                                        replace = TRUE),
+                         Trait = rnorm(100, 20, 5))
+
+# set up parameters
+
+parameters <- matrix(c(rep(1, 2),
+                       0.9, 0.9), 
+                     byrow = TRUE, 
+                     ncol = 2)
+
+stages <- c("juvenile", "adult")
+
+phi = c(0.7, 0.9)
+names(phi) <- c("juvenile", "adult")
+
+# set up IDs
+
+IDs <- 101:10000000
+
+#### MAKE TEST DATA ####
+
+test_data <- run_simulation_state(input_data_old = input_data, 
+                                    parameters = parameters, 
+                                    inc_trait = FALSE,
+                                    start_i = 2, end_i = 5, IDs = IDs,
+                                    stages = stages) 
 
 #### CHECK OBSERVATION AND TRANSITION MATRICES ####
 
 ## Set up parameter values
-mean_phi_adult <- 0.6
-mean_phi_juv <- 0.3
-mean_p <- 0.8
-fecundity <- 1.6
+mean_phi_adult <- 0.9
+mean_phi_juv <- 0.9
+mean_p <- 0.99
+fecundity <- 1
 
 ## Define the matrices using same code as the model
 
@@ -68,151 +102,53 @@ observations[3, 3] <- 1 # Pr(dead t and not detected t)
 manual_juv_to_ad <- mean_phi_juv * mean_p
 matrix_juv_to_ad <- transition[1,2] * observations[2,2]
 
+# SHOULD BE 0 - correct 08.24
+manual_juv_to_ad - matrix_juv_to_ad
+
 # what is prob of adult being observed as adult in t+1
 manual_ad_to_ad <- mean_phi_adult * mean_p
 matrix_ad_to_ad <- transition[2,2] * observations[2,2]
+
+# SHOULD BE 0 - correct 08.24
+manual_ad_to_ad - matrix_ad_to_ad
 
 # what is prob of juvenile dead being observed as dead in t+1
 manual_juv_to_dead <- (1-mean_phi_juv) 
 matrix_juv_to_dead <- transition[1,3] * observations[3,3]
 
-#### CHECK MODEL RUN ####
+# SHOULD BE 0 - correct 08.24
+manual_juv_to_dead - matrix_juv_to_dead
 
-# True values: phi_j = 0.3, phi_a = 0.6, p = 0.8, lambda = 1
+#### CHECK CREATION OF INPUT DATA ####
+
+# True values: phi_j = 0.9, phi_a = 0.9, p = 1, lambda = 1
 
 ## Set up data
-input_data <- output_data
+model_inputs <- make_input_data(test_data,
+                              n_occasions = 5,
+                              fecundity_error = FALSE,
+                              stages = c("juvenile", "adult"))
 
-# re-code raw data so that adult = 2, juvenile = 1
-output_data <- input_data %>%
-  filter(Recap == 1) %>% # only keep those that were recaptured
-  mutate(Surv = case_when(Age > 1 ~ 2, 
-                          TRUE ~ Recap), 
-         Age = case_when(Age == 1 ~ 1,
-                         Age > 1 ~ 2)) # change age to just juv (1) and adult (2)
 
-## Define constants, data and inits
-
-## DATA
-
-# need to make a capture history and save out age and offspring columns
-offspring_obs <- output_data$Offspring
-age <- output_data$Age
-
-# capture history
-capture_history <- output_data %>%
-  # spread out data. The fill = 3 fills in 3s when combo was not observed (dead/non detected)
-  pivot_wider(id_cols = ID, names_from = Year, values_from = Surv,
-              values_fill = 3) %>%
-  as.matrix()
-
-# store ready for model
-data_input <- list(surv_obs = capture_history[,2:26],
-                   age = age,
-                   offspring_obs = offspring_obs)
-
-## INITS
-
-# set up initial values for survival states (1 on first occasion and 2 after)
-surv_state_init <- capture_history[,2:26]
-# create a vector of first occasions (THIS WILL BE A CONSTANT)
-first <- apply(surv_state_init, 1, function(x) which(x<3)[1])
-for(i in 1:nrow(surv_state_init)){
-  if(first[i] < 23)
-    surv_state_init[i, (first[i]+1):23] <- 2}
-
-# for hmm remove any individuals first seen in the final capture occasion
-data_input$surv_obs <- data_input$surv_obs[-which(first > 23), ]
-
-# initial values for MPM parameters
-lambda <- 1
-transition_matrix <- nimMatrix(c(1,0.5,
-                                 1,0.5), 
-                               nrow = 2)
-size_distribution <- c(0.5, 0.5)
-
-inits_hmm <- list(mean_phi_juv = runif(1, 0, 1),
-                  mean_phi_adult = runif(1, 0, 1),
-                  mean_p = runif(1, 0, 1),
-                  alpha = rnorm(1, 0, 0.1),
-                  beta_age = rnorm(1, 0, 0.1),
-                  offspring_state = offspring_obs,
-                  fecundity_rate = rep(1, length(offspring_obs)))
-
-## CONSTANTS
-
-constants <- list(N = nrow(data_input$surv_obs), 
-                  occasions = 25, 
-                  first = first[-which(first > 23)],
-                  O_N = length(offspring_obs))
-
-## Define parameters to track
-
-parameters_to_save <- c("mean_phi_adult",
-                        "mean_phi_juv",
-                        "mean_p",
-                        "alpha",
-                        "beta_age",
-                        "transition_matrix",
-                        "lambda", 
-                        "size_distribution"
-)
-
-#### TEST: run model ####
-
-n_iter <- 5000
-n_burnin <- 50
-n_chains <- 2
-
-start_time <- Sys.time()
-
-mcmc.output <- nimbleMCMC(code = Model_SS_hmm,
-                          constants = constants,
-                          data = data_input,
-                          inits = inits_hmm,
-                          monitors = parameters_to_save,
-                          niter = n_iter,
-                          nburnin = n_burnin,
-                          nchains = n_chains)
-
-end_time <- Sys.time()
-end_time - start_time
-
-MCMCsummary(mcmc.output, round = 2)
 
 #### CHECK MODEL IN WRAPPER ####
-
-parameters_to_save <- c("mean_phi_adult",
-                        "mean_phi_juv",
-                        "mean_p_juv",
-                        "mean_p_adult",
-                        "alpha",
-                        "beta_age",
-                        "transition_matrix",
-                        "lambda", 
-                        "size_distribution"
-)
 
 n_iter <- 50000
 n_burnin <- 500
 n_chains <- 2
 
-load("./Data files/baseline_simulation_statemat1.RData")
-
-# True values: phi_j = 0.3, phi_a = 0.4, p = 0.8, lambda = 0.7
-
-model_inputs <- make_input_data(baseline_state[[1]], n_occasions = 5)
-
 output_results <- nimbleMCMC(code = Model_SS_hmm, 
              data = model_inputs$data_input,
              constants = model_inputs$constants,
              inits = model_inputs$inits,
-             monitors = parameters_to_save,
+             monitors = model_inputs$parameters_to_save,
              niter = n_iter,
              nburnin = n_burnin,
              nchains = n_chains)
 
-MCMCsummary(output_results, round = 2)
+# True values: phi_j = 0.9, phi_a = 0.9, p = 1, lambda = 1
+
+MCMCsummary(output_results, round = 2) # CORRECT 08.24
 
 #### CHECK DIRECT ESTIMATE MODEL ####
 
@@ -223,37 +159,26 @@ source("./Functions/make_input_data_function.R")
 source("./Functions/transition_frequency.R")
 source("./Functions/bootstrap_summary.R")
 
-# load data - test on the state
-load("./Data files/baseline_simulation_statemat1.RData")
+# use above test data
 
 #### construct a transition frequency table
 
 # for the state
-tf_table_state <- create_transition_frequency_table(baseline_state[[1]],
-                                                    max_year = max(baseline_state[[1]]$Year)) # seems to work :)
+tf_table_state <- create_transition_frequency_table(test_data,
+                                                    max_year = max(test_data$Year),
+                                                    stages = stages) 
+
+tf_table_state
+# seems to work :) 08.24
+
 # make population matrix
-make_matrix(tf_table_state)
+make_matrix(tf_table_state) # PRODUCES ROUGHLY OK ESTIMATES surv too high 08.24
 
 #### run bootstrap to get CIs for vital rates and lambda
 
 # for state
 boot_results <- bootstrap_summary(tf_table_state, 
-                                   iterations = 2000)
+                                  iterations = 2000,
+                                  stages = stages)
 
-################################################################################
-
-#### Testing why matrix 4 model output has low coverage but high accuracy ####
-
-# load matrix 4 summary outputs
-
-load("./Data files/2x2/summary_results_2x2.RData")
-
-# restrict to matrix 4, lambda and baseline
-
-working_summary <- filter(summary_results, 
-                          matrix_number == 4,
-                          parameter == "lambda",
-                          scenario == "baseline")
-
-
-
+boot_results # works but survival still too high 08.24

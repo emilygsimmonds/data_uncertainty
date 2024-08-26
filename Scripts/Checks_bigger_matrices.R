@@ -348,12 +348,17 @@ source("./Functions/bootstrap_summary.R")
 
 #### construct a transition frequency table
 
+# MAY NEED TO RE-RUN output_data3 ABOVE
+
 # for the state
 tf_table_state <- create_transition_frequency_table(census_data = output_data3,
                                                     max_year = max(output_data3$Year),
                                                     stages = stages3) # seems to work :)
 # make population matrix
 make_matrix(tf_table_state, stages = stages3)
+
+# True parameters3 = reproduction 0, 0.5, 1 and survival = 0.3, 0.4, 0.7
+# OK: but survival too high for subadults 08.24
 
 #### run bootstrap to get CIs for vital rates and lambda
 
@@ -362,18 +367,4 @@ boot_results <- bootstrap_summary(tf_table_state,
                                   iterations = 2000,
                                   stages = stages3)
 
-# for the state
-tf_table_state <- create_transition_frequency_table(census_data = output_data5,
-                                                    max_year = max(output_data5$Year),
-                                                    stages = stages5) # seems to work :)
-# make population matrix
-make_matrix(tf_table_state, stages = stages5)
-
-#### run bootstrap to get CIs for vital rates and lambda
-
-# for state
-boot_results <- bootstrap_summary(tf_table_state, 
-                                  iterations = 2000,
-                                  stages = stages5)
-
-
+boot_results # WORKS but survival still too high 08.24

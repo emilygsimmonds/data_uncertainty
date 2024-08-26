@@ -17,97 +17,95 @@ source("./Functions/summarise_summary_function.R")
 source("./Scripts/theme_script.R")
 source("./Functions/bootstrap_summary.R")
 
-
 # load results and 'true' matrices
 
 #### 2x2 ####
 
 ## get filenames for all 2x2
 
-load("./Data files/2x2/twobytwo_matrices.RData")
+load("./Data files/2x2_files/input_files/twobytwo_matrices.RData")
 names(output_matrices) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
-filenames <- data.frame(filename = c(list.files("./Data files/2x2/a_A_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/2x2/a_Baseline/", 
-                                  full.names = TRUE),
-                                  list.files("./Data files/2x2/a_J_missing/", 
-                                             full.names = TRUE),
-               list.files("./Data files/2x2/a_R_error/", 
-                          full.names = TRUE),
-               list.files("./Data files/2x2/a_R_missing/", 
-                          full.names = TRUE))) %>%
+# then pull in all model results
+# for non_random need to do partial match to low and high to split them
+# pull in alphabetically as tidyverse will sort them
+filenames <- data.frame(filename = 
+                          c(list.files("./Data files/2x2_files/model_results/a_Baseline/", 
+                                      full.names = TRUE),
+                            list.files("./Data files/2x2_files/model_results/a_not_R_missing/", 
+                                       full.names = TRUE, pattern = "low"),
+                            list.files("./Data files/2x2_files/model_results/a_not_R_missing/", 
+                                       full.names = TRUE, pattern = "high"),
+                            list.files("./Data files/2x2_files/model_results/a_R_error/", 
+                                      full.names = TRUE),
+                            list.files("./Data files/2x2_files/model_results/a_R_missing/", 
+                                      full.names = TRUE)
+                            )) %>%
   mutate(matrix_number = as.numeric(str_sub(filename, -7, -7)))
 
 ################################################################################
 
+# create a dataframe of the 'true' parameters
+# then split it into a list
 true_parameters_22 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                             "reproduction_adult",
-                                            "recapture_juvenile",
-                                            "recapture_adult",
                                             "survival_juvenile",
                                             "survival_adult",
                                             "lambda"), 5),
                               value = rep(c(output_matrices[["mat1"]][1,1],
                                         output_matrices[["mat1"]][1,2],
-                                        1, 0.7, 
                                         output_matrices[["mat1"]][2,1],
                                         output_matrices[["mat1"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat1"]])$values[1]),
                                         output_matrices[["mat2"]][1,1],
                                         output_matrices[["mat2"]][1,2],
-                                        1, 0.7,
                                         output_matrices[["mat2"]][2,1],
                                         output_matrices[["mat2"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat2"]])$values[1]),
                                         output_matrices[["mat3"]][1,1],
                                         output_matrices[["mat3"]][1,2],
-                                        1, 0.7,
                                         output_matrices[["mat3"]][2,1],
                                         output_matrices[["mat3"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat3"]])$values[1]),
                                         output_matrices[["mat4"]][1,1],
                                         output_matrices[["mat4"]][1,2],
-                                        1, 0.7,
                                         output_matrices[["mat4"]][2,1],
                                         output_matrices[["mat4"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat4"]])$values[1]),
                                         output_matrices[["mat5"]][1,1],
                                         output_matrices[["mat5"]][1,2],
-                                        1, 0.7,
                                         output_matrices[["mat5"]][2,1],
                                         output_matrices[["mat5"]][2,2],
                                         as.numeric(eigen(output_matrices[["mat5"]])$values[1])),
                                         5),
-                              matrix_number = rep(rep(1:5, each = 7),5),
-                              scenario = rep(c("adult_missing",
-                                               "baseline",
-                                               "juvenile_missing",
+                              matrix_number = rep(rep(1:5, each = 5),5),
+                              scenario = rep(c("baseline",
+                   # assign the scenarios alphabetically as tidyverse sorts them
+                                               "not_random_missing_low",
+                                               "not_random_missing_high",
                                                "random_error",
-                                               "random_missing"), each = 7*5)) %>%
+                                               "random_missing"), each = 5*5)) %>%
   pivot_wider(values_from = value, names_from = parameter) %>%
-  mutate(recapture_juvenile = rep(c(1,1,0.7,1,0.7), each = 5),
-         recapture_adult = rep(c(0.7,1,1,1,0.7), each = 5)) %>% 
   group_by(scenario) %>% # split true parameters by scenario
   group_split()
 
 # now join all of the true data to a filename using map
 
 # set up index list for filenames 
-filenames_index <- list(c(1:500),
-                          c(501:1000),
-                          c(1001:1500),
-                          c(1501:2000),
-                          c(2001:2500))
+filenames_index <- list(which(str_detect(filenames[,1], "baseline")), # baseline
+                        which(str_detect(filenames[,1], "high")), # not_random_high
+                        which(str_detect(filenames[,1], "low")), # not_random_low
+                        which(str_detect(filenames[,1], "error")), # random error
+                        which(str_detect(filenames[,1], "r_missing"))) # random missing
 
-test <- map2_df(.x = true_parameters_22,
+# take all the filenames of results and onto 'true' data
+input_for_summary <- map2_df(.x = true_parameters_22,
                .y = filenames_index, ~{
   
   # join together the filenames and the true parameters by matrix number
-  left_join(filenames[.y,], .x)[,-3] # remove scenario column
-  
-}) %>%
-  arrange(filenames) %>%
+  #left_join(filenames[.y,], .x)
+  left_join(filenames[.y,], .x)[,-3] # remove scenario column for later computation
+  }) %>%
   group_by(filename) %>%
   group_split()
 
@@ -115,36 +113,34 @@ test <- map2_df(.x = true_parameters_22,
 
 ## summarise the summaries
 
-i <- as.list(rep(c("adult_missing",
-                   "baseline",
-                   "juvenile_missing",
-                   "random_error",
-                   "random_missing"), each = 500))
 
-summary_results <- map2_df(.x = test,
-                           .y = i, ~{
+# don't need to index by scenario - just pull scenario name from the filename
+
+summary_results <- map_df(.x = input_for_summary, ~{
                 summary_summary(inputs = .x,
-                                scenario = .y,
                                 stages = c("juvenile","adult"))})
 
-save(summary_results, file = "./Data files/2x2/summary_results_2x2.RData")
+save(summary_results, 
+     file = "./Data files/2x2_files/summarised_results/summary_results_2x2.RData")
 
 #### 3x3 ####
 ## get filenames for all 3x3
 
-load("./Data files/3x3/threebythree_matrices.RData")
+load("./Data files/3x3_files/input_files/threebythree_matrices.RData")
 names(matrices_33) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
 
-filenames <- data.frame(filename = c(list.files("./Data files/3x3/a_A_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/3x3/a_Baseline/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/3x3/a_J_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/3x3/a_R_error/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/3x3/a_R_missing/", 
-                                                full.names = TRUE))) %>%
+filenames_33 <- data.frame(filename = 
+                          c(list.files("./Data files/3x3_files/model_results/a_Baseline/", 
+                                       full.names = TRUE),
+                            list.files("./Data files/3x3_files/model_results/a_R_error/", 
+                                       full.names = TRUE),
+                            list.files("./Data files/3x3_files/model_results/a_R_missing/", 
+                                       full.names = TRUE),
+                            list.files("./Data files/3x3_files/model_results/a_not_R_missing/", 
+                                       full.names = TRUE, pattern = "low"),
+                            list.files("./Data files/3x3_files/model_results/a_not_R_missing/", 
+                                       full.names = TRUE, pattern = "high")
+                          )) %>%
   mutate(matrix_number = as.numeric(str_sub(filename, -7, -7)))
 
 ################################################################################
@@ -152,9 +148,6 @@ filenames <- data.frame(filename = c(list.files("./Data files/3x3/a_A_missing/",
 true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                                    "reproduction_subadult",
                                                    "reproduction_adult",
-                                                   "recapture_juvenile",
-                                                   "recapture_subadult",
-                                                   "recapture_adult",
                                                    "survival_juvenile",
                                                    "survival_subadult",
                                                    "survival_adult",
@@ -162,7 +155,6 @@ true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                  value = rep(c(matrices_33[["mat1"]][1,1],
                                            matrices_33[["mat1"]][1,2],
                                            matrices_33[["mat1"]][1,3],
-                                           1, 0.8, 0.8,
                                            matrices_33[["mat1"]][2,1],
                                            matrices_33[["mat1"]][3,2],
                                            matrices_33[["mat1"]][3,3],
@@ -170,7 +162,6 @@ true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                            matrices_33[["mat2"]][1,1],
                                            matrices_33[["mat2"]][1,2],
                                            matrices_33[["mat2"]][1,3],
-                                           1, 0.8, 0.8,
                                            matrices_33[["mat2"]][2,1],
                                            matrices_33[["mat2"]][3,2],
                                            matrices_33[["mat2"]][3,3],
@@ -178,7 +169,6 @@ true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                            matrices_33[["mat3"]][1,1],
                                            matrices_33[["mat3"]][1,2],
                                            matrices_33[["mat3"]][1,3],
-                                           1, 0.8, 0.8,
                                            matrices_33[["mat3"]][2,1],
                                            matrices_33[["mat3"]][3,2],
                                            matrices_33[["mat3"]][3,3],
@@ -186,7 +176,6 @@ true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                            matrices_33[["mat4"]][1,1],
                                            matrices_33[["mat4"]][1,2],
                                            matrices_33[["mat4"]][1,3],
-                                           1, 0.8, 0.8,
                                            matrices_33[["mat4"]][2,1],
                                            matrices_33[["mat4"]][3,2],
                                            matrices_33[["mat4"]][3,3],
@@ -194,207 +183,57 @@ true_parameters_33 <- data.frame(parameter = rep(c("reproduction_juvenile",
                                            matrices_33[["mat5"]][1,1],
                                            matrices_33[["mat5"]][1,2],
                                            matrices_33[["mat5"]][1,3],
-                                           1, 0.8, 0.8,
                                            matrices_33[["mat5"]][2,1],
                                            matrices_33[["mat5"]][3,2],
                                            matrices_33[["mat5"]][3,3],
                                            as.numeric(eigen(matrices_33[["mat5"]])$values[1])),5),
-                                 matrix_number = rep(rep(1:5, each = 10),5),
-                                 scenario = rep(c("adult_missing",
-                                                  "baseline",
-                                                  "juvenile_missing",
+                                 matrix_number = rep(rep(1:5, each = 7),5),
+                                 scenario = rep(c("baseline",
                                                   "random_error",
-                                                  "random_missing"), each = 10*5)) %>%
+                                                  "random_missing",
+                                                  "not_random_missing_low",
+                                                  "not_random_missing_high"), each = 7*5)) %>%
   pivot_wider(values_from = value, names_from = parameter) %>%
-  mutate(recapture_juvenile = rep(c(1,1,0.7,1,0.7), each = 5),
-         recapture_subadult = rep(c(0.7,1,1,1,0.7), each = 5),
-         recapture_adult = rep(c(0.7,1,1,1,0.7), each = 5)) %>% 
   group_by(scenario) %>% # split true parameters by scenario
   group_split()
 
 # now join all of the true data to a filename using map
 
 # set up index list for filenames 
-filenames_index <- list(c(1:500),
-                        c(501:1000),
-                        c(1001:1500),
-                        c(1501:2000),
-                        c(2001:2500))
+# make sure alphabetical
+filenames_index_33 <- list(which(str_detect(filenames_33[,1], "baseline")), # baseline
+                           which(str_detect(filenames_33[,1], "high")), # not_random_high
+                           which(str_detect(filenames_33[,1], "low")), # not_random_low
+                           which(str_detect(filenames_33[,1], "error")), # random error
+                           which(str_detect(filenames_33[,1], "r_missing"))) # random missing
 
-test <- map2_df(.x = true_parameters_33,
-                .y = filenames_index, ~{
+input_for_summary_33 <- map2_df(.x = true_parameters_33,
+                  .y = filenames_index_33, ~{
                   # join together the filenames and the true parameters by matrix number
-                  left_join(filenames[.y,], .x)[,-3] # remove scenario column
+                  left_join(filenames_33[.y,], .x)[,-3] # remove scenario column
+                  #left_join(filenames_33[.y,], .x)
                 }) %>%
-  arrange(filenames) %>%
   group_by(filename) %>%
   group_split()
+
+# check
+#input_for_summary_33[[1]][,c(1,3)]
+#input_for_summary_33[[501]][,c(1,3)]
+#input_for_summary_33[[1001]][,c(1,3)]
+#input_for_summary_33[[1501]][,c(1,3)]
+#input_for_summary_33[[1550]][,c(1,3)]
+#input_for_summary_33[[2001]][,c(1,3)]
 
 #### Summary ####
 
 ## summarise the summaries
 
-i <- as.list(rep(c("adult_missing",
-                   "baseline",
-                   "juvenile_missing",
-                   "random_error",
-                   "random_missing"), each = 500))
-
-summary_results <- map2_df(.x = test,
-                           .y = i, ~{
+summary_results <- map_df(.x = input_for_summary_33, ~{
                              summary_summary(inputs = .x,
-                                             scenario = .y,
                                              stages = c("juvenile",
                                                         "subadult","adult"))})
 
-save(summary_results, file = "./Data files/3x3/summary_results_3x3.RData")
-
-#### 5x5 ####
-## get filenames for all 5x5
-
-load("./Data files/5x5/fivebyfive_matrices.RData")
-names(matrices_55) <- c("mat1", "mat2", "mat3", "mat4", "mat5")
-
-filenames <- data.frame(filename = c(list.files("./Data files/5x5/a_A_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/5x5/a_Baseline/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/5x5/a_J_missing/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/5x5/a_R_error/", 
-                                                full.names = TRUE),
-                                     list.files("./Data files/5x5/a_R_missing/", 
-                                                full.names = TRUE))) %>%
-  mutate(matrix_number = as.numeric(str_sub(filename, -7, -7)))
-
-################################################################################
-
-true_parameters_55 <- data.frame(parameter = rep(c("reproduction_juvenile",
-                                                   "reproduction_subadult",
-                                                   "reproduction_adult1",
-                                                   "reproduction_adult2",
-                                                   "reproduction_adult3",
-                                                   "recapture_juvenile",
-                                                   "recapture_subadult",
-                                                   "recapture_adult1",
-                                                   "recapture_adult2",
-                                                   "recapture_adult3",
-                                                   "survival_juvenile",
-                                                   "survival_subadult",
-                                                   "survival_adult1",
-                                                   "survival_adult2",
-                                                   "survival_adult3",
-                                                   "lambda"), 5),
-                                 value = rep(c(matrices_55[["mat1"]][1,1],
-                                           matrices_55[["mat1"]][1,2],
-                                           matrices_55[["mat1"]][1,3],
-                                           matrices_55[["mat1"]][1,4],
-                                           matrices_55[["mat1"]][1,5],
-                                           1, 0.8, 0.8, 0.8, 0.8,
-                                           matrices_55[["mat1"]][2,1],
-                                           matrices_55[["mat1"]][3,2],
-                                           matrices_55[["mat1"]][4,3],
-                                           matrices_55[["mat1"]][5,4],
-                                           matrices_55[["mat1"]][5,5],
-                                           as.numeric(eigen(matrices_55[["mat1"]])$values[1]),
-                                           matrices_55[["mat2"]][1,1],
-                                           matrices_55[["mat2"]][1,2],
-                                           matrices_55[["mat2"]][1,3],
-                                           matrices_55[["mat2"]][1,4],
-                                           matrices_55[["mat2"]][1,5],
-                                           1, 0.8, 0.8, 0.8, 0.8,
-                                           matrices_55[["mat2"]][2,1],
-                                           matrices_55[["mat2"]][3,2],
-                                           matrices_55[["mat2"]][4,3],
-                                           matrices_55[["mat2"]][5,4],
-                                           matrices_55[["mat2"]][5,5],
-                                           as.numeric(eigen(matrices_55[["mat2"]])$values[1]),
-                                           matrices_55[["mat3"]][1,1],
-                                           matrices_55[["mat3"]][1,2],
-                                           matrices_55[["mat3"]][1,3],
-                                           matrices_55[["mat3"]][1,4],
-                                           matrices_55[["mat3"]][1,5],
-                                           1, 0.8, 0.8, 0.8, 0.8,
-                                           matrices_55[["mat3"]][2,1],
-                                           matrices_55[["mat3"]][3,2],
-                                           matrices_55[["mat3"]][4,3],
-                                           matrices_55[["mat3"]][5,4],
-                                           matrices_55[["mat3"]][5,5],
-                                           as.numeric(eigen(matrices_55[["mat3"]])$values[1]),
-                                           matrices_55[["mat4"]][1,1],
-                                           matrices_55[["mat4"]][1,2],
-                                           matrices_55[["mat4"]][1,3],
-                                           matrices_55[["mat4"]][1,4],
-                                           matrices_55[["mat4"]][1,5],
-                                           1, 0.8, 0.8, 0.8, 0.8,
-                                           matrices_55[["mat4"]][2,1],
-                                           matrices_55[["mat4"]][3,2],
-                                           matrices_55[["mat4"]][4,3],
-                                           matrices_55[["mat4"]][5,4],
-                                           matrices_55[["mat4"]][5,5],
-                                           as.numeric(eigen(matrices_55[["mat4"]])$values[1]),
-                                           matrices_55[["mat5"]][1,1],
-                                           matrices_55[["mat5"]][1,2],
-                                           matrices_55[["mat5"]][1,3],
-                                           matrices_55[["mat5"]][1,4],
-                                           matrices_55[["mat5"]][1,5],
-                                           1, 0.8, 0.8, 0.8, 0.8,
-                                           matrices_55[["mat5"]][2,1],
-                                           matrices_55[["mat5"]][3,2],
-                                           matrices_55[["mat5"]][4,3],
-                                           matrices_55[["mat5"]][5,4],
-                                           matrices_55[["mat5"]][5,5],
-                                           as.numeric(eigen(matrices_55[["mat5"]])$values[1])),5),
-                                 matrix_number = rep(rep(1:5, each = 16),5),
-                                 scenario = rep(c("adult_missing",
-                                                  "baseline",
-                                                  "juvenile_missing",
-                                                  "random_error",
-                                                  "random_missing"), each = 16*5)) %>%
-  pivot_wider(values_from = value, names_from = parameter) %>%
-  mutate(recapture_juvenile = rep(c(1,1,0.7,1,0.7), each = 5),
-         recapture_subadult = rep(c(0.7,1,1,1,0.7), each = 5),
-         recapture_adult1 = rep(c(0.7,1,1,1,0.7), each = 5),
-         recapture_adult2 = rep(c(0.7,1,1,1,0.7), each = 5),
-         recapture_adult3 = rep(c(0.7,1,1,1,0.7), each = 5)) %>% 
-  group_by(scenario) %>% # split true parameters by scenario
-  group_split()
-
-# set up index list for filenames 
-filenames_index <- list(c(1:500),
-                        c(501:1000),
-                        c(1001:1500),
-                        c(1501:2000),
-                        c(2001:2500))
-
-test <- map2_df(.x = true_parameters_55,
-                .y = filenames_index, ~{
-                  # join together the filenames and the true parameters by matrix number
-                  left_join(filenames[.y,], .x)[,-3] # remove scenario column
-                }) %>%
-  arrange(filenames) %>%
-  group_by(filename) %>%
-  group_split()
-
-#### Summary ####
-
-## summarise the summaries
-
-i <- as.list(rep(c("adult_missing",
-                   "baseline",
-                   "juvenile_missing",
-                   "random_error",
-                   "random_missing"), each = 500))
-
-summary_results <- map2_df(.x = test,
-                           .y = i, ~{
-                             summary_summary(inputs = .x,
-                                             scenario = .y,
-                                             stages = c("juvenile", "subadult",
-                                                        "adult1", "adult2", 
-                                                        "adult3"))})
-
-save(summary_results, file = "./Data files/5x5/summary_results_5x5.RData")
+save(summary_results, file = "./Data files/3x3_files/summarised_results/summary_results_3x3.RData")
 
 ################################################################################
 #### STAGE-FATE RESULTS ####

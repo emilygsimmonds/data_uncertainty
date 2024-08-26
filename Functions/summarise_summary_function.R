@@ -2,18 +2,22 @@
 
 # Takes summary table and calculates error, uncertainty etc
 
-# Input:
+# inputs includes:
 
 # results = summary table output from MCMCvis()
 
 # true_parameters = table of input parameter values(cols = parameter, value)
 
+# then stages in our argument
+
 ################################################################################
 
 
 summary_summary <- function(inputs,
-                            stages,
-                            scenario){
+                            stages){
+  
+# source the true in CI function
+source("./Functions/true_in_CI.R")
   
 ## first, import result and make summary
 load(inputs$filename)
@@ -30,7 +34,6 @@ if(length(which(true_parameters$parameter %in% rownames(results) == FALSE)) > 0)
 }
   
 # output rows: lambda,
-#              recapture - all stages
 #              reproduction - all stages
 #              survival - all stages
   
@@ -40,7 +43,6 @@ parameter_names <- c("lambda")
 
 for(j in stages){
   parameter_names <- c(parameter_names,
-                       paste0("recapture_", j),
                        paste0("reproduction_", j),
                        paste0("survival_", j))
 }
@@ -67,7 +69,12 @@ output <- mutate(output,
                  error = estimated - true,
                  CI_width = CI_upper - CI_lower,
                  true_in_CI = NA,
-                 scenario = scenario)
+                 # programmatically assign the scenario from the filename
+                 scenario = case_when(str_detect(inputs$filename, "baseline") == TRUE ~ "baseline",
+                                      str_detect(inputs$filename, "error") == TRUE ~ "random_error",
+                                      str_detect(inputs$filename, "high") == TRUE ~ "not_random_high",
+                                      str_detect(inputs$filename, "low") == TRUE ~ "not_random_low",
+                                      str_detect(inputs$filename, "r_missing") == TRUE ~ "random_missing") )
 
 output$true_in_CI <- apply(output, 1, FUN = true_in_CI)
 
@@ -76,16 +83,3 @@ return(output)
   
 }
 
-# short extra function for calculating if true in CI
-
-# input = row of data
-# output = TRUE/FALSE
-
-true_in_CI <- function(input){
-  
-  input <- round(as.numeric(input),2)
-  
-  between(input[2], 
-          input[4], 
-          input[5])
-}
